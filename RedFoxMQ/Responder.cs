@@ -16,25 +16,24 @@
 using RedFoxMQ.Transports;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
 namespace RedFoxMQ
 {
-    public class Publisher : IBindSockets, IDisposable
+    public class Responder : IBindSockets, IDisposable
     {
         private static readonly SocketAccepterFactory SocketAccepterFactory = new SocketAccepterFactory();
         private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
-
+        
         private readonly ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter> _servers;
-        private readonly ConcurrentDictionary<MessageQueue, CancellationTokenSource> _broadcastSockets;
+        private readonly ConcurrentDictionary<MessageReceiveLoop, CancellationTokenSource> _clientSockets;
         private readonly MessageQueueProcessor _messageQueueProcessor = new MessageQueueProcessor();
 
-        public Publisher()
+        public Responder()
         {
             _servers = new ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter>();
-            _broadcastSockets = new ConcurrentDictionary<MessageQueue, CancellationTokenSource>();
+            _clientSockets = new ConcurrentDictionary<MessageReceiveLoop, CancellationTokenSource>();
         }
 
         public void Bind(RedFoxEndpoint endpoint)
@@ -46,9 +45,9 @@ namespace RedFoxMQ
         private void OnClientConnected(ISocket socket)
         {
             var messageFrameSender = new MessageFrameSender(socket);
-            var messageQueue = new MessageQueue(_messageQueueProcessor, messageFrameSender);
+            var messageReceiveLoop = new MessageReceiveLoop(socket);
             var cancellationTokenSource = new CancellationTokenSource();
-            _broadcastSockets.TryAdd(messageQueue, cancellationTokenSource);
+            _clientSockets.TryAdd(messageReceiveLoop, cancellationTokenSource);
         }
 
         public bool Unbind(RedFoxEndpoint endpoint)
@@ -60,31 +59,20 @@ namespace RedFoxMQ
             return serverRemoved;
         }
 
-        public void Broadcast(IMessage message)
-        {
-            var alreadyBroadcastedTo = new HashSet<MessageQueue>();
-
-            var messageFrame = MessageFrameCreator.CreateFromMessage(message);
-
-            foreach (var messageQueue in _broadcastSockets.Keys)
-            {
-                if (alreadyBroadcastedTo.Contains(messageQueue)) continue;
-                alreadyBroadcastedTo.Add(messageQueue);
-
-                messageQueue.Add(messageFrame);
-            }
-        }
-
         private void UnbindAllEndpoints()
         {
             try
             {
-                var endpoints = _servers.Keys.ToList();
-
-                foreach (var endpoint in endpoints)
+                do
                 {
-                    Unbind(endpoint);
-                }
+                    var endpoints = _servers.Keys.ToList();
+
+                    foreach (var endpoint in endpoints)
+                    {
+                        Unbind(endpoint);
+                    }
+
+                } while (true);
             }
             catch (InvalidOperationException) { }
         }
@@ -112,7 +100,7 @@ namespace RedFoxMQ
             Dispose(true);
         }
 
-        ~Publisher()
+        ~Responder()
         {
             Dispose(false);
         }

@@ -16,17 +16,21 @@
 using RedFoxMQ.Transports;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
-    public class Subscriber : IConnectToEndpoint, IDisconnect, IDisposable
+    public class Requester : IConnectToEndpoint, IDisconnect, IDisposable
     {
         private static readonly SocketFactory SocketFactory = new SocketFactory();
+        private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
+
+        private MessageFrameSender _messageFrameSender;
+        private MessageFrameReceiver _messageFrameReceiver;
 
         private ISocket _socket;
-        private MessageReceiveLoop _messageReceiveLoop;
-
-        public event Action<IMessage> MessageReceived = m => { };
+        private CancellationTokenSource _cts = new CancellationTokenSource();
+        private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
 
         public void Connect(RedFoxEndpoint endpoint)
         {
@@ -34,9 +38,20 @@ namespace RedFoxMQ
 
             _socket = SocketFactory.CreateAndConnect(endpoint);
 
-            _messageReceiveLoop = new MessageReceiveLoop(_socket);
-            _messageReceiveLoop.MessageReceived += m => MessageReceived(m);
-            _messageReceiveLoop.Start();
+            _messageFrameSender = new MessageFrameSender(_socket);
+            _messageFrameReceiver = new MessageFrameReceiver(_socket);
+
+            _cts = new CancellationTokenSource();
+        }
+
+        public async Task<IMessage> Request(IMessage message, CancellationToken cancellationToken)
+        {
+            var sendMessageFrame = MessageFrameCreator.CreateFromMessage(message);
+            await _messageFrameSender.SendAsync(sendMessageFrame, cancellationToken);
+
+            var responseMessageFrame = await _messageFrameReceiver.ReceiveAsync(cancellationToken);
+            var response = MessageSerialization.Instance.Deserialize(responseMessageFrame.MessageTypeId, responseMessageFrame.RawMessage);
+            return response;
         }
 
         public void Disconnect()
@@ -49,7 +64,9 @@ namespace RedFoxMQ
             var socket = Interlocked.Exchange(ref _socket, null);
             if (socket == null) return;
 
-            _messageReceiveLoop.Stop(waitForExit);
+            _cts.Cancel(false);
+
+            if (waitForExit) _stopped.Wait();
 
             socket.Disconnect();
         }
@@ -77,7 +94,7 @@ namespace RedFoxMQ
             Dispose(true);
         }
 
-        ~Subscriber()
+        ~Requester()
         {
             Dispose(false);
         }
