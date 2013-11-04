@@ -1,0 +1,89 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{79EC11B9-3372-43F6-95C2-A7965E89C22C}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>RedFoxMQ</RootNamespace>
+    <AssemblyName>RedFoxMQ</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="IDisconnect.cs" />
+    <Compile Include="MessageFrameSender.cs" />
+    <Compile Include="MessageFrameReceiver.cs" />
+    <Compile Include="MessageQueue.cs" />
+    <Compile Include="MessageQueueProcessor.cs" />
+    <Compile Include="Transports\InProc\InProcSocket.cs" />
+    <Compile Include="Transports\InProc\QueueStream.cs" />
+    <Compile Include="Transports\ISocket.cs" />
+    <Compile Include="Transports\SocketFactory.cs" />
+    <Compile Include="Transports\SocketAccepterFactory.cs" />
+    <Compile Include="IReceiveMessageFrame.cs" />
+    <Compile Include="ISendMessageFrame.cs" />
+    <Compile Include="IBroadcastMessageFrame.cs" />
+    <Compile Include="Transports\ISocketAccepter.cs" />
+    <Compile Include="Transports\InProc\InProcessEndpoints.cs" />
+    <Compile Include="MessageFrameStreamReader.cs" />
+    <Compile Include="MessageFrameStreamWriter.cs" />
+    <Compile Include="MessageSerialization.cs" />
+    <Compile Include="IMessage.cs" />
+    <Compile Include="MessageDeserializationException.cs" />
+    <Compile Include="MessageSerializationException.cs" />
+    <Compile Include="RedFoxBaseException.cs" />
+    <Compile Include="MissingMessageDeserializerException.cs" />
+    <Compile Include="MissingMessageSerializerException.cs" />
+    <Compile Include="Subscriber.cs" />
+    <Compile Include="Transports\Tcp\TcpSocket.cs" />
+    <Compile Include="Transports\Tcp\IpAddressFromHostTranslator.cs" />
+    <Compile Include="IConnectToEndpoint.cs" />
+    <Compile Include="IBindSockets.cs" />
+    <Compile Include="IMessageDeserializer.cs" />
+    <Compile Include="IMessageSerializer.cs" />
+    <Compile Include="MessageFrame.cs" />
+    <Compile Include="Transports\RedFoxEndpoint.cs" />
+    <Compile Include="Transports\RedFoxTransport.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Publisher.cs" />
+    <Compile Include="Transports\InProc\InProcessSocketAccepter.cs" />
+    <Compile Include="Transports\Tcp\TcpSocketAccepter.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
