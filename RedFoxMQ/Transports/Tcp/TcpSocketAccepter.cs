@@ -27,7 +27,6 @@ namespace RedFoxMQ.Transports.Tcp
         private RedFoxEndpoint _endpoint;
         private TcpListener _listener;
         private CancellationTokenSource _cts = new CancellationTokenSource();
-        private readonly ManualResetEventSlim _started = new ManualResetEventSlim(false);
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
 
         public event Action<ISocket> ClientConnected = client => { };
@@ -48,9 +47,7 @@ namespace RedFoxMQ.Transports.Tcp
 
             _cts = new CancellationTokenSource();
 
-            _started.Reset();
-            Task.Factory.StartNew(() => StartAcceptLoop(_cts.Token), TaskCreationOptions.LongRunning);
-            _started.Wait();
+            StartAcceptLoop(_cts.Token);
         }
 
         private void StartAcceptLoop(CancellationToken cancellationToken)
@@ -61,7 +58,6 @@ namespace RedFoxMQ.Transports.Tcp
         private async Task AcceptLoopAsync(CancellationToken cancellationToken)
         {
             _stopped.Reset();
-            _started.Set();
 
             try
             {

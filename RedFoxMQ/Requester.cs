@@ -32,16 +32,34 @@ namespace RedFoxMQ
         private CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
 
-        public void Connect(RedFoxEndpoint endpoint)
+
+        public async Task ConnectAsync(RedFoxEndpoint endpoint)
         {
             if (_socket != null) throw new InvalidOperationException("Subscriber already connected");
 
-            _socket = SocketFactory.CreateAndConnect(endpoint);
+            _cts = new CancellationTokenSource();
+
+            await ConnectAsyncWithCancellationToken(endpoint, _cts.Token);
+        }
+
+        public async Task ConnectAsync(RedFoxEndpoint endpoint, CancellationToken cancellationToken)
+        {
+            if (_socket != null) throw new InvalidOperationException("Subscriber already connected");
+            _cts = new CancellationTokenSource();
+
+            using (var cts = CancellationTokenSource.CreateLinkedTokenSource())
+            {
+                await ConnectAsyncWithCancellationToken(endpoint, cts.Token);
+            }
+        }
+
+        private async Task ConnectAsyncWithCancellationToken(RedFoxEndpoint endpoint, CancellationToken cancellationToken)
+        {
+            _socket = await SocketFactory.CreateAndConnect(endpoint, cancellationToken);
 
             _messageFrameSender = new MessageFrameSender(_socket);
             _messageFrameReceiver = new MessageFrameReceiver(_socket);
 
-            _cts = new CancellationTokenSource();
         }
 
         public async Task<IMessage> Request(IMessage message)

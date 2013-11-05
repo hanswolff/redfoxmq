@@ -32,7 +32,7 @@ namespace RedFoxMQ.Tests
                 var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
 
                 responder.Bind(endpoint);
-                requester.Connect(endpoint);
+                requester.ConnectAsync(endpoint).Wait();
 
                 var messageSent = new TestMessage { Text = "Hello" };
                 var messageReceived = (TestMessage)requester.Request(messageSent).Result;
@@ -50,7 +50,7 @@ namespace RedFoxMQ.Tests
                 var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
 
                 responder.Bind(endpoint);
-                requester.Connect(endpoint);
+                requester.ConnectAsync(endpoint).Wait();
 
                 var messageReceived = new List<TestMessage>();
 

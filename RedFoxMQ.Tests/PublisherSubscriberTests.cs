@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
+using System.Runtime.InteropServices;
 using NUnit.Framework;
 using RedFoxMQ.Tests.TestHelpers;
 using RedFoxMQ.Transports;
@@ -24,16 +26,19 @@ namespace RedFoxMQ.Tests
     [TestFixture]
     public class PublisherSubscriberTests
     {
-        [Test]
-        public void Subscribe_to_Publisher_receive_single_broadcasted_message()
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Subscribe_to_Publisher_receive_single_broadcasted_message(RedFoxTransport transport)
         {
             using (var publisher = new Publisher())
             using (var subscriber = new Subscriber())
             {
-                var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
+                var endpoint = new RedFoxEndpoint(transport, "localhost", 5555, null);
 
                 publisher.Bind(endpoint);
-                subscriber.Connect(endpoint);
+                subscriber.ConnectAsync(endpoint).Wait();
+
+                Thread.Sleep(30);
 
                 var isMessageReceived = new ManualResetEventSlim();
                 TestMessage messageReceived = null;
@@ -52,16 +57,19 @@ namespace RedFoxMQ.Tests
             }
         }
 
-        [Test]
-        public void Subscribe_to_Publisher_receive_two_broadcasted_messages()
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Subscribe_to_Publisher_receive_two_broadcasted_messages(RedFoxTransport transport)
         {
             using (var publisher = new Publisher())
             using (var subscriber = new Subscriber())
             {
-                var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
+                var endpoint = new RedFoxEndpoint(transport, "localhost", 5555, null);
 
                 publisher.Bind(endpoint);
-                subscriber.Connect(endpoint);
+                subscriber.ConnectAsync(endpoint).Wait();
+
+                Thread.Sleep(30);
 
                 var isMessageReceived = new ManualResetEventSlim();
                 var messageReceived = new List<TestMessage>();

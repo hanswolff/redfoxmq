@@ -13,12 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using RedFoxMQ.Transports;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
     interface IConnectToEndpoint
     {
-        void Connect(RedFoxEndpoint endpoint);
+        Task ConnectAsync(RedFoxEndpoint endpoint, CancellationToken cancellationToken);
     }
 }

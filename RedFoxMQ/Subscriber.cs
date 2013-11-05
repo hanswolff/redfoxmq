@@ -13,26 +13,47 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using RedFoxMQ.Transports;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
     public class Subscriber : IConnectToEndpoint, IDisconnect, IDisposable
     {
         private static readonly SocketFactory SocketFactory = new SocketFactory();
+        private CancellationTokenSource _cts = new CancellationTokenSource();
 
         private ISocket _socket;
         private MessageReceiveLoop _messageReceiveLoop;
 
         public event Action<IMessage> MessageReceived = m => { };
 
-        public void Connect(RedFoxEndpoint endpoint)
+        public async Task ConnectAsync(RedFoxEndpoint endpoint)
         {
             if (_socket != null) throw new InvalidOperationException("Subscriber already connected");
+            
+            _cts = new CancellationTokenSource();
 
-            _socket = SocketFactory.CreateAndConnect(endpoint);
+            await ConnectAsyncWithCancellationToken(endpoint, _cts.Token);
+        }
+
+        public async Task ConnectAsync(RedFoxEndpoint endpoint, CancellationToken cancellationToken)
+        {
+            if (_socket != null) throw new InvalidOperationException("Subscriber already connected");
+            _cts = new CancellationTokenSource();
+
+            using (var cts = CancellationTokenSource.CreateLinkedTokenSource())
+            {
+                await ConnectAsyncWithCancellationToken(endpoint, cts.Token);
+            }
+        }
+
+        private async Task ConnectAsyncWithCancellationToken(RedFoxEndpoint endpoint, CancellationToken cancellationToken)
+        {
+            _socket = await SocketFactory.CreateAndConnect(endpoint, cancellationToken);
 
             _messageReceiveLoop = new MessageReceiveLoop(_socket);
             _messageReceiveLoop.MessageReceived += m => MessageReceived(m);

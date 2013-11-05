@@ -18,19 +18,20 @@ using RedFoxMQ.Transports.Tcp;
 using System;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace RedFoxMQ.Transports
 {
     class SocketFactory
     {
-        public ISocket CreateAndConnect(RedFoxEndpoint endpoint)
+        public async Task<ISocket> CreateAndConnect(RedFoxEndpoint endpoint, CancellationToken cancellationToken)
         {
             switch (endpoint.Transport)
             {
                 case RedFoxTransport.Inproc:
                     return CreateInProcSocket(endpoint);
                 case RedFoxTransport.Tcp:
-                    return CreateTcpSocket(endpoint);
+                    return await CreateTcpSocket(endpoint, cancellationToken);
                 default:
                     throw new NotSupportedException(String.Format("Transport {0} not supported", endpoint.Transport));
             }
@@ -39,15 +40,13 @@ namespace RedFoxMQ.Transports
         private static ISocket CreateInProcSocket(RedFoxEndpoint endpoint)
         {
             var queueStream = InProcessEndpoints.Instance.Connect(endpoint);
-            Thread.Sleep(10); // TODO: why do we need this?
             return new InProcSocket(endpoint, queueStream);
         }
 
-        private static ISocket CreateTcpSocket(RedFoxEndpoint endpoint)
+        private static async Task<ISocket> CreateTcpSocket(RedFoxEndpoint endpoint, CancellationToken cancellationToken)
         {
             var tcpClient = new TcpClient { ReceiveBufferSize = 65536, SendBufferSize = 65536};
-            tcpClient.Connect(endpoint.Host, endpoint.Port);
-            Thread.Sleep(10); // TODO: why do we need this?
+            await tcpClient.ConnectAsync(endpoint.Host, endpoint.Port);
 
             return new TcpSocket(endpoint, tcpClient);
         }

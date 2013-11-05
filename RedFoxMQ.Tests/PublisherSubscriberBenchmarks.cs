@@ -36,7 +36,9 @@ namespace RedFoxMQ.Tests
                 var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
 
                 publisher.Bind(endpoint);
-                subscriber.Connect(endpoint);
+                subscriber.ConnectAsync(endpoint).Wait();
+
+                Thread.Sleep(30);
 
                 var isMessageReceived = new ManualResetEventSlim();
 
@@ -72,8 +74,10 @@ namespace RedFoxMQ.Tests
                 var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
 
                 publisher.Bind(endpoint);
-                subscriber1.Connect(endpoint);
-                subscriber2.Connect(endpoint);
+                subscriber1.ConnectAsync(endpoint).Wait();
+                subscriber2.ConnectAsync(endpoint).Wait();
+
+                Thread.Sleep(30);
 
                 var isMessageReceived = new ManualResetEventSlim();
 
@@ -111,12 +115,14 @@ namespace RedFoxMQ.Tests
                 var subscribers = Enumerable.Range(1, 9).Select(i =>
                 {
                     var sub = new Subscriber();
-                    sub.Connect(endpoint);
+                    sub.ConnectAsync(endpoint).Wait();
 
                     return sub;
                 }).ToList();
 
-                subscriber.Connect(endpoint);
+                subscriber.ConnectAsync(endpoint).Wait();
+
+                Thread.Sleep(30);
 
                 var isMessageReceived = new ManualResetEventSlim();
 
