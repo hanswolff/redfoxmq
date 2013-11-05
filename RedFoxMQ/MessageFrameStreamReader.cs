@@ -26,16 +26,11 @@ namespace RedFoxMQ
         {
             if (stream == null) throw new ArgumentNullException("stream");
 
-            var header = new byte[6];
-            var offset = 0;
-            while (offset < header.Length)
-            {
-                var read = await stream.ReadAsync(header, 0, header.Length, cancellationToken);
-                offset += read;
-            }
+            var header = await ReadHeader(stream, cancellationToken);
 
             var messageTypeId = BitConverter.ToUInt16(header, 0);
             var length = BitConverter.ToInt32(header, 2);
+
             var rawMessage = await ReadBody(stream, length, cancellationToken);
 
             return new MessageFrame
@@ -44,6 +39,18 @@ namespace RedFoxMQ
                 RawMessage = rawMessage,
                 TimestampReceived = DateTime.UtcNow
             };
+        }
+
+        private static async Task<byte[]> ReadHeader(Stream stream, CancellationToken cancellationToken)
+        {
+            var header = new byte[6];
+            var offset = 0;
+            while (offset < header.Length)
+            {
+                var read = await stream.ReadAsync(header, 0, header.Length, cancellationToken);
+                offset += read;
+            }
+            return header;
         }
 
         private static async Task<byte[]> ReadBody(Stream stream, int length, CancellationToken cancellationToken)

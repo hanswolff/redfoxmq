@@ -43,6 +43,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="PublisherSubscriberBenchmarks.cs" />
+    <Compile Include="RequestResponderTests.cs" />
+    <Compile Include="ResponderTests.cs" />
     <Compile Include="TestHelpers\TestMessageDeserializer.cs" />
     <Compile Include="TestHelpers\TestMessageSerializer.cs" />
     <Compile Include="Transports\SocketAccepterFactoryTests.cs" />

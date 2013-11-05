@@ -2,6 +2,7 @@
 using RedFoxMQ.Transports.Tcp;
 using System;
 using System.Net.Sockets;
+using System.Threading;
 
 namespace RedFoxMQ.Transports
 {
@@ -23,6 +24,7 @@ namespace RedFoxMQ.Transports
         private static ISocket CreateInProcSocket(RedFoxEndpoint endpoint)
         {
             var queueStream = InProcessEndpoints.Instance.Connect(endpoint);
+            Thread.Sleep(10); // TODO: why do we need this?
             return new InProcSocket(endpoint, queueStream);
         }
 
@@ -30,6 +32,8 @@ namespace RedFoxMQ.Transports
         {
             var tcpClient = new TcpClient { ReceiveBufferSize = 65536, SendBufferSize = 65536};
             tcpClient.Connect(endpoint.Host, endpoint.Port);
+            Thread.Sleep(10); // TODO: why do we need this?
+
             return new TcpSocket(endpoint, tcpClient);
         }
     }

@@ -41,10 +41,10 @@ namespace RedFoxMQ
 
         public void Disconnect()
         {
-            Disconnect(false);
+            Disconnect(false, TimeSpan.FromSeconds(5));
         }
 
-        public void Disconnect(bool waitForExit)
+        public void Disconnect(bool waitForExit, TimeSpan timeout)
         {
             var socket = Interlocked.Exchange(ref _socket, null);
             if (socket == null) return;

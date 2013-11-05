@@ -41,7 +41,7 @@ namespace RedFoxMQ
             _cts = new CancellationTokenSource();
 
             _started.Reset();
-            Task.Factory.StartNew(StartReceiveLoop, TaskCreationOptions.LongRunning);
+            StartReceiveLoop();
             _started.Wait();
         }
 

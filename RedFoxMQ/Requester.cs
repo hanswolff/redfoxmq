@@ -44,22 +44,36 @@ namespace RedFoxMQ
             _cts = new CancellationTokenSource();
         }
 
+        public async Task<IMessage> Request(IMessage message)
+        {
+            return await RequestWithCancellationToken(message, _cts.Token);
+        }
+
         public async Task<IMessage> Request(IMessage message, CancellationToken cancellationToken)
+        {
+            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token, cancellationToken))
+            {
+                return await RequestWithCancellationToken(message, cts.Token);
+            }
+        }
+
+        private async Task<IMessage> RequestWithCancellationToken(IMessage message, CancellationToken cancellationToken)
         {
             var sendMessageFrame = MessageFrameCreator.CreateFromMessage(message);
             await _messageFrameSender.SendAsync(sendMessageFrame, cancellationToken);
 
             var responseMessageFrame = await _messageFrameReceiver.ReceiveAsync(cancellationToken);
-            var response = MessageSerialization.Instance.Deserialize(responseMessageFrame.MessageTypeId, responseMessageFrame.RawMessage);
+            var response = MessageSerialization.Instance.Deserialize(responseMessageFrame.MessageTypeId,
+                responseMessageFrame.RawMessage);
             return response;
         }
 
         public void Disconnect()
         {
-            Disconnect(false);
+            Disconnect(false, TimeSpan.FromSeconds(5));
         }
 
-        public void Disconnect(bool waitForExit)
+        public void Disconnect(bool waitForExit, TimeSpan timeout)
         {
             var socket = Interlocked.Exchange(ref _socket, null);
             if (socket == null) return;

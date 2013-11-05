@@ -17,65 +17,46 @@ using NUnit.Framework;
 using RedFoxMQ.Tests.TestHelpers;
 using RedFoxMQ.Transports;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace RedFoxMQ.Tests
 {
     [TestFixture]
-    public class PublisherSubscriberTests
+    public class RequestResponderTests
     {
         [Test]
-        public void Subscribe_to_Publisher_receive_single_broadcasted_message()
+        public void Request_Response_single_message()
         {
-            using (var publisher = new Publisher())
-            using (var subscriber = new Subscriber())
+            using (var responder = new Responder())
+            using (var requester = new Requester())
             {
                 var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
 
-                publisher.Bind(endpoint);
-                subscriber.Connect(endpoint);
-
-                var isMessageReceived = new ManualResetEventSlim();
-                TestMessage messageReceived = null;
-                subscriber.MessageReceived += m =>
-                {
-                    messageReceived = (TestMessage)m; 
-                    isMessageReceived.Set();
-                };
+                responder.Bind(endpoint);
+                requester.Connect(endpoint);
 
                 var messageSent = new TestMessage { Text = "Hello" };
-
-                publisher.Broadcast(messageSent);
-                Assert.IsTrue(isMessageReceived.Wait(30000), "Timeout waiting for message");
+                var messageReceived = (TestMessage)requester.Request(messageSent).Result;
 
                 Assert.AreEqual(messageSent.Text, messageReceived.Text);
             }
         }
 
         [Test]
-        public void Subscribe_to_Publisher_receive_two_broadcasted_messages()
+        public void Request_Response_two_messages()
         {
-            using (var publisher = new Publisher())
-            using (var subscriber = new Subscriber())
+            using (var responder = new Responder())
+            using (var requester = new Requester())
             {
                 var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
 
-                publisher.Bind(endpoint);
-                subscriber.Connect(endpoint);
+                responder.Bind(endpoint);
+                requester.Connect(endpoint);
 
-                var isMessageReceived = new ManualResetEventSlim();
                 var messageReceived = new List<TestMessage>();
-                subscriber.MessageReceived += m => { 
-                    messageReceived.Add((TestMessage)m); 
-                    if (messageReceived.Count == 2) isMessageReceived.Set(); 
-                };
 
                 var messageSent = new TestMessage { Text = "Hello" };
-
-                publisher.Broadcast(messageSent);
-                publisher.Broadcast(messageSent);
-
-                Assert.IsTrue(isMessageReceived.Wait(30000), "Timeout waiting for messages");
+                messageReceived.Add((TestMessage)requester.Request(messageSent).Result);
+                messageReceived.Add((TestMessage)requester.Request(messageSent).Result);
 
                 Assert.AreEqual(messageSent.Text, messageReceived[0].Text);
                 Assert.AreEqual(messageSent.Text, messageReceived[1].Text);

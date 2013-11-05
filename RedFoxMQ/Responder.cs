@@ -13,11 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using RedFoxMQ.Transports;
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using System.Threading;
 
 namespace RedFoxMQ
 {
@@ -25,15 +25,17 @@ namespace RedFoxMQ
     {
         private static readonly SocketAccepterFactory SocketAccepterFactory = new SocketAccepterFactory();
         private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
-        
+
         private readonly ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter> _servers;
-        private readonly ConcurrentDictionary<MessageReceiveLoop, CancellationTokenSource> _clientSockets;
+        private readonly ConcurrentDictionary<MessageReceiveLoop, MessageQueue> _clientSockets;
         private readonly MessageQueueProcessor _messageQueueProcessor = new MessageQueueProcessor();
+
+        public event Func<IMessage, IMessage> ProcessMessage = request => request;
 
         public Responder()
         {
             _servers = new ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter>();
-            _clientSockets = new ConcurrentDictionary<MessageReceiveLoop, CancellationTokenSource>();
+            _clientSockets = new ConcurrentDictionary<MessageReceiveLoop, MessageQueue>();
         }
 
         public void Bind(RedFoxEndpoint endpoint)
@@ -44,10 +46,27 @@ namespace RedFoxMQ
 
         private void OnClientConnected(ISocket socket)
         {
+            if (socket == null) throw new ArgumentNullException("socket");
+
             var messageFrameSender = new MessageFrameSender(socket);
+            var messageQueue = new MessageQueue(_messageQueueProcessor, messageFrameSender);
+
             var messageReceiveLoop = new MessageReceiveLoop(socket);
-            var cancellationTokenSource = new CancellationTokenSource();
-            _clientSockets.TryAdd(messageReceiveLoop, cancellationTokenSource);
+            messageReceiveLoop.MessageReceived += m => MessageReceivedProcessMessage(m, messageQueue);
+            messageReceiveLoop.Start();
+
+            _clientSockets.TryAdd(messageReceiveLoop, messageQueue);
+        }
+
+        private void MessageReceivedProcessMessage(IMessage requestMessage, MessageQueue messageQueue)
+        {
+            if (requestMessage == null) throw new ArgumentNullException("requestMessage");
+            if (messageQueue == null) throw new ArgumentNullException("messageQueue");
+
+            var response = ProcessMessage(requestMessage);
+
+            var responseFrame = MessageFrameCreator.CreateFromMessage(response);
+            messageQueue.Add(responseFrame);
         }
 
         public bool Unbind(RedFoxEndpoint endpoint)
@@ -63,16 +82,12 @@ namespace RedFoxMQ
         {
             try
             {
-                do
+                var endpoints = _servers.Keys.ToList();
+
+                foreach (var endpoint in endpoints)
                 {
-                    var endpoints = _servers.Keys.ToList();
-
-                    foreach (var endpoint in endpoints)
-                    {
-                        Unbind(endpoint);
-                    }
-
-                } while (true);
+                    Unbind(endpoint);
+                }
             }
             catch (InvalidOperationException) { }
         }
