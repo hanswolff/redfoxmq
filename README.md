@@ -76,7 +76,7 @@ The message serialization / deserialization are like:
         }
     }	
 
-I recommend to use (Protocol Buffers)[https://code.google.com/p/protobuf-net/] 
+I recommend to use [Protocol Buffers](https://code.google.com/p/protobuf-net/)
 for message serialization, but it is entirely up to you!
 	
 #### Contact
