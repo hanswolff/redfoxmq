@@ -1,19 +1,19 @@
-# RedFoxMQ
+## RedFoxMQ
 
 RedFoxMQ is a .NET in-memory message queue that uses a simple TCP transport. It is fairly low-level and
-provides full control over message serialization / de-serialization.
+provides full control over message serialization / deserialization.
 
-## Supported Features
+#### Supported Features
 
 - Publisher / Subscriber scenario
 - Request / Response scenario
 - TCP transport or InProc transport
 
-## Planned Features
+#### Planned Features
 
 - message batching
 
-## Usage Example
+#### Usage Example
 
 The easiest way is to look at the unit tests. They are a good source of examples, e.g.:
 
@@ -46,7 +46,40 @@ The easiest way is to look at the unit tests. They are a good source of examples
         }
     }
 
-## Contact
+The message serialization / deserialization are like:
+
+    class TestMessageSerializer : IMessageSerializer
+    {
+        public byte[] Serialize(IMessage message)
+        {
+            var testMessage = (TestMessage) message;
+            return Encoding.UTF8.GetBytes(testMessage.Text);
+        }
+    }
+
+    class TestMessageDeserializer : IMessageDeserializer
+    {
+        public IMessage Deserialize(byte[] rawMessage)
+        {
+            return new TestMessage { Text = Encoding.UTF8.GetString(rawMessage) };
+        }
+    }
+
+    class TestMessage : IMessage
+    {
+        public ushort MessageTypeId { get; private set; }
+        public string Text { get; set; }
+
+        public TestMessage()
+        {
+            MessageTypeId = 1;
+        }
+    }	
+
+I recommend to use (Protocol Buffers)[https://code.google.com/p/protobuf-net/] 
+for message serialization, but it is entirely up to you!
+	
+#### Contact
 
 Please let me know if there are bugs or if you have suggestions how to improve the code.
 I accept pull requests.
