@@ -31,17 +31,18 @@ namespace RedFoxMQ
             if (messageFrame == null) throw new ArgumentNullException("messageFrame");
             if (messageFrame.RawMessage == null) throw new ArgumentException("messageFrame.RawMessage cannot be null");
 
-            var sendBufferSize = MessageFrame.HeaderSize + messageFrame.RawMessage.Length;
             await CreateSendBufferAndSend(stream, messageFrame, cancellationToken);
         }
 
         private static async Task CreateSendBufferAndSend(Stream stream, MessageFrame messageFrame,
             CancellationToken cancellationToken)
         {
+            var sendBufferSize = MessageFrame.HeaderSize + messageFrame.RawMessage.Length;
+
             MemoryStream mem;
             if (!RecycledMemoryStreams.TryDequeue(out mem))
             {
-                mem = new MemoryStream(MessageFrame.HeaderSize + messageFrame.RawMessage.Length);
+                mem = new MemoryStream(sendBufferSize);
             }
 
             try
@@ -51,7 +52,7 @@ namespace RedFoxMQ
                 WriteBody(mem, messageFrame.RawMessage);
 
                 var toSend = mem.GetBuffer();
-                await stream.WriteAsync(toSend, 0, toSend.Length, cancellationToken);
+                await stream.WriteAsync(toSend, 0, sendBufferSize, cancellationToken);
             }
             finally
             {
