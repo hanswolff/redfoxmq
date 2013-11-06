@@ -15,13 +15,13 @@
 // 
 
 using RedFoxMQ.Transports;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
     interface IConnectToEndpoint
     {
-        Task ConnectAsync(RedFoxEndpoint endpoint, CancellationToken cancellationToken);
+        Task ConnectAsync(RedFoxEndpoint endpoint);
+        Task ConnectAsync(RedFoxEndpoint endpoint, int timeoutInSeconds);
     }
 }
