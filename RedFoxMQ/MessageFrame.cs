@@ -19,6 +19,11 @@ namespace RedFoxMQ
 {
     class MessageFrame
     {
+        private const int SizeMessageTypeId = sizeof (ushort);
+        private const int SizeLength = sizeof (int);
+
+        public const int HeaderSize = SizeMessageTypeId + SizeLength;
+
         public ushort MessageTypeId;
         public byte[] RawMessage;
 

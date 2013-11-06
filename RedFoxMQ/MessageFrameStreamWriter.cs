@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,24 +23,41 @@ namespace RedFoxMQ
 {
     class MessageFrameStreamWriter
     {
+        private static readonly ConcurrentQueue<MemoryStream> RecycledMemoryStreams = new ConcurrentQueue<MemoryStream>();
+
         public async Task WriteMessageFrame(Stream stream, MessageFrame messageFrame, CancellationToken cancellationToken)
         {
             if (stream == null) throw new ArgumentNullException("stream");
             if (messageFrame == null) throw new ArgumentNullException("messageFrame");
             if (messageFrame.RawMessage == null) throw new ArgumentException("messageFrame.RawMessage cannot be null");
 
-            byte[] toSend;
+            var sendBufferSize = MessageFrame.HeaderSize + messageFrame.RawMessage.Length;
+            await CreateSendBufferAndSend(stream, messageFrame, cancellationToken);
+        }
 
-            using (var mem = new MemoryStream())
+        private static async Task CreateSendBufferAndSend(Stream stream, MessageFrame messageFrame,
+            CancellationToken cancellationToken)
+        {
+            MemoryStream mem;
+            if (!RecycledMemoryStreams.TryDequeue(out mem))
+            {
+                mem = new MemoryStream(MessageFrame.HeaderSize + messageFrame.RawMessage.Length);
+            }
+
+            try
             {
                 WriteTypeId(mem, messageFrame.MessageTypeId);
                 WriteLength(mem, messageFrame.RawMessage.Length);
                 WriteBody(mem, messageFrame.RawMessage);
 
-                toSend = mem.ToArray();
+                var toSend = mem.GetBuffer();
+                await stream.WriteAsync(toSend, 0, toSend.Length, cancellationToken);
             }
-
-            await stream.WriteAsync(toSend, 0, toSend.Length, cancellationToken);
+            finally
+            {
+                mem.SetLength(0);
+                RecycledMemoryStreams.Enqueue(mem);
+            }
         }
 
         private static void WriteTypeId(Stream stream, ushort messageTypeId)
