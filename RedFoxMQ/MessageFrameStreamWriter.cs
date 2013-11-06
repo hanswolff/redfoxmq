@@ -15,7 +15,9 @@
 // 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -31,10 +33,18 @@ namespace RedFoxMQ
             if (messageFrame == null) throw new ArgumentNullException("messageFrame");
             if (messageFrame.RawMessage == null) throw new ArgumentException("messageFrame.RawMessage cannot be null");
 
-            await CreateSendBufferAndSend(stream, messageFrame, cancellationToken);
+            await CreateBufferWriteSingle(stream, messageFrame, cancellationToken);
         }
 
-        private static async Task CreateSendBufferAndSend(Stream stream, MessageFrame messageFrame,
+        public async Task WriteMessageFrames(Stream stream, ICollection<MessageFrame> messageFrames, CancellationToken cancellationToken)
+        {
+            if (stream == null) throw new ArgumentNullException("stream");
+            if (messageFrames == null) return;
+
+            await CreateBufferWriteMany(stream, messageFrames, cancellationToken);
+        }
+
+        private static async Task CreateBufferWriteSingle(Stream stream, MessageFrame messageFrame,
             CancellationToken cancellationToken)
         {
             var sendBufferSize = MessageFrame.HeaderSize + messageFrame.RawMessage.Length;
@@ -76,6 +86,37 @@ namespace RedFoxMQ
         private static void WriteBody(Stream stream, byte[] rawMessage)
         {
             stream.Write(rawMessage, 0, rawMessage.Length);
+        }
+
+        private static async Task CreateBufferWriteMany(Stream stream, ICollection<MessageFrame> messageFrames,
+            CancellationToken cancellationToken)
+        {
+            if (messageFrames == null) return;
+            var sendBufferSize = messageFrames.Count * MessageFrame.HeaderSize + messageFrames.Sum(m => m.RawMessage.Length);
+
+            MemoryStream mem;
+            if (!RecycledMemoryStreams.TryDequeue(out mem))
+            {
+                mem = new MemoryStream(sendBufferSize);
+            }
+
+            try
+            {
+                foreach (var messageFrame in messageFrames)
+                {
+                    WriteTypeId(mem, messageFrame.MessageTypeId);
+                    WriteLength(mem, messageFrame.RawMessage.Length);
+                    WriteBody(mem, messageFrame.RawMessage);
+                }
+
+                var toSend = mem.GetBuffer();
+                await stream.WriteAsync(toSend, 0, sendBufferSize, cancellationToken);
+            }
+            finally
+            {
+                mem.SetLength(0);
+                RecycledMemoryStreams.Enqueue(mem);
+            }
         }
     }
 }

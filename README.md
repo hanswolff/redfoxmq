@@ -8,9 +8,6 @@ provides full control over message serialization / deserialization.
 - Publisher / Subscriber scenario
 - Request / Response scenario
 - TCP transport or InProc transport
-
-#### Planned Features
-
 - message batching
 
 #### Usage Example

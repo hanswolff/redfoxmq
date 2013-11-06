@@ -13,8 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using RedFoxMQ.Transports;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -36,6 +38,13 @@ namespace RedFoxMQ
             if (messageFrame == null) throw new ArgumentNullException("messageFrame");
 
             await MessageFrameStreamWriter.WriteMessageFrame(_socket.Stream, messageFrame, cancellationToken);
+        }
+
+        public async Task SendAsync(ICollection<MessageFrame> messageFrames, CancellationToken cancellationToken)
+        {
+            if (messageFrames == null) return;
+
+            await MessageFrameStreamWriter.WriteMessageFrames(_socket.Stream, messageFrames, cancellationToken);
         }
 
         public void Disconnect()

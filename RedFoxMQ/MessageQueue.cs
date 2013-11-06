@@ -26,7 +26,8 @@ namespace RedFoxMQ
     {
         private readonly MessageQueueProcessor _messageQueueProcessor;
         private readonly MessageFrameSender _sender;
-        private readonly BlockingCollection<MessageFrame> _messageFrames = new BlockingCollection<MessageFrame>();
+        private readonly BlockingCollection<MessageFrame> _singleMessageFrames = new BlockingCollection<MessageFrame>();
+        private readonly BlockingCollection<List<MessageFrame>> _batchMessageFrames = new BlockingCollection<List<MessageFrame>>();
 
         public event Action<IReadOnlyCollection<MessageFrame>> MessageFramesAdded = m => { };
 
@@ -43,27 +44,42 @@ namespace RedFoxMQ
         public void Add(MessageFrame messageFrame)
         {
             if (messageFrame == null) throw new ArgumentNullException("messageFrame");
-            if (_messageFrames.TryAdd(messageFrame))
+            if (_singleMessageFrames.TryAdd(messageFrame))
             {
                 MessageFramesAdded(new [] { messageFrame });
             }
         }
 
-        public void AddRange(IList<MessageFrame> messageFrames)
+        public void AddRange(IEnumerable<MessageFrame> messageFrames)
         {
             if (messageFrames == null) return;
-            foreach (var messageFrame in messageFrames)
+
+            var batch = new List<MessageFrame>(messageFrames);
+            if (_batchMessageFrames.TryAdd(batch))
             {
-                _messageFrames.TryAdd(messageFrame);
+                MessageFramesAdded(new ReadOnlyCollection<MessageFrame>(batch));
             }
-            MessageFramesAdded(new ReadOnlyCollection<MessageFrame>(messageFrames));
         }
 
         internal async Task<bool> SendFromQueue(CancellationToken cancellationToken)
         {
-            MessageFrame messageFrame;
-            if (!_messageFrames.TryTake(out messageFrame)) return false;
+            List<MessageFrame> batch;
+            if (!_batchMessageFrames.TryTake(out batch))
+            {
+                return await SendSingleMessageFrameFromQueue(cancellationToken);
+            }
 
+            MessageFrame messageFrame;
+            if (_singleMessageFrames.TryTake(out messageFrame)) batch.Add(messageFrame);
+
+            await _sender.SendAsync(batch, cancellationToken);
+            return true;
+        }
+
+        private async Task<bool> SendSingleMessageFrameFromQueue(CancellationToken cancellationToken)
+        {
+            MessageFrame messageFrame;
+            if (!_singleMessageFrames.TryTake(out messageFrame)) return false;
             await _sender.SendAsync(messageFrame, cancellationToken);
             return true;
         }
