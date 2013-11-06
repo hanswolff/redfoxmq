@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 
-using System.Runtime.InteropServices;
 using NUnit.Framework;
 using RedFoxMQ.Tests.TestHelpers;
 using RedFoxMQ.Transports;

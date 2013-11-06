@@ -15,6 +15,7 @@
 // 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -31,12 +32,12 @@ namespace RedFoxMQ
         {
             if (messageQueue == null) throw new ArgumentNullException("messageQueue");
             _messageQueues[messageQueue] = new ManualResetEventSlim(false);
-            messageQueue.MessageFrameAdded += MessageQueueOnMessageFrameAdded;
+            messageQueue.MessageFramesAdded += MessageQueueOnMessageFramesAdded;
 
             StartProcessingIfNotStartedYet();
         }
 
-        private void MessageQueueOnMessageFrameAdded(MessageFrame messageFrame)
+        private void MessageQueueOnMessageFramesAdded(IReadOnlyCollection<MessageFrame> messageFrame)
         {
             _messageQueueHasMessage.Set();
         }
@@ -49,7 +50,7 @@ namespace RedFoxMQ
             var removed = _messageQueues.TryRemove(messageQueue, out oldValue);
             if (removed)
             {
-                messageQueue.MessageFrameAdded -= MessageQueueOnMessageFrameAdded;
+                messageQueue.MessageFramesAdded -= MessageQueueOnMessageFramesAdded;
             }
 
             if (_messageQueues.IsEmpty)

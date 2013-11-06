@@ -62,16 +62,22 @@ namespace RedFoxMQ
 
         public void Broadcast(IMessage message)
         {
-            var alreadyBroadcastedTo = new HashSet<MessageQueue>();
-
             var messageFrame = MessageFrameCreator.CreateFromMessage(message);
 
             foreach (var messageQueue in _broadcastSockets.Keys)
             {
-                if (alreadyBroadcastedTo.Contains(messageQueue)) continue;
-                alreadyBroadcastedTo.Add(messageQueue);
-
                 messageQueue.Add(messageFrame);
+            }
+        }
+
+        public void Broadcast(IReadOnlyList<IMessage> messages)
+        {
+            if (messages == null) return;
+            var messageFrames = messages.Select(message => MessageFrameCreator.CreateFromMessage(message)).ToList();
+
+            foreach (var messageQueue in _broadcastSockets.Keys)
+            {
+                messageQueue.AddRange(messageFrames);
             }
         }
 

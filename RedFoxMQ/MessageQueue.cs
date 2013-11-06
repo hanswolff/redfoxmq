@@ -15,6 +15,8 @@
 // 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -26,7 +28,7 @@ namespace RedFoxMQ
         private readonly MessageFrameSender _sender;
         private readonly BlockingCollection<MessageFrame> _messageFrames = new BlockingCollection<MessageFrame>();
 
-        public event Action<MessageFrame> MessageFrameAdded = m => { };
+        public event Action<IReadOnlyCollection<MessageFrame>> MessageFramesAdded = m => { };
 
         public MessageQueue(MessageQueueProcessor messageQueueProcessor, MessageFrameSender sender)
         {
@@ -43,8 +45,18 @@ namespace RedFoxMQ
             if (messageFrame == null) throw new ArgumentNullException("messageFrame");
             if (_messageFrames.TryAdd(messageFrame))
             {
-                MessageFrameAdded(messageFrame);
+                MessageFramesAdded(new [] { messageFrame });
             }
+        }
+
+        public void AddRange(IList<MessageFrame> messageFrames)
+        {
+            if (messageFrames == null) return;
+            foreach (var messageFrame in messageFrames)
+            {
+                _messageFrames.TryAdd(messageFrame);
+            }
+            MessageFramesAdded(new ReadOnlyCollection<MessageFrame>(messageFrames));
         }
 
         internal async Task<bool> SendFromQueue(CancellationToken cancellationToken)
