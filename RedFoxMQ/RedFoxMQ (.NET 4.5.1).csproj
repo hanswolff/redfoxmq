@@ -40,6 +40,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IDisconnect.cs" />
+    <Compile Include="IPublisher.cs" />
+    <Compile Include="IRequester.cs" />
+    <Compile Include="IResponder.cs" />
+    <Compile Include="ISubscriber.cs" />
     <Compile Include="MessageFrameCreator.cs" />
     <Compile Include="MessageFrameSender.cs" />
     <Compile Include="MessageFrameReceiver.cs" />

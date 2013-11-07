@@ -13,27 +13,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+using System;
+using System.Collections.Concurrent;
 
 // ReSharper disable once CheckNamespace
 namespace RedFoxMQ.Tests
 {
-    class TestMessage : IMessage
+    class TestSubscriber : Subscriber
     {
-        public const int TypeId = 1;
-        public ushort MessageTypeId { get { return TypeId; } }
+        private readonly BlockingCollection<IMessage> _receivedMessages = new BlockingCollection<IMessage>();
 
-        public string Text { get; set; }
-
-        public TestMessage(string text = "")
+        public TestSubscriber()
         {
-            Text = text;
+            MessageReceived += OnMessageReceived;
         }
 
-        public override bool Equals(object obj)
+        private void OnMessageReceived(IMessage message)
         {
-            var testMessage = obj as TestMessage;
-            if (testMessage == null) return false;
-            return Text == testMessage.Text;
+            _receivedMessages.Add(message);
+        }
+
+        public IMessage TestMustReceiveMessageWithin(int timeoutMillis)
+        {
+            IMessage receivedMessage;
+            if (!_receivedMessages.TryTake(out receivedMessage, timeoutMillis))
+                throw new Exception("Subscriber didn't receive message in time");
+
+            return receivedMessage;
         }
     }
 }

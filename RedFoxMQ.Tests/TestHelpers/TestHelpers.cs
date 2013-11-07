@@ -13,15 +13,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-using System;
 using RedFoxMQ.Transports;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.NetworkInformation;
 
 // ReSharper disable once CheckNamespace
 namespace RedFoxMQ.Tests
 {
     public static class TestHelpers
     {
-        public static readonly RedFoxEndpoint TcpTestEndpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
+        public static readonly RedFoxEndpoint TcpTestEndpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", GetFreePort(), null);
+
+        public static int GetFreePort()
+        {
+            var ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
+            var tcpConnInfoArray = ipGlobalProperties.GetActiveTcpConnections();
+
+            var usedPorts = new HashSet<int>(tcpConnInfoArray.Select(x => x.LocalEndPoint.Port));
+            var availablePorts = new HashSet<int>(Enumerable.Range(1024, 65535 - 1024));
+            availablePorts.ExceptWith(usedPorts);
+
+            return availablePorts.Skip(new Random().Next(availablePorts.Count - 1)).First();
+        }
 
         public static Random CreateSemiRandomGenerator()
         {

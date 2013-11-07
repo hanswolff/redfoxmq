@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-
 using RedFoxMQ.Transports;
 using System;
 using System.Threading;
@@ -21,7 +20,7 @@ using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
-    public class Subscriber : IConnectToEndpoint, IDisconnect, IDisposable
+    public class Subscriber : ISubscriber
     {
         private static readonly SocketFactory SocketFactory = new SocketFactory();
         private CancellationTokenSource _cts = new CancellationTokenSource();

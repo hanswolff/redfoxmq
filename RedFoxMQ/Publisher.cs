@@ -22,7 +22,7 @@ using System.Threading;
 
 namespace RedFoxMQ
 {
-    public class Publisher : IBindSockets, IDisposable
+    public class Publisher : IPublisher
     {
         private static readonly SocketAccepterFactory SocketAccepterFactory = new SocketAccepterFactory();
         private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();

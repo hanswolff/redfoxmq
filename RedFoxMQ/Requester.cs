@@ -20,7 +20,7 @@ using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
-    public class Requester : IConnectToEndpoint, IDisconnect, IDisposable
+    public class Requester : IRequester
     {
         private static readonly SocketFactory SocketFactory = new SocketFactory();
         private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();

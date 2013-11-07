@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-
 using RedFoxMQ.Transports;
 using System;
 using System.Collections.Concurrent;
@@ -21,7 +20,7 @@ using System.Linq;
 
 namespace RedFoxMQ
 {
-    public class Responder : IBindSockets, IDisposable
+    public class Responder : IResponder
     {
         private static readonly SocketAccepterFactory SocketAccepterFactory = new SocketAccepterFactory();
         private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();

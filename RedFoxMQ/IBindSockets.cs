@@ -20,5 +20,6 @@ namespace RedFoxMQ
     interface IBindSockets
     {
         void Bind(RedFoxEndpoint endpoint);
+        bool Unbind(RedFoxEndpoint endpoint);
     }
 }

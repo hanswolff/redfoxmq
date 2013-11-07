@@ -15,7 +15,6 @@
 // 
 
 using NUnit.Framework;
-using RedFoxMQ.Transports;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;

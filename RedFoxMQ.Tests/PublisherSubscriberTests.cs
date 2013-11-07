@@ -13,10 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-
 using NUnit.Framework;
 using RedFoxMQ.Transports;
-using System.Collections.Generic;
 using System.Threading;
 
 namespace RedFoxMQ.Tests
@@ -29,58 +27,91 @@ namespace RedFoxMQ.Tests
         public void Subscribe_to_publisher_receive_single_broadcasted_message(RedFoxTransport transport)
         {
             using (var publisher = new Publisher())
-            using (var subscriber = new Subscriber())
+            using (var subscriber = new TestSubscriber())
             {
                 publisher.Bind(TestHelpers.TcpTestEndpoint);
                 subscriber.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
 
                 Thread.Sleep(30);
 
-                var isMessageReceived = new ManualResetEventSlim();
-                TestMessage messageReceived = null;
-                subscriber.MessageReceived += m =>
-                {
-                    messageReceived = (TestMessage)m; 
-                    isMessageReceived.Set();
-                };
+                var broadcastedMessage = new TestMessage { Text = "Hello" };
 
-                var messageSent = new TestMessage { Text = "Hello" };
+                publisher.Broadcast(broadcastedMessage);
 
-                publisher.Broadcast(messageSent);
-                Assert.IsTrue(isMessageReceived.Wait(30000), "Timeout waiting for message");
-
-                Assert.AreEqual(messageSent.Text, messageReceived.Text);
+                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(10000));
             }
         }
 
         [TestCase(RedFoxTransport.Inproc)]
         [TestCase(RedFoxTransport.Tcp)]
-        public void Subscribe_to_publisher_receive_two_broadcasted_messages(RedFoxTransport transport)
+        public void Subscribe_to_publisher_receive_two_single_broadcasted_messages(RedFoxTransport transport)
         {
             using (var publisher = new Publisher())
-            using (var subscriber = new Subscriber())
+            using (var subscriber = new TestSubscriber())
             {
                 publisher.Bind(TestHelpers.TcpTestEndpoint);
                 subscriber.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
 
                 Thread.Sleep(30);
 
-                var isMessageReceived = new ManualResetEventSlim();
-                var messageReceived = new List<TestMessage>();
-                subscriber.MessageReceived += m => { 
-                    messageReceived.Add((TestMessage)m); 
-                    if (messageReceived.Count == 2) isMessageReceived.Set(); 
-                };
+                var broadcastedMessage = new TestMessage { Text = "Hello" };
 
-                var messageSent = new TestMessage { Text = "Hello" };
+                publisher.Broadcast(broadcastedMessage);
+                publisher.Broadcast(broadcastedMessage);
 
-                publisher.Broadcast(messageSent);
-                publisher.Broadcast(messageSent);
+                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(10000));
+                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(10000));
+            }
+        }
 
-                Assert.IsTrue(isMessageReceived.Wait(30000), "Timeout waiting for messages");
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Subscribe_to_publisher_receive_two_broadcasted_messages_from_batch(RedFoxTransport transport)
+        {
+            using (var publisher = new Publisher())
+            using (var subscriber = new TestSubscriber())
+            {
+                publisher.Bind(TestHelpers.TcpTestEndpoint);
+                subscriber.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
 
-                Assert.AreEqual(messageSent.Text, messageReceived[0].Text);
-                Assert.AreEqual(messageSent.Text, messageReceived[1].Text);
+                Thread.Sleep(30);
+
+                var broadcastedMessage = new TestMessage { Text = "Hello" };
+
+                var batch = new[] {broadcastedMessage, broadcastedMessage};
+                publisher.Broadcast(batch);
+
+                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(10000));
+                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(10000));
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void one_subscriber_connects_to_one_publisher_receives_message_then_second_subscriber_connects_both_receive_message(RedFoxTransport transport)
+        {
+            using (var publisher = new Publisher())
+            using (var subscriber1 = new TestSubscriber())
+            using (var subscriber2 = new TestSubscriber())
+            {
+                publisher.Bind(TestHelpers.TcpTestEndpoint);
+                subscriber1.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
+
+                Thread.Sleep(30);
+
+                var broadcastMessage = new TestMessage { Text = "Hello" };
+                publisher.Broadcast(broadcastMessage);
+
+                Assert.AreEqual(broadcastMessage, subscriber1.TestMustReceiveMessageWithin(10000));
+
+                subscriber2.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
+
+                Thread.Sleep(30);
+
+                publisher.Broadcast(broadcastMessage);
+
+                Assert.AreEqual(broadcastMessage, subscriber1.TestMustReceiveMessageWithin(10000));
+                Assert.AreEqual(broadcastMessage, subscriber2.TestMustReceiveMessageWithin(10000));
             }
         }
 

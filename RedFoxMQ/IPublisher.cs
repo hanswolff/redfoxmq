@@ -13,17 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-using System.Text;
+using System;
+using System.Collections.Generic;
 
-// ReSharper disable once CheckNamespace
-namespace RedFoxMQ.Tests
+namespace RedFoxMQ
 {
-    class TestMessageSerializer : IMessageSerializer
+    interface IPublisher : IBindSockets, IDisposable
     {
-        public byte[] Serialize(IMessage message)
-        {
-            var testMessage = (TestMessage) message;
-            return Encoding.UTF8.GetBytes(testMessage.Text);
-        }
+        void Broadcast(IMessage message);
+        void Broadcast(IReadOnlyList<IMessage> messages);
     }
 }
