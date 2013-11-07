@@ -13,17 +13,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+using System;
+
 namespace RedFoxMQ
 {
     public class MessageSerializationException : RedFoxBaseException
     {
+        private const string DefaultMessage = "Error serializing message";
+
         public MessageSerializationException()
-            : base("Error serializing message")
+            : base(DefaultMessage)
+        {
+        }
+
+        public MessageSerializationException(Exception innerException)
+            : base(DefaultMessage, innerException)
         {
         }
 
         public MessageSerializationException(string message)
             : base(message)
+        {
+        }
+
+        public MessageSerializationException(string message, Exception innerException)
+            : base(message, innerException)
         {
         }
     }

@@ -13,17 +13,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+using System;
+
 namespace RedFoxMQ
 {
     public class MessageDeserializationException : RedFoxBaseException
     {
+        private const string DefaultMessage = "Error deserializing message";
+
         public MessageDeserializationException()
-            : base("Error deserializing message")
+            : base(DefaultMessage)
+        {
+        }
+
+        public MessageDeserializationException(Exception innerException)
+            : base(DefaultMessage, innerException)
         {
         }
 
         public MessageDeserializationException(string message)
             : base(message)
+        {
+        }
+
+        public MessageDeserializationException(string message, Exception innerException)
+            : base(message, innerException)
         {
         }
     }

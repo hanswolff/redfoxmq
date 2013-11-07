@@ -21,8 +21,6 @@ namespace RedFoxMQ.Tests
     [TestFixture]
     public class MessageSerializationTests
     {
-        public const ushort CorrectMessageTypeId = 1;
-
         [Test]
         public void no_serializer_defined_Serialize_throws_MissingMessageSerializerException()
         {
@@ -43,7 +41,7 @@ namespace RedFoxMQ.Tests
         public void serializer_defined_for_test_message_Serialize_returns_serialized_object()
         {
             MessageSerialization.Instance.RemoveAllSerializers();
-            MessageSerialization.Instance.RegisterSerializer(CorrectMessageTypeId, new TestMessageSerializer());
+            MessageSerialization.Instance.RegisterSerializer(TestMessage.TypeId, new TestMessageSerializer());
 
             Assert.AreEqual(Encoding.UTF8.GetBytes("abc"), MessageSerialization.Instance.Serialize(new TestMessage { Text = "abc"}));
         }
@@ -51,7 +49,7 @@ namespace RedFoxMQ.Tests
         [Test]
         public void RemoveAllSerializers_removes_serializers()
         {
-            MessageSerialization.Instance.RegisterSerializer(CorrectMessageTypeId, new TestMessageSerializer());
+            MessageSerialization.Instance.RegisterSerializer(TestMessage.TypeId, new TestMessageSerializer());
             MessageSerialization.Instance.RemoveAllSerializers();
 
             Assert.Throws<MissingMessageSerializerException>(() => MessageSerialization.Instance.Serialize(new TestMessage()));
@@ -61,23 +59,23 @@ namespace RedFoxMQ.Tests
         public void no_deserializer_defined_Deserialize_throws_MissingMessageDeserializerException()
         {
             MessageSerialization.Instance.RemoveAllDeserializers();
-            Assert.Throws<MissingMessageDeserializerException>(() => MessageSerialization.Instance.Deserialize(CorrectMessageTypeId, new byte[1]));
+            Assert.Throws<MissingMessageDeserializerException>(() => MessageSerialization.Instance.Deserialize(TestMessage.TypeId, new byte[1]));
         }
 
         [Test]
         public void deserializer_defined_but_not_for_test_message_Deserialize_throws_MissingMessageDeserializerException()
         {
             MessageSerialization.Instance.RemoveAllDeserializers();
-            MessageSerialization.Instance.RegisterDeserializer(0, new TestMessageDeserializer());
+            MessageSerialization.Instance.RegisterDeserializer(TestMessage.TypeId, new TestMessageDeserializer());
 
-            Assert.Throws<MissingMessageDeserializerException>(() => MessageSerialization.Instance.Deserialize(CorrectMessageTypeId, new byte[1]));
+            Assert.Throws<MissingMessageDeserializerException>(() => MessageSerialization.Instance.Deserialize(0, new byte[1]));
         }
 
         [Test]
         public void deserializer_defined_for_test_message_Deserialize_creates_object()
         {
             MessageSerialization.Instance.RemoveAllDeserializers();
-            MessageSerialization.Instance.RegisterDeserializer(CorrectMessageTypeId, new TestMessageDeserializer());
+            MessageSerialization.Instance.RegisterDeserializer(TestMessage.TypeId, new TestMessageDeserializer());
 
             Assert.IsInstanceOf<TestMessage>(MessageSerialization.Instance.Deserialize(1, new byte[1]));
         }
@@ -85,10 +83,32 @@ namespace RedFoxMQ.Tests
         [Test]
         public void RemoveAllDeserializers_removes_serializers()
         {
-            MessageSerialization.Instance.RegisterDeserializer(CorrectMessageTypeId, new TestMessageDeserializer());
+            MessageSerialization.Instance.RegisterDeserializer(TestMessage.TypeId, new TestMessageDeserializer());
             MessageSerialization.Instance.RemoveAllDeserializers();
 
-            Assert.Throws<MissingMessageDeserializerException>(() => MessageSerialization.Instance.Deserialize(CorrectMessageTypeId, new byte[1]));
+            Assert.Throws<MissingMessageDeserializerException>(() => MessageSerialization.Instance.Deserialize(TestMessage.TypeId, new byte[1]));
+        }
+
+        [Test]
+        public void MessageSerializationException_should_be_thrown_on_exception_while_serializing_message()
+        {
+            MessageSerialization.Instance.RegisterSerializer(ExceptionTestMessage.TypeId, new ExceptionTestMessageSerializer());
+
+            var messageThatCausesExceptionOnSerialization = new ExceptionTestMessage(true, false);
+            var exception = Assert.Throws<MessageSerializationException>(() => MessageSerialization.Instance.Serialize(messageThatCausesExceptionOnSerialization));
+            Assert.IsInstanceOf<TestException>(exception.InnerException);
+        }
+
+        [Test]
+        public void MessageDeserializationException_should_be_thrown_on_exception_while_deserializing_message()
+        {
+            MessageSerialization.Instance.RegisterSerializer(ExceptionTestMessage.TypeId, new ExceptionTestMessageSerializer());
+            MessageSerialization.Instance.RegisterDeserializer(ExceptionTestMessage.TypeId, new ExceptionTestMessageDeserializer());
+
+            var messageThatCausesExceptionOnDeserialization = new ExceptionTestMessage(false, true);
+            var message = MessageSerialization.Instance.Serialize(messageThatCausesExceptionOnDeserialization);
+            var exception = Assert.Throws<MessageDeserializationException>(() => MessageSerialization.Instance.Deserialize(ExceptionTestMessage.TypeId, message));
+            Assert.IsInstanceOf<TestException>(exception.InnerException);
         }
     }
 }

@@ -26,7 +26,7 @@ namespace RedFoxMQ
             get
             {
                 if (_instance != null) return _instance;
-                    return _instance = new MessageSerialization();
+                return _instance = new MessageSerialization();
             }
         }
 
@@ -77,7 +77,14 @@ namespace RedFoxMQ
                 throw new MissingMessageSerializerException(messageTypeId, message.GetType());
             }
 
-            return serializer.Serialize(message);
+            try
+            {
+                return serializer.Serialize(message);
+            }
+            catch (Exception ex)
+            {
+                throw new MessageSerializationException(ex);
+            }
         }
 
         public IMessage Deserialize(ushort messageTypeId, byte[] serializedMessage)
@@ -90,7 +97,14 @@ namespace RedFoxMQ
                 throw new MissingMessageDeserializerException(messageTypeId);
             }
 
-            return deserializer.Deserialize(serializedMessage);
+            try
+            {
+                return deserializer.Deserialize(serializedMessage);
+            }
+            catch (Exception ex)
+            {
+                throw new MessageDeserializationException(ex);
+            }
         }
     }
 }

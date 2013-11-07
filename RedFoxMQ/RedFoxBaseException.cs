@@ -17,7 +17,7 @@ using System;
 
 namespace RedFoxMQ
 {
-    public abstract class RedFoxBaseException : Exception
+    public abstract class RedFoxBaseException : ApplicationException
     {
         protected RedFoxBaseException()
         {
@@ -25,6 +25,11 @@ namespace RedFoxMQ
 
         protected RedFoxBaseException(string message)
             : base(message)
+        {
+        }
+
+        protected RedFoxBaseException(string message, Exception innerException)
+            : base(message, innerException)
         {
         }
     }

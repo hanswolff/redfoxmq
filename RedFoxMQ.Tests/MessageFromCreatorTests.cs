@@ -29,14 +29,6 @@ namespace RedFoxMQ.Tests
             Assert.AreEqual(message.MessageTypeId, messageFrame.MessageTypeId);
         }
 
-        [Test]
-        public void message_serialization_exception_should_be_passed_down()
-        {
-            var messageFrameCreator = new MessageFrameCreator();
-            var messageThatCausesExceptionOnSerialization = new ExceptionTestMessage(true, false);
-            Assert.Throws<TestException>(() => messageFrameCreator.CreateFromMessage(messageThatCausesExceptionOnSerialization));
-        }
-
         [SetUp]
         public void SetUp()
         {

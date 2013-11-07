@@ -17,7 +17,7 @@ using System;
 
 namespace RedFoxMQ
 {
-    public class MissingMessageSerializerException : RedFoxBaseException
+    public class MissingMessageSerializerException : MessageSerializationException
     {
         public MissingMessageSerializerException()
             : base(String.Format("No message serializer defined for message"))
