@@ -13,22 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-using System;
 
-namespace RedFoxMQ
+// ReSharper disable once CheckNamespace
+namespace RedFoxMQ.Tests
 {
-    class MessageFrameCreator
+    class ExceptionTestMessageSerializer : IMessageSerializer
     {
-        public MessageFrame CreateFromMessage(IMessage message)
+        public byte[] Serialize(IMessage message)
         {
-            if (message == null) throw new ArgumentNullException("message");
+            var exceptionTestMessage = (ExceptionTestMessage)message;
 
-            var messageFrame = new MessageFrame
-            {
-                MessageTypeId = message.MessageTypeId,
-                RawMessage = MessageSerialization.Instance.Serialize(message)
-            };
-            return messageFrame;
+            if (exceptionTestMessage.ThrowOnSerialization)
+                throw new TestException("Message serializer has thrown an exception as requested");
+
+            if (exceptionTestMessage.ThrowOnDeserialization)
+                return new byte[0];
+
+            return new byte[1];
         }
     }
 }

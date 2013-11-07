@@ -15,7 +15,6 @@
 // 
 
 using NUnit.Framework;
-using RedFoxMQ.Tests.TestHelpers;
 using RedFoxMQ.Transports;
 using System.Collections.Generic;
 using System.Threading;
@@ -27,15 +26,13 @@ namespace RedFoxMQ.Tests
     {
         [TestCase(RedFoxTransport.Inproc)]
         [TestCase(RedFoxTransport.Tcp)]
-        public void Subscribe_to_Publisher_receive_single_broadcasted_message(RedFoxTransport transport)
+        public void Subscribe_to_publisher_receive_single_broadcasted_message(RedFoxTransport transport)
         {
             using (var publisher = new Publisher())
             using (var subscriber = new Subscriber())
             {
-                var endpoint = new RedFoxEndpoint(transport, "localhost", 5555, null);
-
-                publisher.Bind(endpoint);
-                subscriber.ConnectAsync(endpoint).Wait();
+                publisher.Bind(TestHelpers.TcpTestEndpoint);
+                subscriber.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
 
                 Thread.Sleep(30);
 
@@ -58,15 +55,13 @@ namespace RedFoxMQ.Tests
 
         [TestCase(RedFoxTransport.Inproc)]
         [TestCase(RedFoxTransport.Tcp)]
-        public void Subscribe_to_Publisher_receive_two_broadcasted_messages(RedFoxTransport transport)
+        public void Subscribe_to_publisher_receive_two_broadcasted_messages(RedFoxTransport transport)
         {
             using (var publisher = new Publisher())
             using (var subscriber = new Subscriber())
             {
-                var endpoint = new RedFoxEndpoint(transport, "localhost", 5555, null);
-
-                publisher.Bind(endpoint);
-                subscriber.ConnectAsync(endpoint).Wait();
+                publisher.Bind(TestHelpers.TcpTestEndpoint);
+                subscriber.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
 
                 Thread.Sleep(30);
 
@@ -92,8 +87,7 @@ namespace RedFoxMQ.Tests
         [SetUp]
         public void Setup()
         {
-            MessageSerialization.Instance.RegisterSerializer(new TestMessage().MessageTypeId, new TestMessageSerializer());
-            MessageSerialization.Instance.RegisterDeserializer(new TestMessage().MessageTypeId, new TestMessageDeserializer());
+            TestHelpers.InitializeMessageSerialization();
         }
     }
 }

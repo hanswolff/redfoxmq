@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 using NUnit.Framework;
-using System;
 using System.IO;
 using System.Threading;
 
@@ -36,7 +35,6 @@ namespace RedFoxMQ.Tests
 
                 Assert.AreEqual(54321, messageFrame.MessageTypeId);
                 Assert.AreEqual(rawMessage, messageFrame.RawMessage);
-                Assert.LessOrEqual(messageFrame.TimestampReceived, DateTime.UtcNow);
             }
         }
     }

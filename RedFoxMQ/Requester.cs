@@ -32,7 +32,6 @@ namespace RedFoxMQ
         private CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
 
-
         public async Task ConnectAsync(RedFoxEndpoint endpoint)
         {
             if (_socket != null) throw new InvalidOperationException("Subscriber already connected");

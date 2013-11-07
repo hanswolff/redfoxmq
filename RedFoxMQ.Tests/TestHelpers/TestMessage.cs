@@ -13,16 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-namespace RedFoxMQ.Tests.TestHelpers
+
+// ReSharper disable once CheckNamespace
+namespace RedFoxMQ.Tests
 {
     class TestMessage : IMessage
     {
-        public ushort MessageTypeId { get; private set; }
+        public const int TypeId = 1;
+        public ushort MessageTypeId { get { return TypeId; } }
+
         public string Text { get; set; }
 
-        public TestMessage()
+        public TestMessage(string text = "")
         {
-            MessageTypeId = 1;
+            Text = text;
         }
     }
 }

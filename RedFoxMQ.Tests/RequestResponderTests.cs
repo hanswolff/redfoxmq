@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 using NUnit.Framework;
-using RedFoxMQ.Tests.TestHelpers;
 using RedFoxMQ.Transports;
 using System.Collections.Generic;
 
@@ -66,8 +65,7 @@ namespace RedFoxMQ.Tests
         [SetUp]
         public void Setup()
         {
-            MessageSerialization.Instance.RegisterSerializer(new TestMessage().MessageTypeId, new TestMessageSerializer());
-            MessageSerialization.Instance.RegisterDeserializer(new TestMessage().MessageTypeId, new TestMessageDeserializer());
+            TestHelpers.InitializeMessageSerialization();
         }
     }
 }

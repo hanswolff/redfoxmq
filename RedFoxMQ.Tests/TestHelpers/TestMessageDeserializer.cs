@@ -15,7 +15,8 @@
 // 
 using System.Text;
 
-namespace RedFoxMQ.Tests.TestHelpers
+// ReSharper disable once CheckNamespace
+namespace RedFoxMQ.Tests
 {
     class TestMessageDeserializer : IMessageDeserializer
     {

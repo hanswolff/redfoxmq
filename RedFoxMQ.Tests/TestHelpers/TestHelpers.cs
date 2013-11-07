@@ -14,11 +14,15 @@
 // limitations under the License.
 // 
 using System;
+using RedFoxMQ.Transports;
 
-namespace RedFoxMQ.Tests.TestHelpers
+// ReSharper disable once CheckNamespace
+namespace RedFoxMQ.Tests
 {
     public static class TestHelpers
     {
+        public static readonly RedFoxEndpoint TcpTestEndpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
+
         public static Random CreateSemiRandomGenerator()
         {
             var now = DateTime.Now;
@@ -33,6 +37,15 @@ namespace RedFoxMQ.Tests.TestHelpers
                 result[i] = (byte)random.Next(256);
             }
             return result;
+        }
+
+        public static void InitializeMessageSerialization()
+        {
+            MessageSerialization.Instance.RegisterSerializer(TestMessage.TypeId, new TestMessageSerializer());
+            MessageSerialization.Instance.RegisterDeserializer(TestMessage.TypeId, new TestMessageDeserializer());
+
+            MessageSerialization.Instance.RegisterSerializer(ExceptionTestMessage.TypeId, new ExceptionTestMessageSerializer());
+            MessageSerialization.Instance.RegisterDeserializer(ExceptionTestMessage.TypeId, new ExceptionTestMessageDeserializer());
         }
     }
 }

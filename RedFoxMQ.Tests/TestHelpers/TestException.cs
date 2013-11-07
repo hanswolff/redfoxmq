@@ -15,20 +15,14 @@
 // 
 using System;
 
-namespace RedFoxMQ
+// ReSharper disable once CheckNamespace
+namespace RedFoxMQ.Tests
 {
-    class MessageFrameCreator
+    class TestException : Exception
     {
-        public MessageFrame CreateFromMessage(IMessage message)
+        public TestException(string message)
+            : base(message)
         {
-            if (message == null) throw new ArgumentNullException("message");
-
-            var messageFrame = new MessageFrame
-            {
-                MessageTypeId = message.MessageTypeId,
-                RawMessage = MessageSerialization.Instance.Serialize(message)
-            };
-            return messageFrame;
         }
     }
 }

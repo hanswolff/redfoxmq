@@ -14,7 +14,6 @@
 // limitations under the License.
 // 
 using NUnit.Framework;
-using RedFoxMQ.Tests.TestHelpers;
 using System.Text;
 
 namespace RedFoxMQ.Tests

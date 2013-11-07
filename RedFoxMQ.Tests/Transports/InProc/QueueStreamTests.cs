@@ -312,15 +312,15 @@ namespace RedFoxMQ.Tests.Transports.InProc
         {
             var stream = new QueueStream();
 
-            var random = TestHelpers.TestHelpers.CreateSemiRandomGenerator();
+            var random = TestHelpers.CreateSemiRandomGenerator();
             int totalLength = 0;
 
             using (var writtenBytes = new MemoryStream())
             using (var readBytes = new MemoryStream())
             {
-                for (int i = 0; i < 1000; i++)
+                for (var i = 0; i < 1000; i++)
                 {
-                    var buffer = TestHelpers.TestHelpers.GetRandomBytes(random, random.Next(10));
+                    var buffer = TestHelpers.GetRandomBytes(random, random.Next(10));
                     stream.Write(buffer, 0, buffer.Length);
                     totalLength += buffer.Length;
 
@@ -348,13 +348,13 @@ namespace RedFoxMQ.Tests.Transports.InProc
         {
             var stream = new QueueStream();
 
-            var random = TestHelpers.TestHelpers.CreateSemiRandomGenerator();
+            var random = TestHelpers.CreateSemiRandomGenerator();
 
             using (var writtenBytes = new MemoryStream())
             {
                 for (int i = 0; i < 1000; i++)
                 {
-                    var buffer = TestHelpers.TestHelpers.GetRandomBytes(random, random.Next(10));
+                    var buffer = TestHelpers.GetRandomBytes(random, random.Next(10));
                     stream.Write(buffer, 0, buffer.Length);
 
                     writtenBytes.Write(buffer, 0, buffer.Length);

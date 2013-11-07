@@ -37,7 +37,6 @@ namespace RedFoxMQ
             {
                 MessageTypeId = messageTypeId,
                 RawMessage = rawMessage,
-                TimestampReceived = DateTime.UtcNow
             };
         }
 
