@@ -25,7 +25,7 @@ namespace RedFoxMQ
 {
     class MessageFrameStreamWriter
     {
-        private static readonly ConcurrentQueue<MemoryStream> RecycledMemoryStreams = new ConcurrentQueue<MemoryStream>();
+        private static readonly ConcurrentQueue<WeakReference<MemoryStream>> RecycledMemoryStreams = new ConcurrentQueue<WeakReference<MemoryStream>>();
 
         public async Task WriteMessageFrame(Stream stream, MessageFrame messageFrame, CancellationToken cancellationToken)
         {
@@ -49,11 +49,8 @@ namespace RedFoxMQ
         {
             var sendBufferSize = MessageFrame.HeaderSize + messageFrame.RawMessage.Length;
 
-            MemoryStream mem;
-            if (!RecycledMemoryStreams.TryDequeue(out mem))
-            {
-                mem = new MemoryStream(sendBufferSize);
-            }
+            WeakReference<MemoryStream> reference;
+            var mem = GetOrCreateMemoryStream(sendBufferSize, out reference);
 
             try
             {
@@ -67,8 +64,27 @@ namespace RedFoxMQ
             finally
             {
                 mem.SetLength(0);
-                RecycledMemoryStreams.Enqueue(mem);
+                RecycledMemoryStreams.Enqueue(reference);
             }
+        }
+
+        private static MemoryStream GetOrCreateMemoryStream(int sendBufferSize, out WeakReference<MemoryStream> reference)
+        {
+            MemoryStream mem;
+            if (!RecycledMemoryStreams.TryDequeue(out reference))
+            {
+                mem = new MemoryStream(sendBufferSize);
+                reference = new WeakReference<MemoryStream>(mem);
+            }
+            else
+            {
+                if (!reference.TryGetTarget(out mem))
+                {
+                    mem = new MemoryStream(sendBufferSize);
+                    reference.SetTarget(mem);
+                }
+            }
+            return mem;
         }
 
         private static void WriteTypeId(Stream stream, ushort messageTypeId)
@@ -94,11 +110,8 @@ namespace RedFoxMQ
             if (messageFrames == null) return;
             var sendBufferSize = messageFrames.Count * MessageFrame.HeaderSize + messageFrames.Sum(m => m.RawMessage.Length);
 
-            MemoryStream mem;
-            if (!RecycledMemoryStreams.TryDequeue(out mem))
-            {
-                mem = new MemoryStream(sendBufferSize);
-            }
+            WeakReference<MemoryStream> reference;
+            var mem = GetOrCreateMemoryStream(sendBufferSize, out reference);
 
             try
             {
@@ -115,7 +128,7 @@ namespace RedFoxMQ
             finally
             {
                 mem.SetLength(0);
-                RecycledMemoryStreams.Enqueue(mem);
+                RecycledMemoryStreams.Enqueue(reference);
             }
         }
     }
