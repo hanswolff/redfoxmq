@@ -64,6 +64,7 @@ namespace RedFoxMQ.Transports.Tcp
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     var tcpClient = await _listener.AcceptTcpClientAsync();
+                    SetupTcpClientParameters(tcpClient);
                     TryFireClientConnectedEvent(tcpClient);
                 }
             }
@@ -74,6 +75,13 @@ namespace RedFoxMQ.Transports.Tcp
             {
                 _stopped.Set();
             }
+        }
+
+        private static void SetupTcpClientParameters(TcpClient tcpClient)
+        {
+            tcpClient.NoDelay = true;
+            tcpClient.ReceiveBufferSize = 16384;
+            tcpClient.SendBufferSize = 16384;
         }
 
         private bool TryFireClientConnectedEvent(TcpClient tcpClient)
