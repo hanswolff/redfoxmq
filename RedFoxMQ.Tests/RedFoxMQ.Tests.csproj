@@ -72,9 +72,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RedFoxMQ\RedFoxMQ %28.NET 4.5.1%29.csproj">
+    <ProjectReference Include="..\RedFoxMQ\RedFoxMQ.csproj">
       <Project>{79ec11b9-3372-43f6-95c2-a7965e89c22c}</Project>
-      <Name>RedFoxMQ %28.NET 4.5.1%29</Name>
+      <Name>RedFoxMQ</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
