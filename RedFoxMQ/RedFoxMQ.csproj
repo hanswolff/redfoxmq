@@ -39,7 +39,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\GlobalAssemblyInfo.cs">
+      <Link>Properties\GlobalAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="IDisconnect.cs" />
+    <Compile Include="IPublisher.cs" />
+    <Compile Include="IRequester.cs" />
+    <Compile Include="IResponder.cs" />
+    <Compile Include="ISubscriber.cs" />
     <Compile Include="MessageFrameCreator.cs" />
     <Compile Include="MessageFrameSender.cs" />
     <Compile Include="MessageFrameReceiver.cs" />

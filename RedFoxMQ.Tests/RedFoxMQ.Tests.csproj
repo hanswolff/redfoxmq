@@ -42,11 +42,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\GlobalAssemblyInfo.cs">
+      <Link>Properties\GlobalAssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="MessageFromCreatorTests.cs" />
     <Compile Include="PublisherSubscriberBenchmarks.cs" />
     <Compile Include="RequestResponderTests.cs" />
     <Compile Include="ResponderTests.cs" />
+    <Compile Include="TestHelpers\TestException.cs" />
+    <Compile Include="TestHelpers\ExceptionTestMessage.cs" />
+    <Compile Include="TestHelpers\ExceptionTestMessageDeserializer.cs" />
     <Compile Include="TestHelpers\TestMessageDeserializer.cs" />
+    <Compile Include="TestHelpers\ExceptionTestMessageSerializer.cs" />
     <Compile Include="TestHelpers\TestMessageSerializer.cs" />
+    <Compile Include="TestHelpers\TestSubscriber.cs" />
     <Compile Include="Transports\SocketAccepterFactoryTests.cs" />
     <Compile Include="MessageFrameStreamReaderTests.cs" />
     <Compile Include="MessageFrameStreamWriterTests.cs" />
@@ -63,9 +72,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RedFoxMQ\RedFoxMQ.csproj">
+    <ProjectReference Include="..\RedFoxMQ\RedFoxMQ %28.NET 4.5.1%29.csproj">
       <Project>{79ec11b9-3372-43f6-95c2-a7965e89c22c}</Project>
-      <Name>RedFoxMQ</Name>
+      <Name>RedFoxMQ %28.NET 4.5.1%29</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
