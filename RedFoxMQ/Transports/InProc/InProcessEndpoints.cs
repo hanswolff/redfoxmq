@@ -32,19 +32,19 @@ namespace RedFoxMQ.Transports.InProc
 
         private InProcessEndpoints()
         {
-            _registeredAccepterPorts = new ConcurrentDictionary<RedFoxEndpoint, BlockingCollection<QueueStream>>();
+            _registeredAccepterPorts = new ConcurrentDictionary<RedFoxEndpoint, BlockingCollection<InProcSocket>>();
         }
 
-        private readonly ConcurrentDictionary<RedFoxEndpoint, BlockingCollection<QueueStream>> _registeredAccepterPorts;
+        private readonly ConcurrentDictionary<RedFoxEndpoint, BlockingCollection<InProcSocket>> _registeredAccepterPorts;
 
-        public BlockingCollection<QueueStream> RegisterAccepter(RedFoxEndpoint endpoint)
+        public BlockingCollection<InProcSocket> RegisterAccepter(RedFoxEndpoint endpoint)
         {
             if (endpoint.Transport != RedFoxTransport.Inproc)
                 throw new ArgumentException("Only InProcess transport endpoints are allowed to be registered");
 
             var result = _registeredAccepterPorts.AddOrUpdate(
                 endpoint,
-                e => new BlockingCollection<QueueStream>(),
+                e => new BlockingCollection<InProcSocket>(),
                 (e, v) =>
                 {
                     throw new InvalidOperationException("Endpoint already listening to InProcess clients");
@@ -52,25 +52,26 @@ namespace RedFoxMQ.Transports.InProc
             return result;
         }
 
-        public QueueStream Connect(RedFoxEndpoint endpoint)
+        public InProcSocket Connect(RedFoxEndpoint endpoint)
         {
             if (endpoint.Transport != RedFoxTransport.Inproc)
                 throw new ArgumentException("Only InProcess transport endpoints are allowed to be registered");
 
-            BlockingCollection<QueueStream> accepter;
+            BlockingCollection<InProcSocket> accepter;
             if (!_registeredAccepterPorts.TryGetValue(endpoint, out accepter))
             {
                 throw new InvalidOperationException("Endpoint not listening to InProcess clients");
             }
 
             var queueStream = new QueueStream(true);
-            accepter.Add(queueStream);
-            return queueStream;
+            var socket = new InProcSocket(endpoint, queueStream);
+            accepter.Add(socket);
+            return socket;
         }
 
         public bool UnregisterAccepter(RedFoxEndpoint endpoint)
         {
-            BlockingCollection<QueueStream> oldValue;
+            BlockingCollection<InProcSocket> oldValue;
             return _registeredAccepterPorts.TryRemove(endpoint, out oldValue);
         }
     }

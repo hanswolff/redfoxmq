@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
+using System.IO;
 using RedFoxMQ.Transports;
 using System;
 using System.Threading;
@@ -53,6 +55,7 @@ namespace RedFoxMQ
 
         public void Disconnect()
         {
+            _socket.Stream.Close();
             _socket.Disconnect();
         }
     }

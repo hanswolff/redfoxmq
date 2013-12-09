@@ -39,8 +39,7 @@ namespace RedFoxMQ.Transports
 
         private static ISocket CreateInProcSocket(RedFoxEndpoint endpoint)
         {
-            var queueStream = InProcessEndpoints.Instance.Connect(endpoint);
-            return new InProcSocket(endpoint, queueStream);
+            return InProcessEndpoints.Instance.Connect(endpoint);
         }
 
         private static async Task<ISocket> CreateTcpSocket(RedFoxEndpoint endpoint, int timeoutInSeconds)

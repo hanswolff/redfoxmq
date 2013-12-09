@@ -52,6 +52,7 @@ namespace RedFoxMQ
             if (!_cts.IsCancellationRequested)
             {
                 _messageReceiveLoop = new MessageReceiveLoop(_socket);
+                _messageReceiveLoop.SocketError += (s, e) => s.Disconnect();
                 _messageReceiveLoop.MessageReceived += m => MessageReceived(m);
                 _messageReceiveLoop.Start();
             }

@@ -80,7 +80,6 @@ namespace RedFoxMQ
                     _messageQueueHasMessage.WaitOne(10);
 
                     Loop(cancellationToken);
-                    
                 }
             }
             catch (OperationCanceledException)

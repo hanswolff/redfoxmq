@@ -24,7 +24,7 @@ namespace RedFoxMQ.Tests
     [TestFixture]
     public class PublisherSubscriberTests
     {
-        public const int Timeout = 10000;
+        public const int Timeout = 200000;
 
         [TestCase(RedFoxTransport.Inproc)]
         [TestCase(RedFoxTransport.Tcp)]
@@ -88,7 +88,7 @@ namespace RedFoxMQ.Tests
 
                 var broadcastedMessage = new TestMessage { Text = "Hello" };
 
-                var batch = new[] {broadcastedMessage, broadcastedMessage};
+                var batch = new[] { broadcastedMessage, broadcastedMessage };
                 publisher.Broadcast(batch);
 
                 Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(Timeout));

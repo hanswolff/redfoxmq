@@ -13,8 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using RedFoxMQ.Transports;
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -29,10 +31,14 @@ namespace RedFoxMQ
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
 
         public event Action<IMessage> MessageReceived = m => { };
+        public event Action<ISocket, Exception> SocketError = (s, e) => { };
+
+        private readonly ISocket _socket;
 
         public MessageReceiveLoop(ISocket socket)
         {
             if (socket == null) throw new ArgumentNullException("socket");
+            _socket = socket;
             _messageFrameReceiver = new MessageFrameReceiver(socket);
         }
 
@@ -72,7 +78,8 @@ namespace RedFoxMQ
                     IMessage message = null;
                     try
                     {
-                        message = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId, messageFrame.RawMessage);
+                        message = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId,
+                            messageFrame.RawMessage);
                     }
                     catch (RedFoxBaseException)
                     {
@@ -84,6 +91,13 @@ namespace RedFoxMQ
             }
             catch (OperationCanceledException)
             {
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+            catch (IOException ex)
+            {
+                SocketError(_socket, ex);
             }
             finally
             {

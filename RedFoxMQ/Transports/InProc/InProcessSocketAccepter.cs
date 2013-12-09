@@ -22,7 +22,7 @@ namespace RedFoxMQ.Transports.InProc
 {
     class InProcessSocketAccepter : ISocketAccepter
     {
-        private BlockingCollection<QueueStream> _listener;
+        private BlockingCollection<InProcSocket> _listener;
         private CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ManualResetEventSlim _started = new ManualResetEventSlim(false);
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
@@ -31,7 +31,7 @@ namespace RedFoxMQ.Transports.InProc
         public event Action<ISocket> ClientDisconnected = client => { };
 
         private RedFoxEndpoint _endpoint;
-        public void Bind(RedFoxEndpoint endpoint, Action<ISocket> onClientConnected = null, Action<ISocket> onClientDisconnected = null)
+        public void Bind(RedFoxEndpoint endpoint, SocketMode socketMode, Action<ISocket> onClientConnected = null, Action<ISocket> onClientDisconnected = null)
         {
             if (_listener != null || !_stopped.IsSet)
                 throw new InvalidOperationException("Server already bound, please use Unbind first");
@@ -58,8 +58,8 @@ namespace RedFoxMQ.Transports.InProc
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    var queueStream = _listener.Take(cancellationToken);
-                    TryFireClientConnectedEvent(queueStream);
+                    var socket = _listener.Take(cancellationToken);
+                    TryFireClientConnectedEvent(socket);
                 }
             }
             catch (OperationCanceledException)
@@ -71,11 +71,10 @@ namespace RedFoxMQ.Transports.InProc
             }
         }
 
-        private bool TryFireClientConnectedEvent(QueueStream queueStream)
+        private bool TryFireClientConnectedEvent(InProcSocket socket)
         {
             try
             {
-                var socket = new InProcSocket(_endpoint, queueStream);
                 socket.Disconnected += () => ClientDisconnected(socket);
                 ClientConnected(socket);
                 return true;

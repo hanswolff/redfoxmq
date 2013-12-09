@@ -34,10 +34,10 @@ namespace RedFoxMQ.Transports
             }
         }
 
-        public ISocketAccepter CreateAndBind(RedFoxEndpoint endpoint, Action<ISocket> onClientConnected = null, Action<ISocket> onClientDisconnected = null)
+        public ISocketAccepter CreateAndBind(RedFoxEndpoint endpoint, SocketMode socketMode, Action<ISocket> onClientConnected = null, Action<ISocket> onClientDisconnected = null)
         {
             var server = CreateForTransport(endpoint.Transport);
-            server.Bind(endpoint, onClientConnected, onClientDisconnected);
+            server.Bind(endpoint, socketMode, onClientConnected, onClientDisconnected);
             return server;
         }
     }

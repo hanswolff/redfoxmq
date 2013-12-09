@@ -42,7 +42,7 @@ namespace RedFoxMQ
 
         public void Bind(RedFoxEndpoint endpoint)
         {
-            var server = SocketAccepterFactory.CreateAndBind(endpoint, OnClientConnected);
+            var server = SocketAccepterFactory.CreateAndBind(endpoint, SocketMode.ReadWrite, OnClientConnected);
             _servers[endpoint] = server;
         }
 
@@ -54,6 +54,7 @@ namespace RedFoxMQ
             var messageFrameSender = new MessageFrameSender(socket);
             var messageQueue = new MessageQueue(_messageQueueProcessor, messageFrameSender);
             var messageReceiveLoop = new MessageReceiveLoop(socket);
+            messageReceiveLoop.SocketError += (s, e) => s.Disconnect();
             messageReceiveLoop.MessageReceived += m => MessageReceivedProcessMessage(m, messageQueue);
             messageReceiveLoop.Start();
 
