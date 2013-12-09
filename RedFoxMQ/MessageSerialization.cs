@@ -19,6 +19,9 @@ namespace RedFoxMQ
 {
     public class MessageSerialization
     {
+        private readonly IMessageSerializer[] _serializers = new IMessageSerializer[ushort.MaxValue];
+        private readonly IMessageDeserializer[] _deserializers = new IMessageDeserializer[ushort.MaxValue];
+
         private static volatile MessageSerialization _instance;
 
         public static MessageSerialization Instance
@@ -30,15 +33,16 @@ namespace RedFoxMQ
             }
         }
 
+        public IMessageSerializer DefaultSerializer { get; set; }
+        public IMessageDeserializer DefaultDeserializer { get; set; }
+
         private MessageSerialization()
         {
         }
 
-        private readonly IMessageSerializer[] _serializers = new IMessageSerializer[ushort.MaxValue];
-        private readonly IMessageDeserializer[] _deserializers = new IMessageDeserializer[ushort.MaxValue];
-
         public void RemoveAllSerializers()
         {
+            DefaultSerializer = null;
             for (var i = 0; i < _serializers.Length; i++)
             {
                 _serializers[i] = null;
@@ -47,6 +51,7 @@ namespace RedFoxMQ
 
         public void RemoveAllDeserializers()
         {
+            DefaultDeserializer = null;
             for (var i = 0; i < _deserializers.Length; i++)
             {
                 _deserializers[i] = null;
@@ -71,7 +76,7 @@ namespace RedFoxMQ
 
             var messageTypeId = message.MessageTypeId;
 
-            var serializer = _serializers[messageTypeId];
+            var serializer = _serializers[messageTypeId] ?? DefaultSerializer;
             if (serializer == null)
             {
                 throw new MissingMessageSerializerException(messageTypeId, message.GetType());
@@ -91,7 +96,7 @@ namespace RedFoxMQ
         {
             if (serializedMessage == null) throw new ArgumentNullException("serializedMessage");
 
-            var deserializer = _deserializers[messageTypeId];
+            var deserializer = _deserializers[messageTypeId] ?? DefaultDeserializer;
             if (deserializer == null)
             {
                 throw new MissingMessageDeserializerException(messageTypeId);

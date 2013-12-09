@@ -38,6 +38,15 @@ namespace RedFoxMQ.Tests
         }
 
         [Test]
+        public void default_serializer_defined_but_no_specific_message_serializer_for_test_message_use_default_serializer()
+        {
+            MessageSerialization.Instance.RemoveAllSerializers();
+            MessageSerialization.Instance.DefaultSerializer = new TestMessageSerializer();
+
+            Assert.AreEqual(Encoding.UTF8.GetBytes("abc"), MessageSerialization.Instance.Serialize(new TestMessage { Text = "abc" }));
+        }
+
+        [Test]
         public void serializer_defined_for_test_message_Serialize_returns_serialized_object()
         {
             MessageSerialization.Instance.RemoveAllSerializers();
@@ -69,6 +78,15 @@ namespace RedFoxMQ.Tests
             MessageSerialization.Instance.RegisterDeserializer(TestMessage.TypeId, new TestMessageDeserializer());
 
             Assert.Throws<MissingMessageDeserializerException>(() => MessageSerialization.Instance.Deserialize(0, new byte[1]));
+        }
+
+        [Test]
+        public void default_deserializer_defined_but_no_specific_message_deserializer_for_test_message_use_default_deserializer()
+        {
+            MessageSerialization.Instance.RemoveAllDeserializers();
+            MessageSerialization.Instance.DefaultDeserializer = new TestMessageDeserializer();
+
+            Assert.IsInstanceOf<TestMessage>(MessageSerialization.Instance.Deserialize(0, new byte[1]));
         }
 
         [Test]
