@@ -36,7 +36,7 @@ namespace RedFoxMQ.Tests
             using (var mem = new MemoryStream())
             {
                 var writer = new MessageFrameStreamWriter();
-                writer.WriteMessageFrame(mem, messageFrame, CancellationToken.None).Wait();
+                writer.WriteMessageFrameAsync(mem, messageFrame, CancellationToken.None).Wait();
 
                 var writtenToStream = mem.ToArray();
                 

@@ -61,12 +61,12 @@ namespace RedFoxMQ
             }
         }
 
-        internal async Task<bool> SendFromQueue(CancellationToken cancellationToken)
+        internal async Task<bool> SendFromQueueAsync(CancellationToken cancellationToken)
         {
             List<MessageFrame> batch;
             if (!_batchMessageFrames.TryTake(out batch))
             {
-                return await SendSingleMessageFrameFromQueue(cancellationToken);
+                return await SendSingleMessageFrameFromQueueAsync(cancellationToken);
             }
 
             MessageFrame messageFrame;
@@ -76,7 +76,7 @@ namespace RedFoxMQ
             return true;
         }
 
-        private async Task<bool> SendSingleMessageFrameFromQueue(CancellationToken cancellationToken)
+        private async Task<bool> SendSingleMessageFrameFromQueueAsync(CancellationToken cancellationToken)
         {
             MessageFrame messageFrame;
             if (!_singleMessageFrames.TryTake(out messageFrame)) return false;

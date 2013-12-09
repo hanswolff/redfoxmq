@@ -113,7 +113,7 @@ namespace RedFoxMQ
             var hasMore = true;
             while (hasMore && !cancellationToken.IsCancellationRequested)
             {
-                hasMore = await messageQueue.SendFromQueue(cancellationToken);
+                hasMore = await messageQueue.SendFromQueueAsync(cancellationToken);
             }
         }
 

@@ -27,16 +27,16 @@ namespace RedFoxMQ
     {
         private static readonly ConcurrentQueue<WeakReference<MemoryStream>> RecycledMemoryStreams = new ConcurrentQueue<WeakReference<MemoryStream>>();
 
-        public async Task WriteMessageFrame(Stream stream, MessageFrame messageFrame, CancellationToken cancellationToken)
+        public async Task WriteMessageFrameAsync(Stream stream, MessageFrame messageFrame, CancellationToken cancellationToken)
         {
             if (stream == null) throw new ArgumentNullException("stream");
             if (messageFrame == null) throw new ArgumentNullException("messageFrame");
             if (messageFrame.RawMessage == null) throw new ArgumentException("messageFrame.RawMessage cannot be null");
 
-            await CreateBufferWriteSingle(stream, messageFrame, cancellationToken);
+            await CreateBufferWriteSingleAsync(stream, messageFrame, cancellationToken);
         }
 
-        public async Task WriteMessageFrames(Stream stream, ICollection<MessageFrame> messageFrames, CancellationToken cancellationToken)
+        public async Task WriteMessageFramesAsync(Stream stream, ICollection<MessageFrame> messageFrames, CancellationToken cancellationToken)
         {
             if (stream == null) throw new ArgumentNullException("stream");
             if (messageFrames == null) return;
@@ -44,7 +44,7 @@ namespace RedFoxMQ
             await CreateBufferWriteMany(stream, messageFrames, cancellationToken);
         }
 
-        private static async Task CreateBufferWriteSingle(Stream stream, MessageFrame messageFrame,
+        private static async Task CreateBufferWriteSingleAsync(Stream stream, MessageFrame messageFrame,
             CancellationToken cancellationToken)
         {
             var sendBufferSize = MessageFrame.HeaderSize + messageFrame.RawMessage.Length;
