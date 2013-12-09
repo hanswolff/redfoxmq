@@ -22,6 +22,8 @@ namespace RedFoxMQ.Tests
     [TestFixture]
     public class PublisherSubscriberTests
     {
+        public const int Timeout = 20000;
+
         [TestCase(RedFoxTransport.Inproc)]
         [TestCase(RedFoxTransport.Tcp)]
         public void Subscribe_to_publisher_receive_single_broadcasted_message(RedFoxTransport transport)
@@ -38,7 +40,7 @@ namespace RedFoxMQ.Tests
 
                 publisher.Broadcast(broadcastedMessage);
 
-                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(10000));
+                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(Timeout));
             }
         }
 
@@ -59,8 +61,8 @@ namespace RedFoxMQ.Tests
                 publisher.Broadcast(broadcastedMessage);
                 publisher.Broadcast(broadcastedMessage);
 
-                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(10000));
-                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(10000));
+                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(Timeout));
+                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(Timeout));
             }
         }
 
@@ -81,8 +83,8 @@ namespace RedFoxMQ.Tests
                 var batch = new[] {broadcastedMessage, broadcastedMessage};
                 publisher.Broadcast(batch);
 
-                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(10000));
-                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(10000));
+                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(Timeout));
+                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(Timeout));
             }
         }
 
@@ -102,7 +104,7 @@ namespace RedFoxMQ.Tests
                 var broadcastMessage = new TestMessage { Text = "Hello" };
                 publisher.Broadcast(broadcastMessage);
 
-                Assert.AreEqual(broadcastMessage, subscriber1.TestMustReceiveMessageWithin(10000));
+                Assert.AreEqual(broadcastMessage, subscriber1.TestMustReceiveMessageWithin(Timeout));
 
                 subscriber2.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
 
@@ -110,8 +112,8 @@ namespace RedFoxMQ.Tests
 
                 publisher.Broadcast(broadcastMessage);
 
-                Assert.AreEqual(broadcastMessage, subscriber1.TestMustReceiveMessageWithin(10000));
-                Assert.AreEqual(broadcastMessage, subscriber2.TestMustReceiveMessageWithin(10000));
+                Assert.AreEqual(broadcastMessage, subscriber1.TestMustReceiveMessageWithin(Timeout));
+                Assert.AreEqual(broadcastMessage, subscriber2.TestMustReceiveMessageWithin(Timeout));
             }
         }
 
