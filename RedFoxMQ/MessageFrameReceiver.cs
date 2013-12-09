@@ -33,7 +33,12 @@ namespace RedFoxMQ
 
         public async Task<MessageFrame> ReceiveAsync(CancellationToken cancellationToken)
         {
-            return await MessageFrameStreamReader.ReadMessageFrame(_socket.Stream, cancellationToken);
+            return await MessageFrameStreamReader.ReadMessageFrameAsync(_socket.Stream, cancellationToken);
+        }
+
+        public MessageFrame Receive()
+        {
+            return MessageFrameStreamReader.ReadMessageFrame(_socket.Stream);
         }
 
         public void Disconnect()

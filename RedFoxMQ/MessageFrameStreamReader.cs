@@ -22,16 +22,16 @@ namespace RedFoxMQ
 {
     class MessageFrameStreamReader
     {
-        public async Task<MessageFrame> ReadMessageFrame(Stream stream, CancellationToken cancellationToken)
+        public async Task<MessageFrame> ReadMessageFrameAsync(Stream stream, CancellationToken cancellationToken)
         {
             if (stream == null) throw new ArgumentNullException("stream");
 
-            var header = await ReadHeader(stream, cancellationToken);
+            var header = await ReadHeaderAsync(stream, cancellationToken);
 
             var messageTypeId = BitConverter.ToUInt16(header, 0);
             var length = BitConverter.ToInt32(header, 2);
 
-            var rawMessage = await ReadBody(stream, length, cancellationToken);
+            var rawMessage = await ReadBodyAsync(stream, length, cancellationToken);
 
             return new MessageFrame
             {
@@ -40,7 +40,7 @@ namespace RedFoxMQ
             };
         }
 
-        private static async Task<byte[]> ReadHeader(Stream stream, CancellationToken cancellationToken)
+        private static async Task<byte[]> ReadHeaderAsync(Stream stream, CancellationToken cancellationToken)
         {
             var header = new byte[6];
             var offset = 0;
@@ -52,7 +52,7 @@ namespace RedFoxMQ
             return header;
         }
 
-        private static async Task<byte[]> ReadBody(Stream stream, int length, CancellationToken cancellationToken)
+        private static async Task<byte[]> ReadBodyAsync(Stream stream, int length, CancellationToken cancellationToken)
         {
             var rawMessage = new byte[length];
 
@@ -60,6 +60,49 @@ namespace RedFoxMQ
             while (offset < length)
             {
                 var read = await stream.ReadAsync(rawMessage, offset, rawMessage.Length, cancellationToken);
+                offset += read;
+            }
+            return rawMessage;
+        }
+
+        public MessageFrame ReadMessageFrame(Stream stream)
+        {
+            if (stream == null) throw new ArgumentNullException("stream");
+
+            var header = ReadHeader(stream);
+
+            var messageTypeId = BitConverter.ToUInt16(header, 0);
+            var length = BitConverter.ToInt32(header, 2);
+
+            var rawMessage = ReadBody(stream, length);
+
+            return new MessageFrame
+            {
+                MessageTypeId = messageTypeId,
+                RawMessage = rawMessage,
+            };
+        }
+
+        private static byte[] ReadHeader(Stream stream)
+        {
+            var header = new byte[6];
+            var offset = 0;
+            while (offset < header.Length)
+            {
+                var read = stream.Read(header, 0, header.Length);
+                offset += read;
+            }
+            return header;
+        }
+
+        private static byte[] ReadBody(Stream stream, int length)
+        {
+            var rawMessage = new byte[length];
+
+            var offset = 0;
+            while (offset < length)
+            {
+                var read = stream.Read(rawMessage, offset, rawMessage.Length);
                 offset += read;
             }
             return rawMessage;

@@ -54,10 +54,10 @@ namespace RedFoxMQ
 
         private void StartReceiveLoop()
         {
-            var task = ReceiveLoopAsync(_cts.Token);
+            Task.Factory.StartNew(() => ReceiveLoop(_cts.Token), TaskCreationOptions.LongRunning);
         }
 
-        private async Task ReceiveLoopAsync(CancellationToken cancellationToken)
+        private void ReceiveLoop(CancellationToken cancellationToken)
         {
             _stopped.Reset();
             _started.Set();
@@ -66,7 +66,7 @@ namespace RedFoxMQ
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    var messageFrame = await _messageFrameReceiver.ReceiveAsync(cancellationToken);
+                    var messageFrame = _messageFrameReceiver.Receive();
 
                     IMessage message = null;
                     try

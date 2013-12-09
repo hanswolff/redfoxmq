@@ -31,7 +31,7 @@ namespace RedFoxMQ.Tests
             using (var mem = new MemoryStream(serializedMessageFrame))
             {
                 var reader = new MessageFrameStreamReader();
-                var messageFrame = reader.ReadMessageFrame(mem, CancellationToken.None).Result;
+                var messageFrame = reader.ReadMessageFrameAsync(mem, CancellationToken.None).Result;
 
                 Assert.AreEqual(54321, messageFrame.MessageTypeId);
                 Assert.AreEqual(rawMessage, messageFrame.RawMessage);
