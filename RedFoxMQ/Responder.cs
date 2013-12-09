@@ -49,7 +49,6 @@ namespace RedFoxMQ
         private void OnClientConnected(ISocket socket)
         {
             if (socket == null) throw new ArgumentNullException("socket");
-            if (socket.IsDisconnected) return;
 
             var messageFrameSender = new MessageFrameSender(socket);
             var messageQueue = new MessageQueue(_messageQueueProcessor, messageFrameSender);

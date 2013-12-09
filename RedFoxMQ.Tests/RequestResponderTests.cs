@@ -13,22 +13,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading;
 
 namespace RedFoxMQ.Tests
 {
     [TestFixture]
     public class RequestResponderTests
     {
-        [Test]
-        public void Request_Response_single_message()
+        public static readonly int TestTimeoutInMillis = Debugger.IsAttached ? -1 : 10000;
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Request_Response_single_message(RedFoxTransport transport)
         {
             using (var responder = new Responder())
             using (var requester = new Requester())
             {
-                var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
 
                 responder.Bind(endpoint);
                 requester.ConnectAsync(endpoint).Wait();
@@ -40,13 +46,14 @@ namespace RedFoxMQ.Tests
             }
         }
 
-        [Test]
-        public void Request_Response_two_messages()
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Request_Response_two_messages(RedFoxTransport transport)
         {
             using (var responder = new Responder())
             using (var requester = new Requester())
             {
-                var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
 
                 responder.Bind(endpoint);
                 requester.ConnectAsync(endpoint).Wait();
@@ -59,6 +66,46 @@ namespace RedFoxMQ.Tests
 
                 Assert.AreEqual(messageSent.Text, messageReceived[0].Text);
                 Assert.AreEqual(messageSent.Text, messageReceived[1].Text);
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Responder_ClientConnected_event_fired(RedFoxTransport transport)
+        {
+            using (var responder = new Responder())
+            using (var requester = new Requester())
+            {
+                var eventFired = new ManualResetEventSlim();
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+
+                responder.ClientConnected += s => eventFired.Set();
+                responder.Bind(endpoint);
+
+                requester.ConnectAsync(endpoint).Wait();
+                requester.Disconnect();
+
+                Assert.IsTrue(eventFired.Wait(TestTimeoutInMillis));
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Requester_Disconnected_event_fired(RedFoxTransport transport)
+        {
+            using (var responder = new Responder())
+            using (var requester = new Requester())
+            {
+                var eventFired = new ManualResetEventSlim();
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+
+                responder.Bind(endpoint);
+
+                requester.Disconnected += eventFired.Set;
+                requester.ConnectAsync(endpoint).Wait();
+                requester.Disconnect();
+
+                Assert.IsTrue(eventFired.Wait(TestTimeoutInMillis));
             }
         }
 

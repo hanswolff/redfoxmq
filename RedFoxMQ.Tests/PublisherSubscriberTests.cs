@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using System;
+using System.Diagnostics;
 using System.Threading;
 
 namespace RedFoxMQ.Tests
@@ -24,7 +24,7 @@ namespace RedFoxMQ.Tests
     [TestFixture]
     public class PublisherSubscriberTests
     {
-        public const int Timeout = 200000;
+        public static readonly int TestTimeoutInMillis = Debugger.IsAttached ? -1 : 10000;
 
         [TestCase(RedFoxTransport.Inproc)]
         [TestCase(RedFoxTransport.Tcp)]
@@ -44,7 +44,7 @@ namespace RedFoxMQ.Tests
 
                 publisher.Broadcast(broadcastedMessage);
 
-                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(Timeout));
+                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(TestTimeoutInMillis));
             }
         }
 
@@ -67,8 +67,8 @@ namespace RedFoxMQ.Tests
                 publisher.Broadcast(broadcastedMessage);
                 publisher.Broadcast(broadcastedMessage);
 
-                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(Timeout));
-                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(Timeout));
+                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(TestTimeoutInMillis));
+                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(TestTimeoutInMillis));
             }
         }
 
@@ -91,8 +91,8 @@ namespace RedFoxMQ.Tests
                 var batch = new[] { broadcastedMessage, broadcastedMessage };
                 publisher.Broadcast(batch);
 
-                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(Timeout));
-                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(Timeout));
+                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(TestTimeoutInMillis));
+                Assert.AreEqual(broadcastedMessage, subscriber.TestMustReceiveMessageWithin(TestTimeoutInMillis));
             }
         }
 
@@ -111,7 +111,7 @@ namespace RedFoxMQ.Tests
 
                 subscriber.ConnectAsync(endpoint).Wait();
 
-                Assert.IsTrue(eventFired.Wait(Timeout));
+                Assert.IsTrue(eventFired.Wait(TestTimeoutInMillis));
             }
         }
 
@@ -128,10 +128,32 @@ namespace RedFoxMQ.Tests
                 publisher.Bind(endpoint);
                 publisher.ClientDisconnected += s => eventFired.Set();
 
+                Thread.Sleep(30);
+
                 subscriber.ConnectAsync(endpoint).Wait();
                 subscriber.Disconnect();
 
-                Assert.IsTrue(eventFired.Wait(Timeout));
+                Assert.IsTrue(eventFired.Wait(TestTimeoutInMillis));
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Subscriber_Disconnected_event_fires(RedFoxTransport transport)
+        {
+            using (var publisher = new Publisher())
+            using (var subscriber = new TestSubscriber())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+                var eventFired = new ManualResetEventSlim();
+
+                publisher.Bind(endpoint);
+
+                subscriber.Disconnected += eventFired.Set;
+                subscriber.ConnectAsync(endpoint).Wait();
+                subscriber.Disconnect();
+
+                Assert.IsTrue(eventFired.Wait(TestTimeoutInMillis));
             }
         }
 
@@ -146,7 +168,7 @@ namespace RedFoxMQ.Tests
                 publisher.Bind(endpoint);
 
                 subscriber.ConnectAsync(endpoint).Wait();
-                subscriber.Disconnect(true, TimeSpan.FromMilliseconds(Timeout));
+                subscriber.Disconnect(true, TimeSpan.FromMilliseconds(TestTimeoutInMillis));
             }
         }
 
@@ -168,7 +190,7 @@ namespace RedFoxMQ.Tests
                 var broadcastMessage = new TestMessage { Text = "Hello" };
                 publisher.Broadcast(broadcastMessage);
 
-                Assert.AreEqual(broadcastMessage, subscriber1.TestMustReceiveMessageWithin(Timeout));
+                Assert.AreEqual(broadcastMessage, subscriber1.TestMustReceiveMessageWithin(TestTimeoutInMillis));
 
                 subscriber2.ConnectAsync(endpoint).Wait();
 
@@ -176,8 +198,8 @@ namespace RedFoxMQ.Tests
 
                 publisher.Broadcast(broadcastMessage);
 
-                Assert.AreEqual(broadcastMessage, subscriber1.TestMustReceiveMessageWithin(Timeout));
-                Assert.AreEqual(broadcastMessage, subscriber2.TestMustReceiveMessageWithin(Timeout));
+                Assert.AreEqual(broadcastMessage, subscriber1.TestMustReceiveMessageWithin(TestTimeoutInMillis));
+                Assert.AreEqual(broadcastMessage, subscriber2.TestMustReceiveMessageWithin(TestTimeoutInMillis));
             }
         }
 
