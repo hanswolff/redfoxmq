@@ -20,8 +20,9 @@ namespace RedFoxMQ.Transports
     interface ISocketAccepter
     {
         event Action<ISocket> ClientConnected;
+        event Action<ISocket> ClientDisconnected;
 
-        void Bind(RedFoxEndpoint endpoint, Action<ISocket> onClientConnected = null);
+        void Bind(RedFoxEndpoint endpoint, Action<ISocket> onClientConnected = null, Action<ISocket> onClientDisconnected = null);
         void Unbind(bool waitForExit = true);
     }
 }

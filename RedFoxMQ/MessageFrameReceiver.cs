@@ -29,6 +29,12 @@ namespace RedFoxMQ
         {
             if (socket == null) throw new ArgumentNullException("socket");
             _socket = socket;
+            _socket.Disconnected += SocketDisconnected;
+        }
+
+        private void SocketDisconnected()
+        {
+            Disconnected();
         }
 
         public async Task<MessageFrame> ReceiveAsync(CancellationToken cancellationToken)
@@ -40,6 +46,10 @@ namespace RedFoxMQ
         {
             return MessageFrameStreamReader.ReadMessageFrame(_socket.Stream);
         }
+
+        public bool IsDisconnected { get { return _socket.IsDisconnected; } }
+
+        public event Action Disconnected = () => { };
 
         public void Disconnect()
         {

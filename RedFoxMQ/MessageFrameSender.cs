@@ -31,6 +31,7 @@ namespace RedFoxMQ
         {
             if (socket == null) throw new ArgumentNullException("socket");
             _socket = socket;
+            _socket.Disconnected += SocketDisconnected;
         }
 
         public async Task SendAsync(MessageFrame messageFrame, CancellationToken cancellationToken)
@@ -45,6 +46,15 @@ namespace RedFoxMQ
             if (messageFrames == null) return;
 
             await MessageFrameStreamWriter.WriteMessageFramesAsync(_socket.Stream, messageFrames, cancellationToken);
+        }
+
+        public bool IsDisconnected { get { return _socket.IsDisconnected; } }
+
+        public event Action Disconnected = () => { };
+
+        private void SocketDisconnected()
+        {
+            Disconnected();
         }
 
         public void Disconnect()

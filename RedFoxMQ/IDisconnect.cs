@@ -13,11 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+using System;
 
 namespace RedFoxMQ
 {
-    interface IDisconnect
+    public interface IDisconnect
     {
+        bool IsDisconnected { get; }
+
+        event Action Disconnected;
+
         void Disconnect();
     }
 }

@@ -13,8 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using NUnit.Framework;
 using RedFoxMQ.Transports;
+using System;
 using System.Threading;
 
 namespace RedFoxMQ.Tests
@@ -22,7 +24,7 @@ namespace RedFoxMQ.Tests
     [TestFixture]
     public class PublisherSubscriberTests
     {
-        public const int Timeout = 20000;
+        public const int Timeout = 10000;
 
         [TestCase(RedFoxTransport.Inproc)]
         [TestCase(RedFoxTransport.Tcp)]
@@ -31,8 +33,10 @@ namespace RedFoxMQ.Tests
             using (var publisher = new Publisher())
             using (var subscriber = new TestSubscriber())
             {
-                publisher.Bind(TestHelpers.TcpTestEndpoint);
-                subscriber.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+
+                publisher.Bind(endpoint);
+                subscriber.ConnectAsync(endpoint).Wait();
 
                 Thread.Sleep(30);
 
@@ -51,8 +55,10 @@ namespace RedFoxMQ.Tests
             using (var publisher = new Publisher())
             using (var subscriber = new TestSubscriber())
             {
-                publisher.Bind(TestHelpers.TcpTestEndpoint);
-                subscriber.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+
+                publisher.Bind(endpoint);
+                subscriber.ConnectAsync(endpoint).Wait();
 
                 Thread.Sleep(30);
 
@@ -73,8 +79,10 @@ namespace RedFoxMQ.Tests
             using (var publisher = new Publisher())
             using (var subscriber = new TestSubscriber())
             {
-                publisher.Bind(TestHelpers.TcpTestEndpoint);
-                subscriber.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+
+                publisher.Bind(endpoint);
+                subscriber.ConnectAsync(endpoint).Wait();
 
                 Thread.Sleep(30);
 
@@ -90,14 +98,70 @@ namespace RedFoxMQ.Tests
 
         [TestCase(RedFoxTransport.Inproc)]
         [TestCase(RedFoxTransport.Tcp)]
+        public void Publisher_ClientConnected_event_fires(RedFoxTransport transport)
+        {
+            using (var publisher = new Publisher())
+            using (var subscriber = new TestSubscriber())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+                var eventFired = new ManualResetEventSlim();
+
+                publisher.Bind(endpoint);
+                publisher.ClientConnected += s => eventFired.Set();
+
+                subscriber.ConnectAsync(endpoint).Wait();
+
+                Assert.IsTrue(eventFired.Wait(Timeout));
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Publisher_ClientDisconnected_event_fires(RedFoxTransport transport)
+        {
+            using (var publisher = new Publisher())
+            using (var subscriber = new TestSubscriber())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+                var eventFired = new ManualResetEventSlim();
+
+                publisher.Bind(endpoint);
+                publisher.ClientDisconnected += s => eventFired.Set();
+
+                subscriber.ConnectAsync(endpoint).Wait();
+                subscriber.Disconnect();
+
+                Assert.IsTrue(eventFired.Wait(Timeout));
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Subscriber_Disconnect_doesnt_hang(RedFoxTransport transport)
+        {
+            using (var publisher = new Publisher())
+            using (var subscriber = new TestSubscriber())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+                publisher.Bind(endpoint);
+
+                subscriber.ConnectAsync(endpoint).Wait();
+                subscriber.Disconnect(true, TimeSpan.FromMilliseconds(Timeout));
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
         public void one_subscriber_connects_to_one_publisher_receives_message_then_second_subscriber_connects_both_receive_message(RedFoxTransport transport)
         {
             using (var publisher = new Publisher())
             using (var subscriber1 = new TestSubscriber())
             using (var subscriber2 = new TestSubscriber())
             {
-                publisher.Bind(TestHelpers.TcpTestEndpoint);
-                subscriber1.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+
+                publisher.Bind(endpoint);
+                subscriber1.ConnectAsync(endpoint).Wait();
 
                 Thread.Sleep(30);
 
@@ -106,7 +170,7 @@ namespace RedFoxMQ.Tests
 
                 Assert.AreEqual(broadcastMessage, subscriber1.TestMustReceiveMessageWithin(Timeout));
 
-                subscriber2.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
+                subscriber2.ConnectAsync(endpoint).Wait();
 
                 Thread.Sleep(30);
 

@@ -32,6 +32,10 @@ namespace RedFoxMQ
         private CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
 
+        public bool IsDisconnected { get { return _socket.IsDisconnected; } }
+
+        public event Action Disconnected = () => { };
+
         public async Task ConnectAsync(RedFoxEndpoint endpoint)
         {
             if (_socket != null) throw new InvalidOperationException("Subscriber already connected");
@@ -47,12 +51,18 @@ namespace RedFoxMQ
             _cts = new CancellationTokenSource();
 
             _socket = await SocketFactory.CreateAndConnect(endpoint, timeoutInSeconds);
+            _socket.Disconnected += SocketDisconnected;
 
             if (!_cts.IsCancellationRequested)
             {
                 _messageFrameSender = new MessageFrameSender(_socket);
                 _messageFrameReceiver = new MessageFrameReceiver(_socket);
             }
+        }
+
+        private void SocketDisconnected()
+        {
+            Disconnected();
         }
 
         public async Task<IMessage> Request(IMessage message)

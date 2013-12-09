@@ -13,12 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using RedFoxMQ.Transports;
+using System;
 
 namespace RedFoxMQ
 {
     interface IBindSockets
     {
+        event Action<ISocket> ClientConnected;
+        event Action<ISocket> ClientDisconnected;
+
         void Bind(RedFoxEndpoint endpoint);
         bool Unbind(RedFoxEndpoint endpoint);
     }

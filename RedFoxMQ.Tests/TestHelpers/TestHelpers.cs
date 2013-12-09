@@ -26,6 +26,16 @@ namespace RedFoxMQ.Tests
     {
         public static readonly RedFoxEndpoint TcpTestEndpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", GetFreePort(), null);
 
+        public static RedFoxEndpoint CreateEndpointForTransport(RedFoxTransport transport)
+        {
+            return new RedFoxEndpoint(transport, "localhost", GetFreePort(), null);
+        }
+
+        public static RedFoxEndpoint CreateEndpointForTransport(RedFoxTransport transport, int port)
+        {
+            return new RedFoxEndpoint(transport, "localhost", port, null);
+        }
+
         public static int GetFreePort()
         {
             var ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();

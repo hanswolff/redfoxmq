@@ -18,7 +18,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 
 namespace RedFoxMQ
 {
@@ -28,27 +27,46 @@ namespace RedFoxMQ
         private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
 
         private readonly ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter> _servers;
-        private readonly ConcurrentDictionary<MessageQueue, CancellationTokenSource> _broadcastSockets;
+        private readonly ConcurrentDictionary<ISocket, MessageQueue> _broadcastSockets;
         private readonly MessageQueueProcessor _messageQueueProcessor = new MessageQueueProcessor();
+
+        public event Action<ISocket> ClientConnected = s => { };
+        public event Action<ISocket> ClientDisconnected = s => { };
 
         public Publisher()
         {
             _servers = new ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter>();
-            _broadcastSockets = new ConcurrentDictionary<MessageQueue, CancellationTokenSource>();
+            _broadcastSockets = new ConcurrentDictionary<ISocket, MessageQueue>();
         }
 
         public void Bind(RedFoxEndpoint endpoint)
         {
-            var server = SocketAccepterFactory.CreateAndBind(endpoint, OnClientConnected);
+            var server = SocketAccepterFactory.CreateAndBind(endpoint, OnClientConnected, SocketDisconnected);
             _servers[endpoint] = server;
         }
 
         private void OnClientConnected(ISocket socket)
         {
+            if (socket == null) throw new ArgumentNullException("socket");
+            if (socket.IsDisconnected) return;
+
             var messageFrameSender = new MessageFrameSender(socket);
             var messageQueue = new MessageQueue(_messageQueueProcessor, messageFrameSender);
-            var cancellationTokenSource = new CancellationTokenSource();
-            _broadcastSockets.TryAdd(messageQueue, cancellationTokenSource);
+            
+            if (_broadcastSockets.TryAdd(socket, messageQueue))
+            {
+                ClientConnected(socket);
+            }
+        }
+
+        private void SocketDisconnected(ISocket socket)
+        {
+            MessageQueue messageQueue;
+            if (_broadcastSockets.TryRemove(socket, out messageQueue))
+            {
+                messageQueue.Dispose();
+                ClientDisconnected(socket);
+            }
         }
 
         public bool Unbind(RedFoxEndpoint endpoint)
@@ -64,7 +82,7 @@ namespace RedFoxMQ
         {
             var messageFrame = MessageFrameCreator.CreateFromMessage(message);
 
-            foreach (var messageQueue in _broadcastSockets.Keys)
+            foreach (var messageQueue in _broadcastSockets.Values)
             {
                 messageQueue.Add(messageFrame);
             }
@@ -75,7 +93,7 @@ namespace RedFoxMQ
             if (messages == null) return;
             var messageFrames = messages.Select(message => MessageFrameCreator.CreateFromMessage(message)).ToList();
 
-            foreach (var messageQueue in _broadcastSockets.Keys)
+            foreach (var messageQueue in _broadcastSockets.Values)
             {
                 messageQueue.AddRange(messageFrames);
             }

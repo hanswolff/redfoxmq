@@ -30,8 +30,9 @@ namespace RedFoxMQ.Transports.Tcp
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
 
         public event Action<ISocket> ClientConnected = client => { };
+        public event Action<ISocket> ClientDisconnected = client => { };
 
-        public void Bind(RedFoxEndpoint endpoint, Action<ISocket> onClientConnected = null)
+        public void Bind(RedFoxEndpoint endpoint, Action<ISocket> onClientConnected = null, Action<ISocket> onClientDisconnected = null)
         {
             if (_listener != null || !_stopped.IsSet) 
                 throw new InvalidOperationException("Server already bound, please use Unbind first");
@@ -42,6 +43,8 @@ namespace RedFoxMQ.Transports.Tcp
             _listener = new TcpListener(ipAddress, endpoint.Port);
             if (onClientConnected != null)
                 ClientConnected += onClientConnected;
+            if (onClientDisconnected != null)
+                ClientDisconnected += onClientDisconnected;
 
             _listener.Start();
 
@@ -89,6 +92,7 @@ namespace RedFoxMQ.Transports.Tcp
             try
             {
                 var socket = new TcpSocket(_endpoint, tcpClient);
+                socket.Disconnected += () => ClientDisconnected(socket);
                 ClientConnected(socket);
                 return true;
             }

@@ -37,6 +37,9 @@ namespace RedFoxMQ
             _clientSockets = new ConcurrentDictionary<MessageReceiveLoop, MessageQueue>();
         }
 
+        public event Action<ISocket> ClientConnected = s => { };
+        public event Action<ISocket> ClientDisconnected = s => { };
+
         public void Bind(RedFoxEndpoint endpoint)
         {
             var server = SocketAccepterFactory.CreateAndBind(endpoint, OnClientConnected);
@@ -46,15 +49,35 @@ namespace RedFoxMQ
         private void OnClientConnected(ISocket socket)
         {
             if (socket == null) throw new ArgumentNullException("socket");
+            if (socket.IsDisconnected) return;
 
             var messageFrameSender = new MessageFrameSender(socket);
             var messageQueue = new MessageQueue(_messageQueueProcessor, messageFrameSender);
-
             var messageReceiveLoop = new MessageReceiveLoop(socket);
             messageReceiveLoop.MessageReceived += m => MessageReceivedProcessMessage(m, messageQueue);
             messageReceiveLoop.Start();
 
-            _clientSockets.TryAdd(messageReceiveLoop, messageQueue);
+            socket.Disconnected += () => SocketDisconnected(socket, messageReceiveLoop);
+
+            if (_clientSockets.TryAdd(messageReceiveLoop, messageQueue))
+            {
+                ClientConnected(socket);
+            }
+
+            if (socket.IsDisconnected)
+            {
+                // this is to fix the race condition if socket was disconnected meanwhile
+                SocketDisconnected(socket, messageReceiveLoop);
+            }
+        }
+
+        private void SocketDisconnected(ISocket socket, MessageReceiveLoop receiveLoop)
+        {
+            MessageQueue messageQueue;
+            if (_clientSockets.TryRemove(receiveLoop, out messageQueue))
+            {
+                ClientDisconnected(socket);
+            }
         }
 
         private void MessageReceivedProcessMessage(IMessage requestMessage, MessageQueue messageQueue)

@@ -40,9 +40,22 @@ namespace RedFoxMQ.Transports.Tcp
             _stream = tcpClient.GetStream();
         }
 
+        private volatile bool _isDisconnected;
+        public bool IsDisconnected
+        {
+            get { return _isDisconnected; }
+        }
+
+        public event Action Disconnected = () => { };
+
         public void Disconnect()
         {
+            // TODO: fix race condition
+            if (_isDisconnected) return;
+            _isDisconnected = true;
+
             _tcpClient.Close();
+            Disconnected();
         }
     }
 }

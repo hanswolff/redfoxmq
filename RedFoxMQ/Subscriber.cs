@@ -28,6 +28,10 @@ namespace RedFoxMQ
         private ISocket _socket;
         private MessageReceiveLoop _messageReceiveLoop;
 
+        public bool IsDisconnected { get { return _socket.IsDisconnected; } }
+
+        public event Action Disconnected = () => { };
+
         public event Action<IMessage> MessageReceived = m => { };
 
         public async Task ConnectAsync(RedFoxEndpoint endpoint)
@@ -43,6 +47,7 @@ namespace RedFoxMQ
             _cts = new CancellationTokenSource();
 
             _socket = await SocketFactory.CreateAndConnect(endpoint, timeoutInSeconds);
+            _socket.Disconnected += SocketDisconnected;
 
             if (!_cts.IsCancellationRequested)
             {
@@ -50,6 +55,11 @@ namespace RedFoxMQ
                 _messageReceiveLoop.MessageReceived += m => MessageReceived(m);
                 _messageReceiveLoop.Start();
             }
+        }
+
+        private void SocketDisconnected()
+        {
+            Disconnected();
         }
 
         public void Disconnect()
@@ -71,7 +81,7 @@ namespace RedFoxMQ
         private bool _disposed;
         private readonly object _disposeLock = new object();
 
-        protected virtual void Dispose(bool disposing) 
+        protected virtual void Dispose(bool disposing)
         {
             lock (_disposeLock)
             {

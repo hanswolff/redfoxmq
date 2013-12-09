@@ -48,6 +48,7 @@ namespace RedFoxMQ
         public void Stop(bool waitForExit = true)
         {
             _cts.Cancel(false);
+            _messageFrameReceiver.Disconnect();
 
             if (waitForExit) _stopped.Wait();
         }
