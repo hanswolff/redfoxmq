@@ -25,10 +25,11 @@ namespace RedFoxMQ.Tests
     [Explicit]
     class PublisherSubscriberBenchmarks
     {
+        private const int Count = 20000;
         private const int TimeOut = 30000;
 
-        [TestCase(10000)]
-        public void One_Publisher_One_Subscriber_Single_Broadcasts(int count)
+        [Test]
+        public void One_Publisher_One_Subscriber_Single_Broadcasts()
         {
             using (var publisher = new Publisher())
             using (var subscriber = new Subscriber())
@@ -45,25 +46,25 @@ namespace RedFoxMQ.Tests
                 {
                     Interlocked.Increment(ref receivedCount);
 
-                    if (receivedCount >= count) isMessageReceived.Set();
+                    if (receivedCount >= Count) isMessageReceived.Set();
                 };
 
                 var messageSent = new TestMessage { Text = "Hello" };
 
                 var sw = Stopwatch.StartNew();
-                for (var i = 0; i < count; i++)
+                for (var i = 0; i < Count; i++)
                 {
                     publisher.Broadcast(messageSent);
                 }
                 Assert.IsTrue(isMessageReceived.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, count, count / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, Count, Count / sw.Elapsed.TotalSeconds);
             }
         }
 
-        [TestCase(10000)]
-        public void One_Publisher_One_Subscriber_Batch_Broadcast(int count)
+        [Test]
+        public void One_Publisher_One_Subscriber_Batch_Broadcast()
         {
             using (var publisher = new Publisher())
             using (var subscriber = new Subscriber())
@@ -80,13 +81,13 @@ namespace RedFoxMQ.Tests
                 {
                     Interlocked.Increment(ref receivedCount);
 
-                    if (receivedCount >= count) isMessageReceived.Set();
+                    if (receivedCount >= Count) isMessageReceived.Set();
                 };
 
                 var messageSent = new TestMessage { Text = "Hello" };
 
                 var batch = new List<TestMessage>();
-                for (var i = 0; i < count; i++)
+                for (var i = 0; i < Count; i++)
                     batch.Add(messageSent);
 
                 var sw = Stopwatch.StartNew();
@@ -94,12 +95,12 @@ namespace RedFoxMQ.Tests
                 Assert.IsTrue(isMessageReceived.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, count, count / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, Count, Count / sw.Elapsed.TotalSeconds);
             }
         }
 
-        [TestCase(10000)]
-        public void One_Publisher_Two_Subscribers_Single_Broadcasts(int count)
+        [Test]
+        public void One_Publisher_Two_Subscribers_Single_Broadcasts()
         {
             using (var publisher = new Publisher())
             using (var subscriber1 = new Subscriber())
@@ -117,25 +118,25 @@ namespace RedFoxMQ.Tests
                 subscriber2.MessageReceived += m =>
                 {
                     Interlocked.Increment(ref receivedCount);
-                    if (receivedCount >= count) isMessageReceived.Set();
+                    if (receivedCount >= Count) isMessageReceived.Set();
                 };
 
                 var messageSent = new TestMessage { Text = "Hello" };
 
                 var sw = Stopwatch.StartNew();
-                for (var i = 0; i < count; i++)
+                for (var i = 0; i < Count; i++)
                 {
                     publisher.Broadcast(messageSent);
                 }
                 Assert.IsTrue(isMessageReceived.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, count, count / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, Count, Count / sw.Elapsed.TotalSeconds);
             }
         }
 
-        [TestCase(10000)]
-        public void One_Publisher_Two_Subscribers_Batch_Broadcast(int count)
+        [Test]
+        public void One_Publisher_Two_Subscribers_Batch_Broadcast()
         {
             using (var publisher = new Publisher())
             using (var subscriber1 = new Subscriber())
@@ -153,13 +154,13 @@ namespace RedFoxMQ.Tests
                 subscriber2.MessageReceived += m =>
                 {
                     Interlocked.Increment(ref receivedCount);
-                    if (receivedCount >= count) isMessageReceived.Set();
+                    if (receivedCount >= Count) isMessageReceived.Set();
                 };
 
                 var messageSent = new TestMessage { Text = "Hello" };
 
                 var batch = new List<TestMessage>();
-                for (var i = 0; i < count; i++)
+                for (var i = 0; i < Count; i++)
                     batch.Add(messageSent);
 
                 var sw = Stopwatch.StartNew();
@@ -167,12 +168,12 @@ namespace RedFoxMQ.Tests
                 Assert.IsTrue(isMessageReceived.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, count, count / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, Count, Count / sw.Elapsed.TotalSeconds);
             }
         }
 
-        [TestCase(10000)]
-        public void One_Publisher_Ten_Subscribers_Single_Broadcasts(int count)
+        [Test]
+        public void One_Publisher_Ten_Subscribers_Single_Broadcasts()
         {
             using (var publisher = new Publisher())
             using (var subscriber = new Subscriber())
@@ -197,13 +198,13 @@ namespace RedFoxMQ.Tests
                 subscriber.MessageReceived += m =>
                 {
                     Interlocked.Increment(ref receivedCount);
-                    if (receivedCount >= count) isMessageReceived.Set();
+                    if (receivedCount >= Count) isMessageReceived.Set();
                 };
 
                 var messageSent = new TestMessage { Text = "Hello" };
 
                 var sw = Stopwatch.StartNew();
-                for (var i = 0; i < count; i++)
+                for (var i = 0; i < Count; i++)
                 {
                     publisher.Broadcast(messageSent);
                 }
@@ -212,12 +213,12 @@ namespace RedFoxMQ.Tests
 
                 subscribers.ForEach(sub => sub.Dispose());
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, count, count / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, Count, Count / sw.Elapsed.TotalSeconds);
             }
         }
 
-        [TestCase(10000)]
-        public void One_Publisher_Ten_Subscribers_Batch_Broadcast(int count)
+        [Test]
+        public void One_Publisher_Ten_Subscribers_Batch_Broadcast()
         {
             using (var publisher = new Publisher())
             using (var subscriber = new Subscriber())
@@ -242,13 +243,13 @@ namespace RedFoxMQ.Tests
                 subscriber.MessageReceived += m =>
                 {
                     Interlocked.Increment(ref receivedCount);
-                    if (receivedCount >= count) isMessageReceived.Set();
+                    if (receivedCount >= Count) isMessageReceived.Set();
                 };
 
                 var messageSent = new TestMessage { Text = "Hello" };
 
                 var batch = new List<TestMessage>();
-                for (var i = 0; i < count; i++)
+                for (var i = 0; i < Count; i++)
                     batch.Add(messageSent);
 
                 var sw = Stopwatch.StartNew();
@@ -258,7 +259,7 @@ namespace RedFoxMQ.Tests
 
                 subscribers.ForEach(sub => sub.Dispose());
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, count, count / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, Count, Count / sw.Elapsed.TotalSeconds);
             }
         }
 
