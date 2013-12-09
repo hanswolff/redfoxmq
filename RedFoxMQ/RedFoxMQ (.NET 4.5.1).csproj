@@ -75,6 +75,7 @@
     <Compile Include="MissingMessageDeserializerException.cs" />
     <Compile Include="MissingMessageSerializerException.cs" />
     <Compile Include="Subscriber.cs" />
+    <Compile Include="Transports\SocketMode.cs" />
     <Compile Include="Transports\Tcp\TcpSocket.cs" />
     <Compile Include="Transports\Tcp\IpAddressFromHostTranslator.cs" />
     <Compile Include="IConnectToEndpoint.cs" />
