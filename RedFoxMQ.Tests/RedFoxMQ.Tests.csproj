@@ -48,10 +48,12 @@
     <Compile Include="MessageFromCreatorTests.cs" />
     <Compile Include="PublisherSubscriberBenchmarks.cs" />
     <Compile Include="RequestResponderTests.cs" />
+    <Compile Include="ResponderWorkerSchedulerTests.cs" />
     <Compile Include="ResponderTests.cs" />
     <Compile Include="TestHelpers\TestException.cs" />
     <Compile Include="TestHelpers\ExceptionTestMessage.cs" />
     <Compile Include="TestHelpers\ExceptionTestMessageDeserializer.cs" />
+    <Compile Include="TestHelpers\TestWorkUnit.cs" />
     <Compile Include="TestHelpers\TestMessageDeserializer.cs" />
     <Compile Include="TestHelpers\ExceptionTestMessageSerializer.cs" />
     <Compile Include="TestHelpers\TestMessageSerializer.cs" />

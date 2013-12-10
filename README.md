@@ -1,14 +1,20 @@
 ## RedFoxMQ
 
 RedFoxMQ is a .NET in-memory message queue that uses a simple TCP transport. It is fairly low-level and
-provides full control over message serialization / deserialization.
+provides full control over message serialization / de-serialization.
 
 #### Supported Features
 
 - Publisher / Subscriber scenario
 - Request / Response scenario
-- TCP transport or InProc transport
+- TCP / InProc transport
 - message batching
+
+#### Planned Features
+
+- Response work unit scheduler for Responder
+- ServiceBus implementation
+- shared memory transport for faster inter-process communication
 
 #### Usage Example
 
@@ -27,7 +33,7 @@ The easiest way is to look at the unit tests. They are a good source of examples
 
                 responder.Bind(endpoint);
                 requester.ConnectAsync(endpoint).Wait();
-
+				
                 var messageSent = new TestMessage { Text = "Hello" };
                 var messageReceived = (TestMessage)requester.Request(messageSent).Result;
 
@@ -75,7 +81,7 @@ The message serialization / deserialization are like:
 
 I recommend to use [Protocol Buffers](https://code.google.com/p/protobuf-net/)
 for message serialization, but it is entirely up to you!
-	
+
 #### Contact
 
 Please let me know if there are bugs or if you have suggestions how to improve the code.
