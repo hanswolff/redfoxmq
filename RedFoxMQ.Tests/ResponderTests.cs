@@ -25,7 +25,7 @@ namespace RedFoxMQ.Tests
         [Test]
         public void responders_bind_same_endpoint_twice_fails()
         {
-            using (var responder = new Responder())
+            using (var responder = TestHelpers.CreateTestResponder())
             {
                 var endpoint = new RedFoxEndpoint("/path");
                 responder.Bind(endpoint);
@@ -36,7 +36,7 @@ namespace RedFoxMQ.Tests
         [Test]
         public void responder_can_bind_multiple_different_endpoints()
         {
-            using (var responder = new Responder())
+            using (var responder = TestHelpers.CreateTestResponder())
             {
                 responder.Bind(new RedFoxEndpoint("/path1"));
                 responder.Bind(new RedFoxEndpoint("/path2"));
@@ -46,13 +46,13 @@ namespace RedFoxMQ.Tests
         [Test]
         public void responder_dispose_unbinds_endpoints()
         {
-            using (var responder = new Responder())
+            using (var responder = TestHelpers.CreateTestResponder())
             {
                 responder.Bind(new RedFoxEndpoint("/path1"));
                 responder.Bind(new RedFoxEndpoint("/path2"));
             }
 
-            using (var responder = new Responder())
+            using (var responder = TestHelpers.CreateTestResponder())
             {
                 responder.Bind(new RedFoxEndpoint("/path1"));
                 responder.Bind(new RedFoxEndpoint("/path2"));
@@ -62,8 +62,8 @@ namespace RedFoxMQ.Tests
         [Test]
         public void two_responders_same_endpoint_fails()
         {
-            using (var responder1 = new Responder())
-            using (var responder2 = new Responder())
+            using (var responder1 = TestHelpers.CreateTestResponder())
+            using (var responder2 = TestHelpers.CreateTestResponder())
             {
                 var endpoint = new RedFoxEndpoint("/path");
                 responder1.Bind(endpoint);

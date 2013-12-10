@@ -13,25 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+using System;
 
-using System.Threading;
-
-// ReSharper disable once CheckNamespace
-namespace RedFoxMQ.Tests
+namespace RedFoxMQ
 {
-    class TestWorkUnit : IResponderWorkUnit
+    public class ResponderWorkUnitFactory : IResponderWorkUnitFactory
     {
-        private readonly int _sleepDelay;
+        private readonly Func<IMessage, IResponderWorkUnit> _factory;
 
-        public TestWorkUnit(int sleepDelay)
+        public ResponderWorkUnitFactory(Func<IMessage, IResponderWorkUnit> factory)
         {
-            _sleepDelay = sleepDelay;
+            if (factory == null) throw new ArgumentNullException("factory");
+            _factory = factory;
         }
 
-        public IMessage GetResponse(object state)
+        public IResponderWorkUnit CreateWorkUnit(IMessage requestMessage)
         {
-            Thread.Sleep(_sleepDelay);
-            return new TestMessage();
+            return _factory(requestMessage);
         }
     }
 }

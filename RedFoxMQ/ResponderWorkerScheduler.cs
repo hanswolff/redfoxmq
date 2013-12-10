@@ -24,7 +24,7 @@ namespace RedFoxMQ
         private readonly int _minThreads;
         private readonly int _maxThreads;
 
-        private readonly BlockingCollection<IResponderWorkUnit> _workUnits = new BlockingCollection<IResponderWorkUnit>();
+        private readonly BlockingCollection<ResponderWorkUnitWithState> _workUnits = new BlockingCollection<ResponderWorkUnitWithState>();
         private readonly ConcurrentDictionary<Guid, Thread> _threads = new ConcurrentDictionary<Guid, Thread>();
 
         private int _currentWorkerThreadCount;
@@ -39,8 +39,8 @@ namespace RedFoxMQ
             get { return _currentBusyThreadCount; }
         }
 
-        public event Action<IResponderWorkUnit, IMessage> WorkUnitCompleted = (wu, m) => { };
-        public event Action<IResponderWorkUnit, Exception> WorkUnitException = (wu, e) => { };
+        public event Action<IResponderWorkUnit, object, IMessage> WorkUnitCompleted = (wu, s, m) => { };
+        public event Action<IResponderWorkUnit, object, Exception> WorkUnitException = (wu, s, e) => { };
 
         private TimeSpan _maxIdleTime;
         /// <summary>
@@ -97,8 +97,8 @@ namespace RedFoxMQ
             {
                 do
                 {
-                    var workUnit = TryGetWorkUnit(cancellationToken);
-                    if (workUnit == null) continue;
+                    ResponderWorkUnitWithState workUnitWithState;
+                    if (!TryGetWorkUnit(out workUnitWithState, cancellationToken)) continue;
 
                     Interlocked.Increment(ref _currentBusyThreadCount);
                     try
@@ -106,16 +106,16 @@ namespace RedFoxMQ
                         IMessage response = null;
                         try
                         {
-                            response = workUnit.GetResponse();
+                            response = workUnitWithState.WorkUnit.GetResponse(workUnitWithState.State);
                         }
                         catch (Exception ex)
                         {
-                            WorkUnitException(workUnit, ex);
+                            WorkUnitException(workUnitWithState.WorkUnit, workUnitWithState.State, ex);
                         }
 
                         if (response != null)
                         {
-                            WorkUnitCompleted(workUnit, response);
+                            WorkUnitCompleted(workUnitWithState.WorkUnit, workUnitWithState.State, response);
                         }
                     }
                     catch
@@ -133,11 +133,9 @@ namespace RedFoxMQ
             }
         }
 
-        private IResponderWorkUnit TryGetWorkUnit(CancellationToken cancellationToken)
+        private bool TryGetWorkUnit(out ResponderWorkUnitWithState workUnitWithState, CancellationToken cancellationToken)
         {
-            IResponderWorkUnit workUnit;
-            _workUnits.TryTake(out workUnit, (int)MaxIdleTime.TotalMilliseconds, cancellationToken);
-            return workUnit;
+            return _workUnits.TryTake(out workUnitWithState, (int)MaxIdleTime.TotalMilliseconds, cancellationToken);
         }
 
         private bool ShutdownTaskIfNotNeeded(Guid threadId)
@@ -157,12 +155,12 @@ namespace RedFoxMQ
             return true;
         }
 
-        public void AddWorkUnit(IResponderWorkUnit workUnit)
+        public void AddWorkUnit(IResponderWorkUnit workUnit, object state)
         {
             if (workUnit == null) throw new ArgumentNullException("workUnit");
             if (_disposed) throw new ObjectDisposedException(GetType().FullName);
 
-            _workUnits.TryAdd(workUnit);
+            _workUnits.TryAdd(new ResponderWorkUnitWithState(workUnit, state));
 
             var workerThreadCount = _currentWorkerThreadCount;
             if (workerThreadCount == 0 || (_currentBusyThreadCount == workerThreadCount && workerThreadCount < _maxThreads))

@@ -19,6 +19,5 @@ namespace RedFoxMQ
 {
     interface IResponder : IBindSockets, IDisposable
     {
-        event Func<IMessage, IMessage> ProcessMessage;
     }
 }

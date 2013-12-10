@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
+using System.Threading;
 using RedFoxMQ.Transports;
 using System;
 using System.Collections.Concurrent;
@@ -28,13 +30,18 @@ namespace RedFoxMQ
         private readonly ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter> _servers;
         private readonly ConcurrentDictionary<MessageReceiveLoop, MessageQueue> _clientSockets;
         private readonly MessageQueueProcessor _messageQueueProcessor = new MessageQueueProcessor();
+        private readonly IResponderWorkUnitFactory _responderWorkUnitFactory;
+        private readonly ResponderWorkerScheduler _scheduler;
 
-        public event Func<IMessage, IMessage> ProcessMessage = request => request;
-
-        public Responder()
+        public Responder(IResponderWorkUnitFactory responderWorkUnitFactory, int minThreads = 1, int maxThreads = 1)
         {
+            if (responderWorkUnitFactory == null) throw new ArgumentNullException("responderWorkUnitFactory");
+            _responderWorkUnitFactory = responderWorkUnitFactory;
+
             _servers = new ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter>();
             _clientSockets = new ConcurrentDictionary<MessageReceiveLoop, MessageQueue>();
+            _scheduler = new ResponderWorkerScheduler(minThreads, maxThreads);
+            _scheduler.WorkUnitCompleted += SchedulerWorkUnitCompleted;
         }
 
         public event Action<ISocket> ClientConnected = s => { };
@@ -85,10 +92,18 @@ namespace RedFoxMQ
             if (requestMessage == null) throw new ArgumentNullException("requestMessage");
             if (messageQueue == null) throw new ArgumentNullException("messageQueue");
 
-            var response = ProcessMessage(requestMessage);
+            var workUnit = _responderWorkUnitFactory.CreateWorkUnit(requestMessage);
+            _scheduler.AddWorkUnit(workUnit, messageQueue);
+        }
 
-            var responseFrame = MessageFrameCreator.CreateFromMessage(response);
+        private void SchedulerWorkUnitCompleted(IResponderWorkUnit workUnit, object state, IMessage responseMessage)
+        {
+            var messageQueue = (MessageQueue) state;
+            var responseFrame = MessageFrameCreator.CreateFromMessage(responseMessage);
             messageQueue.Add(responseFrame);
+
+            // TODO: pass cancellation token
+            messageQueue.SendFromQueueAsync(new CancellationToken(false)).Wait();
         }
 
         public bool Unbind(RedFoxEndpoint endpoint)

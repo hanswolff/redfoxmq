@@ -64,6 +64,12 @@ namespace RedFoxMQ.Tests
             return result;
         }
 
+        public static Responder CreateTestResponder(int sleepDelay = 0)
+        {
+            var factory = new ResponderWorkUnitFactory(m => new TestWorkUnit(sleepDelay));
+            return new Responder(factory);
+        }
+
         public static void InitializeMessageSerialization()
         {
             MessageSerialization.Instance.RegisterSerializer(TestMessage.TypeId, new TestMessageSerializer());

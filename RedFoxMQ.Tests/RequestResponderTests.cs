@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using System.Collections.Generic;
@@ -31,7 +30,7 @@ namespace RedFoxMQ.Tests
         [TestCase(RedFoxTransport.Tcp)]
         public void Request_Response_single_message(RedFoxTransport transport)
         {
-            using (var responder = new Responder())
+            using (var responder = TestHelpers.CreateTestResponder())
             using (var requester = new Requester())
             {
                 var endpoint = TestHelpers.CreateEndpointForTransport(transport);
@@ -39,9 +38,18 @@ namespace RedFoxMQ.Tests
                 responder.Bind(endpoint);
                 requester.ConnectAsync(endpoint).Wait();
 
-                var messageSent = new TestMessage { Text = "Hello" };
-                var messageReceived = (TestMessage)requester.Request(messageSent).Result;
+                TestMessage messageReceived = null;
+                var signal = new ManualResetEventSlim();
+                requester.ResponseReceived += m =>
+                {
+                    messageReceived = (TestMessage)m;
+                    signal.Set();
+                };
 
+                var messageSent = new TestMessage { Text = "Hello" };
+                requester.RequestAsync(messageSent);
+
+                signal.Wait(TestTimeoutInMillis);
                 Assert.AreEqual(messageSent.Text, messageReceived.Text);
             }
         }
@@ -50,7 +58,7 @@ namespace RedFoxMQ.Tests
         [TestCase(RedFoxTransport.Tcp)]
         public void Request_Response_two_messages(RedFoxTransport transport)
         {
-            using (var responder = new Responder())
+            using (var responder = TestHelpers.CreateTestResponder())
             using (var requester = new Requester())
             {
                 var endpoint = TestHelpers.CreateEndpointForTransport(transport);
@@ -58,14 +66,21 @@ namespace RedFoxMQ.Tests
                 responder.Bind(endpoint);
                 requester.ConnectAsync(endpoint).Wait();
 
-                var messageReceived = new List<TestMessage>();
+                var messagesReceived = new List<TestMessage>();
+                var signal = new ManualResetEventSlim();
+                requester.ResponseReceived += m =>
+                {
+                    messagesReceived.Add((TestMessage)m);
+                    if (messagesReceived.Count == 2) signal.Set();
+                };
 
                 var messageSent = new TestMessage { Text = "Hello" };
-                messageReceived.Add((TestMessage)requester.Request(messageSent).Result);
-                messageReceived.Add((TestMessage)requester.Request(messageSent).Result);
+                requester.RequestAsync(messageSent);
+                requester.RequestAsync(messageSent);
 
-                Assert.AreEqual(messageSent.Text, messageReceived[0].Text);
-                Assert.AreEqual(messageSent.Text, messageReceived[1].Text);
+                signal.Wait(TestTimeoutInMillis);
+                Assert.AreEqual(messageSent.Text, messagesReceived[0].Text);
+                Assert.AreEqual(messageSent.Text, messagesReceived[1].Text);
             }
         }
 
@@ -73,7 +88,7 @@ namespace RedFoxMQ.Tests
         [TestCase(RedFoxTransport.Tcp)]
         public void Responder_ClientConnected_event_fired(RedFoxTransport transport)
         {
-            using (var responder = new Responder())
+            using (var responder = TestHelpers.CreateTestResponder())
             using (var requester = new Requester())
             {
                 var eventFired = new ManualResetEventSlim();
@@ -93,7 +108,7 @@ namespace RedFoxMQ.Tests
         [TestCase(RedFoxTransport.Tcp)]
         public void Requester_Disconnected_event_fired(RedFoxTransport transport)
         {
-            using (var responder = new Responder())
+            using (var responder = TestHelpers.CreateTestResponder())
             using (var requester = new Requester())
             {
                 var eventFired = new ManualResetEventSlim();
