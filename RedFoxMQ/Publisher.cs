@@ -48,7 +48,6 @@ namespace RedFoxMQ
         private void OnClientConnected(ISocket socket)
         {
             if (socket == null) throw new ArgumentNullException("socket");
-            if (socket.IsDisconnected) return;
 
             var messageFrameSender = new MessageFrameSender(socket);
             var messageQueue = new MessageQueue(_messageQueueProcessor, messageFrameSender);
@@ -56,6 +55,12 @@ namespace RedFoxMQ
             if (_broadcastSockets.TryAdd(socket, messageQueue))
             {
                 ClientConnected(socket);
+            }
+
+            if (socket.IsDisconnected)
+            {
+                // this is to fix the race condition if socket was disconnected meanwhile
+                SocketDisconnected(socket);
             }
         }
 

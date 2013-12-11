@@ -125,10 +125,8 @@ namespace RedFoxMQ.Tests
                 var endpoint = TestHelpers.CreateEndpointForTransport(transport);
                 var eventFired = new ManualResetEventSlim();
 
-                publisher.Bind(endpoint);
                 publisher.ClientDisconnected += s => eventFired.Set();
-
-                Thread.Sleep(30);
+                publisher.Bind(endpoint);
 
                 subscriber.ConnectAsync(endpoint).Wait();
                 subscriber.Disconnect();

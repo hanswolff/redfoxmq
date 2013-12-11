@@ -28,6 +28,7 @@ namespace RedFoxMQ.Transports.Tcp
         private TcpListener _listener;
 
         private CancellationTokenSource _cts = new CancellationTokenSource();
+        private readonly ManualResetEventSlim _started = new ManualResetEventSlim(false);
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
 
         public event Action<ISocket> ClientConnected = client => { };
@@ -48,6 +49,9 @@ namespace RedFoxMQ.Transports.Tcp
             if (onClientDisconnected != null)
                 ClientDisconnected += onClientDisconnected;
 
+            _stopped.Reset();
+            _started.Reset();
+
             _listener.Start();
 
             _cts = new CancellationTokenSource();
@@ -62,7 +66,7 @@ namespace RedFoxMQ.Transports.Tcp
 
         private async Task AcceptLoopAsync(SocketMode socketMode, CancellationToken cancellationToken)
         {
-            _stopped.Reset();
+            _started.Set();
 
             try
             {
@@ -74,12 +78,12 @@ namespace RedFoxMQ.Transports.Tcp
                     var socket = new TcpSocket(_endpoint, tcpClient);
                     socket.Disconnected += () => ClientDisconnected(socket);
 
+                    TryFireClientConnectedEvent(socket);
+
                     if (socketMode == SocketMode.WriteOnly)
                     {
                         var task = ReadLoopAsyncToDetectDisconnection(socket, tcpClient, cancellationToken);
                     }
-
-                    TryFireClientConnectedEvent(socket);
                 }
             }
             catch (OperationCanceledException)
@@ -152,13 +156,12 @@ namespace RedFoxMQ.Transports.Tcp
         public void Unbind(bool waitForExit = true)
         {
             var listener = Interlocked.Exchange(ref _listener, null);
-            if (listener != null)
-            {
-                _cts.Cancel(false);
-                listener.Stop();
+            if (listener == null) return;
 
-                if (waitForExit) _stopped.Wait();
-            }
+            _cts.Cancel(false);
+            listener.Stop();
+
+            if (waitForExit) _stopped.Wait();
         }
     }
 }
