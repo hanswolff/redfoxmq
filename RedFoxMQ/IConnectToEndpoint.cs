@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 using RedFoxMQ.Transports;
+using System;
 using System.Threading.Tasks;
 
 namespace RedFoxMQ
@@ -21,9 +22,9 @@ namespace RedFoxMQ
     interface IConnectToEndpoint
     {
         void Connect(RedFoxEndpoint endpoint);
-        void Connect(RedFoxEndpoint endpoint, int timeoutInSeconds);
+        void Connect(RedFoxEndpoint endpoint, TimeSpan timeout);
 
         Task ConnectAsync(RedFoxEndpoint endpoint);
-        Task ConnectAsync(RedFoxEndpoint endpoint, int timeoutInSeconds);
+        Task ConnectAsync(RedFoxEndpoint endpoint, TimeSpan timeout);
     }
 }

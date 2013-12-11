@@ -24,62 +24,63 @@ namespace RedFoxMQ.Transports
 {
     class SocketFactory
     {
-        public async Task<ISocket> CreateAndConnect(RedFoxEndpoint endpoint, int timeoutInSeconds = 0)
+        public async Task<ISocket> CreateAndConnect(RedFoxEndpoint endpoint)
+        {
+            return await CreateAndConnect(endpoint, TimeSpan.FromMilliseconds(-1));
+        }
+
+        public async Task<ISocket> CreateAndConnect(RedFoxEndpoint endpoint, TimeSpan timeout)
+        {
+            return await CreateAndConnect(endpoint, timeout, new CancellationToken());
+        }
+
+        public async Task<ISocket> CreateAndConnect(RedFoxEndpoint endpoint, TimeSpan timeout, CancellationToken cancellationToken)
         {
             switch (endpoint.Transport)
             {
                 case RedFoxTransport.Inproc:
-                    return CreateInProcSocket(endpoint);
+                    return CreateInProcSocket(endpoint, cancellationToken);
                 case RedFoxTransport.Tcp:
-                    return await CreateTcpSocket(endpoint, timeoutInSeconds);
+                    return await CreateTcpSocket(endpoint, timeout, cancellationToken);
                 default:
                     throw new NotSupportedException(String.Format("Transport {0} not supported", endpoint.Transport));
             }
         }
 
-        private static ISocket CreateInProcSocket(RedFoxEndpoint endpoint)
+        private static ISocket CreateInProcSocket(RedFoxEndpoint endpoint, CancellationToken cancellationToken)
         {
             return InProcessEndpoints.Instance.Connect(endpoint);
         }
 
-        private static async Task<ISocket> CreateTcpSocket(RedFoxEndpoint endpoint, int timeoutInSeconds)
+        private static async Task<ISocket> CreateTcpSocket(RedFoxEndpoint endpoint, TimeSpan timeout, CancellationToken cancellationToken)
         {
             var tcpClient = new TcpClient { ReceiveBufferSize = 65536, SendBufferSize = 65536};
-            await ConnecTcpSocketAsync(tcpClient, endpoint.Host, endpoint.Port, timeoutInSeconds);
+            await ConnectTcpSocketAsync(tcpClient, endpoint.Host, endpoint.Port, timeout, cancellationToken);
 
             return new TcpSocket(endpoint, tcpClient);
         }
 
-        private static async Task ConnecTcpSocketAsync(TcpClient client, string hostName, int port, int timeoutInSeconds)
+        private static async Task ConnectTcpSocketAsync(TcpClient client, string hostName, int port, TimeSpan timeout, CancellationToken cancellationToken)
         {
-            var tcs = new TaskCompletionSource<bool>();
-
-            Timer timer = null;
-            if (timeoutInSeconds != 0)
+            await Task.Run(() =>
             {
-                timer = new Timer(
-                    t => tcs.TrySetException(new TimeoutException(String.Format("Timeout occured trying to connect to {0}:{1}", hostName, port))),
-                    null, TimeSpan.FromSeconds(timeoutInSeconds), TimeSpan.FromMilliseconds(-1));
-            }
-
-            var task = Task.Factory.FromAsync(
-                client.BeginConnect,
-                ar =>
+                var ar = client.BeginConnect(hostName, port, null, null);
+                var wh = ar.AsyncWaitHandle;
+                try
                 {
-                    if (timer != null) timer.Dispose();
-                    if (tcs.TrySetResult(true))
+                    if (!ar.AsyncWaitHandle.WaitOne(timeout, false))
                     {
-                        try
-                        {
-                            client.EndConnect(ar);
-                        }
-                        catch (ObjectDisposedException) { }
+                        client.Close();
+                        throw new TimeoutException();
                     }
 
-                },
-                hostName, port, null);
-
-            await tcs.Task;
+                    client.EndConnect(ar);
+                }
+                finally
+                {
+                    wh.Close();
+                }  
+            }, cancellationToken);
         }
     }
 }

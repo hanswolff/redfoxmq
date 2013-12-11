@@ -48,20 +48,20 @@ namespace RedFoxMQ
 
             _cts = new CancellationTokenSource();
 
-            await ConnectAsync(endpoint, 0);
+            await ConnectAsync(endpoint, TimeSpan.FromMilliseconds(-1));
         }
 
-        public void Connect(RedFoxEndpoint endpoint, int timeoutInSeconds)
+        public void Connect(RedFoxEndpoint endpoint, TimeSpan timeout)
         {
-            ConnectAsync(endpoint, timeoutInSeconds).Wait();
+            ConnectAsync(endpoint, timeout).Wait();
         }
 
-        public async Task ConnectAsync(RedFoxEndpoint endpoint, int timeoutInSeconds)
+        public async Task ConnectAsync(RedFoxEndpoint endpoint, TimeSpan timeout)
         {
             if (_socket != null) throw new InvalidOperationException("Subscriber already connected");
             _cts = new CancellationTokenSource();
 
-            _socket = await SocketFactory.CreateAndConnect(endpoint, timeoutInSeconds);
+            _socket = await SocketFactory.CreateAndConnect(endpoint, timeout);
             _socket.Disconnected += SocketDisconnected;
 
             if (!_cts.IsCancellationRequested)

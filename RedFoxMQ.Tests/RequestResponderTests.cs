@@ -103,6 +103,9 @@ namespace RedFoxMQ.Tests
                 responder.Bind(endpoint);
 
                 requester.Connect(endpoint);
+
+                Thread.Sleep(30);
+
                 requester.Disconnect();
 
                 Assert.IsTrue(eventFired.Wait(TestTimeoutInMillis));
@@ -123,6 +126,9 @@ namespace RedFoxMQ.Tests
 
                 requester.Disconnected += eventFired.Set;
                 requester.Connect(endpoint);
+
+                Thread.Sleep(30);
+
                 requester.Disconnect();
 
                 Assert.IsTrue(eventFired.Wait(TestTimeoutInMillis));

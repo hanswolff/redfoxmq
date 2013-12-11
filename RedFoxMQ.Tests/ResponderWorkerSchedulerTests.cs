@@ -67,11 +67,11 @@ namespace RedFoxMQ.Tests
         [Test]
         public void ResponderWorkerScheduler_CurrentBusyThreadCount_decreased_when_back_idle()
         {
-            var workUnit = new TestWorkUnit(new TestMessage(), 30);
+            var workUnit = new TestWorkUnit(new TestMessage(), 60);
             using (var scheduler = new ResponderWorkerScheduler(1, 1))
             {
                 scheduler.AddWorkUnit(workUnit, null);
-                Thread.Sleep(15);
+                Thread.Sleep(30);
                 Assert.AreEqual(1, scheduler.CurrentBusyThreadCount);
                 Thread.Sleep(60);
                 Assert.AreEqual(0, scheduler.CurrentBusyThreadCount);

@@ -27,7 +27,7 @@ namespace RedFoxMQ
         private readonly MessageFrameReceiver _messageFrameReceiver;
 
         private CancellationTokenSource _cts = new CancellationTokenSource();
-        private readonly ManualResetEventSlim _started = new ManualResetEventSlim(false);
+        private TaskCompletionSource<bool> _started = new TaskCompletionSource<bool>();
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
 
         public event Action<IMessage> MessageReceived = m => { };
@@ -46,9 +46,9 @@ namespace RedFoxMQ
         {
             _cts = new CancellationTokenSource();
 
-            _started.Reset();
+            _started = new TaskCompletionSource<bool>();
             StartReceiveLoop();
-            _started.Wait();
+            _started.Task.Wait();
         }
 
         public void Stop(bool waitForExit = true)
@@ -66,7 +66,7 @@ namespace RedFoxMQ
         private void ReceiveLoop(CancellationToken cancellationToken)
         {
             _stopped.Reset();
-            _started.Set();
+            _started.SetResult(true);
 
             try
             {
@@ -101,7 +101,6 @@ namespace RedFoxMQ
             finally
             {
                 _stopped.Set();
-                _started.Reset();
             }
         }
 
