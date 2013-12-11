@@ -56,7 +56,7 @@ namespace RedFoxMQ
             if (_socket != null) throw new InvalidOperationException("Subscriber already connected");
             _cts = new CancellationTokenSource();
 
-            _socket = await SocketFactory.CreateAndConnect(endpoint, timeout);
+            _socket = await SocketFactory.CreateAndConnectAsync(endpoint, timeout);
             _socket.Disconnected += SocketDisconnected;
 
             if (!_cts.IsCancellationRequested)

@@ -24,22 +24,22 @@ namespace RedFoxMQ.Transports
 {
     class SocketFactory
     {
-        public async Task<ISocket> CreateAndConnect(RedFoxEndpoint endpoint)
+        public async Task<ISocket> CreateAndConnectAsync(RedFoxEndpoint endpoint)
         {
-            return await CreateAndConnect(endpoint, TimeSpan.FromMilliseconds(-1));
+            return await CreateAndConnectAsync(endpoint, TimeSpan.FromMilliseconds(-1));
         }
 
-        public async Task<ISocket> CreateAndConnect(RedFoxEndpoint endpoint, TimeSpan timeout)
+        public async Task<ISocket> CreateAndConnectAsync(RedFoxEndpoint endpoint, TimeSpan timeout)
         {
-            return await CreateAndConnect(endpoint, timeout, new CancellationToken());
+            return await CreateAndConnectAsync(endpoint, timeout, new CancellationToken());
         }
 
-        public async Task<ISocket> CreateAndConnect(RedFoxEndpoint endpoint, TimeSpan timeout, CancellationToken cancellationToken)
+        public async Task<ISocket> CreateAndConnectAsync(RedFoxEndpoint endpoint, TimeSpan timeout, CancellationToken cancellationToken)
         {
             switch (endpoint.Transport)
             {
                 case RedFoxTransport.Inproc:
-                    return CreateInProcSocket(endpoint, cancellationToken);
+                    return CreateInProcSocket(endpoint);
                 case RedFoxTransport.Tcp:
                     return await CreateTcpSocket(endpoint, timeout, cancellationToken);
                 default:
@@ -47,7 +47,7 @@ namespace RedFoxMQ.Transports
             }
         }
 
-        private static ISocket CreateInProcSocket(RedFoxEndpoint endpoint, CancellationToken cancellationToken)
+        private static ISocket CreateInProcSocket(RedFoxEndpoint endpoint)
         {
             return InProcessEndpoints.Instance.Connect(endpoint);
         }

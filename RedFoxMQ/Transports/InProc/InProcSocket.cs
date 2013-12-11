@@ -46,5 +46,10 @@ namespace RedFoxMQ.Transports.InProc
 
             Disconnected();
         }
+
+        public override string ToString()
+        {
+            return GetType().Name + ", " + Endpoint;
+        }
     }
 }

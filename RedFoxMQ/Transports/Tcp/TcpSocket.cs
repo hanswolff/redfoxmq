@@ -31,10 +31,12 @@ namespace RedFoxMQ.Transports.Tcp
 
         public RedFoxEndpoint Endpoint { get; private set; }
 
+        private readonly System.Net.EndPoint _remoteEndPoint;
         public TcpSocket(RedFoxEndpoint endpoint, TcpClient tcpClient)
         {
             if (tcpClient == null) throw new ArgumentNullException("tcpClient");
             _tcpClient = tcpClient;
+            _remoteEndPoint = tcpClient.Client.RemoteEndPoint;
 
             Endpoint = endpoint;
             _stream = tcpClient.GetStream();
@@ -56,6 +58,11 @@ namespace RedFoxMQ.Transports.Tcp
 
             _tcpClient.Close();
             Disconnected();
+        }
+
+        public override string ToString()
+        {
+            return GetType().Name + ", RemoteEndpoint: " + _remoteEndPoint;
         }
     }
 }
