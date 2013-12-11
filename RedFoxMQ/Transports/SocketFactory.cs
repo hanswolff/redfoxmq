@@ -17,31 +17,24 @@ using RedFoxMQ.Transports.InProc;
 using RedFoxMQ.Transports.Tcp;
 using System;
 using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace RedFoxMQ.Transports
 {
     class SocketFactory
     {
-        public async Task<ISocket> CreateAndConnectAsync(RedFoxEndpoint endpoint)
+        public ISocket CreateAndConnectAsync(RedFoxEndpoint endpoint)
         {
-            return await CreateAndConnectAsync(endpoint, TimeSpan.FromMilliseconds(-1));
+            return CreateAndConnectAsync(endpoint, TimeSpan.FromMilliseconds(-1));
         }
 
-        public async Task<ISocket> CreateAndConnectAsync(RedFoxEndpoint endpoint, TimeSpan timeout)
-        {
-            return await CreateAndConnectAsync(endpoint, timeout, new CancellationToken());
-        }
-
-        public async Task<ISocket> CreateAndConnectAsync(RedFoxEndpoint endpoint, TimeSpan timeout, CancellationToken cancellationToken)
+        public ISocket CreateAndConnectAsync(RedFoxEndpoint endpoint, TimeSpan timeout)
         {
             switch (endpoint.Transport)
             {
                 case RedFoxTransport.Inproc:
                     return CreateInProcSocket(endpoint);
                 case RedFoxTransport.Tcp:
-                    return await CreateTcpSocket(endpoint, timeout, cancellationToken);
+                    return CreateTcpSocket(endpoint, timeout);
                 default:
                     throw new NotSupportedException(String.Format("Transport {0} not supported", endpoint.Transport));
             }
@@ -52,35 +45,32 @@ namespace RedFoxMQ.Transports
             return InProcessEndpoints.Instance.Connect(endpoint);
         }
 
-        private static async Task<ISocket> CreateTcpSocket(RedFoxEndpoint endpoint, TimeSpan timeout, CancellationToken cancellationToken)
+        private static ISocket CreateTcpSocket(RedFoxEndpoint endpoint, TimeSpan timeout)
         {
-            var tcpClient = new TcpClient { ReceiveBufferSize = 65536, SendBufferSize = 65536};
-            await ConnectTcpSocketAsync(tcpClient, endpoint.Host, endpoint.Port, timeout, cancellationToken);
+            var tcpClient = new TcpClient { ReceiveBufferSize = 65536, SendBufferSize = 65536 };
+            ConnectTcpSocket(tcpClient, endpoint.Host, endpoint.Port, timeout);
 
             return new TcpSocket(endpoint, tcpClient);
         }
 
-        private static async Task ConnectTcpSocketAsync(TcpClient client, string hostName, int port, TimeSpan timeout, CancellationToken cancellationToken)
+        private static void ConnectTcpSocket(TcpClient client, string hostName, int port, TimeSpan timeout)
         {
-            await Task.Run(() =>
+            var ar = client.BeginConnect(hostName, port, null, null);
+            var wh = ar.AsyncWaitHandle;
+            try
             {
-                var ar = client.BeginConnect(hostName, port, null, null);
-                var wh = ar.AsyncWaitHandle;
-                try
+                if (!ar.AsyncWaitHandle.WaitOne(timeout, false))
                 {
-                    if (!ar.AsyncWaitHandle.WaitOne(timeout, false))
-                    {
-                        client.Close();
-                        throw new TimeoutException();
-                    }
-
-                    client.EndConnect(ar);
+                    client.Close();
+                    throw new TimeoutException();
                 }
-                finally
-                {
-                    wh.Close();
-                }  
-            }, cancellationToken);
+
+                client.EndConnect(ar);
+            }
+            finally
+            {
+                wh.Close();
+            }
         }
     }
 }

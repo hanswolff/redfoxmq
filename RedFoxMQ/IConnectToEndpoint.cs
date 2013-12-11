@@ -15,7 +15,6 @@
 // 
 using RedFoxMQ.Transports;
 using System;
-using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
@@ -23,8 +22,5 @@ namespace RedFoxMQ
     {
         void Connect(RedFoxEndpoint endpoint);
         void Connect(RedFoxEndpoint endpoint, TimeSpan timeout);
-
-        Task ConnectAsync(RedFoxEndpoint endpoint);
-        Task ConnectAsync(RedFoxEndpoint endpoint, TimeSpan timeout);
     }
 }
