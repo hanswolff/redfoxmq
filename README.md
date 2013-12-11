@@ -31,12 +31,28 @@ The easiest way is to look at the unit tests. They are a good source of examples
             {
                 var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
 
+                // start listening to requests
                 responder.Bind(endpoint);
-                requester.ConnectAsync(endpoint).Wait();
-				
-                var messageSent = new TestMessage { Text = "Hello" };
-                var messageReceived = (TestMessage)requester.Request(messageSent).Result;
+                
+                IMessage messageReceived = null;
+                var signal = new ManualResetEventSlim();
+                
+                // subscribe to response events
+                requester.ResponseReceived += response =>
+                {
+                    messageReceived = response;
+                    signal.Set();
+                };
 
+                // connect to listening endpoint
+                requester.Connect(endpoint);
+
+                // send request
+                var messageToSent = new TestMessage { Text = "Hello" };
+                requester.Request(messageSent);
+
+                // wait for response event to fire
+                Assert.IsTrue(signal.Wait());
                 Assert.AreEqual(messageSent.Text, messageReceived.Text);
             }
         }
@@ -77,7 +93,7 @@ The message serialization / deserialization are like:
         {
             MessageTypeId = 1;
         }
-    }	
+    }    
 
 I recommend to use [Protocol Buffers](https://code.google.com/p/protobuf-net/)
 for message serialization, but it is entirely up to you!

@@ -36,7 +36,6 @@ namespace RedFoxMQ.Tests
                 var endpoint = TestHelpers.CreateEndpointForTransport(transport);
 
                 responder.Bind(endpoint);
-                requester.ConnectAsync(endpoint).Wait();
 
                 TestMessage messageReceived = null;
                 var signal = new ManualResetEventSlim();
@@ -46,10 +45,14 @@ namespace RedFoxMQ.Tests
                     signal.Set();
                 };
 
-                var messageSent = new TestMessage { Text = "Hello" };
-                requester.RequestAsync(messageSent);
+                requester.Connect(endpoint);
 
-                signal.Wait(TestTimeoutInMillis);
+                Thread.Sleep(30);
+
+                var messageSent = new TestMessage { Text = "Hello" };
+                requester.Request(messageSent);
+
+                Assert.IsTrue(signal.Wait(TestTimeoutInMillis));
                 Assert.AreEqual(messageSent.Text, messageReceived.Text);
             }
         }
@@ -64,7 +67,9 @@ namespace RedFoxMQ.Tests
                 var endpoint = TestHelpers.CreateEndpointForTransport(transport);
 
                 responder.Bind(endpoint);
-                requester.ConnectAsync(endpoint).Wait();
+                requester.Connect(endpoint);
+
+                Thread.Sleep(30);
 
                 var messagesReceived = new List<TestMessage>();
                 var signal = new ManualResetEventSlim();
@@ -75,10 +80,10 @@ namespace RedFoxMQ.Tests
                 };
 
                 var messageSent = new TestMessage { Text = "Hello" };
-                requester.RequestAsync(messageSent);
-                requester.RequestAsync(messageSent);
+                requester.Request(messageSent);
+                requester.Request(messageSent);
 
-                signal.Wait(TestTimeoutInMillis);
+                Assert.IsTrue(signal.Wait(TestTimeoutInMillis));
                 Assert.AreEqual(messageSent.Text, messagesReceived[0].Text);
                 Assert.AreEqual(messageSent.Text, messagesReceived[1].Text);
             }
@@ -97,7 +102,7 @@ namespace RedFoxMQ.Tests
                 responder.ClientConnected += s => eventFired.Set();
                 responder.Bind(endpoint);
 
-                requester.ConnectAsync(endpoint).Wait();
+                requester.Connect(endpoint);
                 requester.Disconnect();
 
                 Assert.IsTrue(eventFired.Wait(TestTimeoutInMillis));
@@ -117,7 +122,7 @@ namespace RedFoxMQ.Tests
                 responder.Bind(endpoint);
 
                 requester.Disconnected += eventFired.Set;
-                requester.ConnectAsync(endpoint).Wait();
+                requester.Connect(endpoint);
                 requester.Disconnect();
 
                 Assert.IsTrue(eventFired.Wait(TestTimeoutInMillis));

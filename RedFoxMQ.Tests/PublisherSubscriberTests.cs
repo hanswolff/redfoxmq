@@ -36,7 +36,7 @@ namespace RedFoxMQ.Tests
                 var endpoint = TestHelpers.CreateEndpointForTransport(transport);
 
                 publisher.Bind(endpoint);
-                subscriber.ConnectAsync(endpoint).Wait();
+                subscriber.Connect(endpoint);
 
                 Thread.Sleep(30);
 
@@ -58,7 +58,7 @@ namespace RedFoxMQ.Tests
                 var endpoint = TestHelpers.CreateEndpointForTransport(transport);
 
                 publisher.Bind(endpoint);
-                subscriber.ConnectAsync(endpoint).Wait();
+                subscriber.Connect(endpoint);
 
                 Thread.Sleep(30);
 
@@ -82,7 +82,7 @@ namespace RedFoxMQ.Tests
                 var endpoint = TestHelpers.CreateEndpointForTransport(transport);
 
                 publisher.Bind(endpoint);
-                subscriber.ConnectAsync(endpoint).Wait();
+                subscriber.Connect(endpoint);
 
                 Thread.Sleep(30);
 
@@ -109,7 +109,7 @@ namespace RedFoxMQ.Tests
                 publisher.Bind(endpoint);
                 publisher.ClientConnected += s => eventFired.Set();
 
-                subscriber.ConnectAsync(endpoint).Wait();
+                subscriber.Connect(endpoint);
 
                 Assert.IsTrue(eventFired.Wait(TestTimeoutInMillis));
             }
@@ -128,7 +128,7 @@ namespace RedFoxMQ.Tests
                 publisher.ClientDisconnected += s => eventFired.Set();
                 publisher.Bind(endpoint);
 
-                subscriber.ConnectAsync(endpoint).Wait();
+                subscriber.Connect(endpoint);
                 subscriber.Disconnect();
 
                 Assert.IsTrue(eventFired.Wait(TestTimeoutInMillis));
@@ -148,7 +148,7 @@ namespace RedFoxMQ.Tests
                 publisher.Bind(endpoint);
 
                 subscriber.Disconnected += eventFired.Set;
-                subscriber.ConnectAsync(endpoint).Wait();
+                subscriber.Connect(endpoint);
                 subscriber.Disconnect();
 
                 Assert.IsTrue(eventFired.Wait(TestTimeoutInMillis));
@@ -165,7 +165,7 @@ namespace RedFoxMQ.Tests
                 var endpoint = TestHelpers.CreateEndpointForTransport(transport);
                 publisher.Bind(endpoint);
 
-                subscriber.ConnectAsync(endpoint).Wait();
+                subscriber.Connect(endpoint);
                 subscriber.Disconnect(true, TimeSpan.FromMilliseconds(TestTimeoutInMillis));
             }
         }
@@ -181,7 +181,7 @@ namespace RedFoxMQ.Tests
                 var endpoint = TestHelpers.CreateEndpointForTransport(transport);
 
                 publisher.Bind(endpoint);
-                subscriber1.ConnectAsync(endpoint).Wait();
+                subscriber1.Connect(endpoint);
 
                 Thread.Sleep(30);
 
@@ -190,7 +190,7 @@ namespace RedFoxMQ.Tests
 
                 Assert.AreEqual(broadcastMessage, subscriber1.TestMustReceiveMessageWithin(TestTimeoutInMillis));
 
-                subscriber2.ConnectAsync(endpoint).Wait();
+                subscriber2.Connect(endpoint);
 
                 Thread.Sleep(30);
 

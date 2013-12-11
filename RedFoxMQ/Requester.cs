@@ -37,6 +37,11 @@ namespace RedFoxMQ
         public event Action Disconnected = () => { };
         public event Action<IMessage> ResponseReceived = r => { };
 
+        public void Connect(RedFoxEndpoint endpoint)
+        {
+            ConnectAsync(endpoint).Wait();
+        }
+
         public async Task ConnectAsync(RedFoxEndpoint endpoint)
         {
             if (_socket != null) throw new InvalidOperationException("Subscriber already connected");
@@ -44,6 +49,11 @@ namespace RedFoxMQ
             _cts = new CancellationTokenSource();
 
             await ConnectAsync(endpoint, 0);
+        }
+
+        public void Connect(RedFoxEndpoint endpoint, int timeoutInSeconds)
+        {
+            ConnectAsync(endpoint, timeoutInSeconds).Wait();
         }
 
         public async Task ConnectAsync(RedFoxEndpoint endpoint, int timeoutInSeconds)
@@ -73,9 +83,20 @@ namespace RedFoxMQ
             Disconnected();
         }
 
+        public void Request(IMessage message)
+        {
+            RequestAsync(message).Wait();
+        }
+
         public async Task RequestAsync(IMessage message)
         {
             await RequestWithCancellationToken(message, _cts.Token);
+        }
+
+        public void Request(IMessage message, CancellationToken cancellationToken)
+        {
+            // ReSharper disable once MethodSupportsCancellation
+            RequestAsync(message, cancellationToken).Wait();
         }
 
         public async Task RequestAsync(IMessage message, CancellationToken cancellationToken)
@@ -114,7 +135,7 @@ namespace RedFoxMQ
         private bool _disposed;
         private readonly object _disposeLock = new object();
 
-        protected virtual void Dispose(bool disposing) 
+        protected virtual void Dispose(bool disposing)
         {
             lock (_disposeLock)
             {

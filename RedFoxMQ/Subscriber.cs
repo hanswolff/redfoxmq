@@ -34,11 +34,21 @@ namespace RedFoxMQ
 
         public event Action<IMessage> MessageReceived = m => { };
 
+        public void Connect(RedFoxEndpoint endpoint)
+        {
+            ConnectAsync(endpoint).Wait();
+        }
+
         public async Task ConnectAsync(RedFoxEndpoint endpoint)
         {
             if (_socket != null) throw new InvalidOperationException("Subscriber already connected");
 
             await ConnectAsync(endpoint, 0);
+        }
+
+        public void Connect(RedFoxEndpoint endpoint, int timeoutInSeconds)
+        {
+            ConnectAsync(endpoint, timeoutInSeconds).Wait();
         }
 
         public async Task ConnectAsync(RedFoxEndpoint endpoint, int timeoutInSeconds)
@@ -73,7 +83,7 @@ namespace RedFoxMQ
             var socket = Interlocked.Exchange(ref _socket, null);
             if (socket == null) return;
 
-            _messageReceiveLoop.Stop(waitForExit);
+            _messageReceiveLoop.Dispose();
 
             socket.Disconnect();
         }

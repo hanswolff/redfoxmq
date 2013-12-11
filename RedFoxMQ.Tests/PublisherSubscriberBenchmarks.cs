@@ -34,8 +34,9 @@ namespace RedFoxMQ.Tests
             using (var publisher = new Publisher())
             using (var subscriber = new Subscriber())
             {
-                publisher.Bind(TestHelpers.TcpTestEndpoint);
-                subscriber.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
+                var endpoint = TestHelpers.TcpTestEndpoint;
+                publisher.Bind(endpoint);
+                subscriber.Connect(endpoint);
 
                 Thread.Sleep(30);
 
@@ -69,8 +70,9 @@ namespace RedFoxMQ.Tests
             using (var publisher = new Publisher())
             using (var subscriber = new Subscriber())
             {
-                publisher.Bind(TestHelpers.TcpTestEndpoint);
-                subscriber.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
+                var endpoint = TestHelpers.TcpTestEndpoint;
+                publisher.Bind(endpoint);
+                subscriber.Connect(endpoint);
 
                 Thread.Sleep(30);
 
@@ -106,9 +108,10 @@ namespace RedFoxMQ.Tests
             using (var subscriber1 = new Subscriber())
             using (var subscriber2 = new Subscriber())
             {
-                publisher.Bind(TestHelpers.TcpTestEndpoint);
-                subscriber1.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
-                subscriber2.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
+                var endpoint = TestHelpers.TcpTestEndpoint;
+                publisher.Bind(endpoint);
+                subscriber1.Connect(endpoint);
+                subscriber2.Connect(endpoint);
 
                 Thread.Sleep(30);
 
@@ -142,9 +145,10 @@ namespace RedFoxMQ.Tests
             using (var subscriber1 = new Subscriber())
             using (var subscriber2 = new Subscriber())
             {
-                publisher.Bind(TestHelpers.TcpTestEndpoint);
-                subscriber1.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
-                subscriber2.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
+                var endpoint = TestHelpers.TcpTestEndpoint;
+                publisher.Bind(endpoint);
+                subscriber1.Connect(endpoint);
+                subscriber2.Connect(endpoint);
 
                 Thread.Sleep(30);
 
@@ -178,17 +182,18 @@ namespace RedFoxMQ.Tests
             using (var publisher = new Publisher())
             using (var subscriber = new Subscriber())
             {
-                publisher.Bind(TestHelpers.TcpTestEndpoint);
+                var endpoint = TestHelpers.TcpTestEndpoint;
+                publisher.Bind(endpoint);
 
                 var subscribers = Enumerable.Range(1, 9).Select(i =>
                 {
                     var sub = new Subscriber();
-                    sub.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
+                    sub.Connect(endpoint);
 
                     return sub;
                 }).ToList();
 
-                subscriber.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
+                subscriber.Connect(endpoint);
 
                 Thread.Sleep(30);
 
@@ -223,17 +228,18 @@ namespace RedFoxMQ.Tests
             using (var publisher = new Publisher())
             using (var subscriber = new Subscriber())
             {
-                publisher.Bind(TestHelpers.TcpTestEndpoint);
+                var endpoint = TestHelpers.TcpTestEndpoint;
+                publisher.Bind(endpoint);
 
                 var subscribers = Enumerable.Range(1, 9).Select(i =>
                 {
                     var sub = new Subscriber();
-                    sub.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
+                    sub.Connect(endpoint);
 
                     return sub;
                 }).ToList();
 
-                subscriber.ConnectAsync(TestHelpers.TcpTestEndpoint).Wait();
+                subscriber.Connect(endpoint);
 
                 Thread.Sleep(30);
 

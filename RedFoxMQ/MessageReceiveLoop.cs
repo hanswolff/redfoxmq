@@ -54,7 +54,6 @@ namespace RedFoxMQ
         public void Stop(bool waitForExit = true)
         {
             _cts.Cancel(false);
-            _messageFrameReceiver.Disconnect();
 
             if (waitForExit) _stopped.Wait();
         }
@@ -102,6 +101,7 @@ namespace RedFoxMQ
             finally
             {
                 _stopped.Set();
+                _started.Reset();
             }
         }
 
@@ -128,6 +128,7 @@ namespace RedFoxMQ
             {
                 if (!_disposed)
                 {
+                    _messageFrameReceiver.Disconnect();
                     Stop(false);
 
                     _disposed = true;

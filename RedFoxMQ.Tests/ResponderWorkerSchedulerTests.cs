@@ -71,9 +71,9 @@ namespace RedFoxMQ.Tests
             using (var scheduler = new ResponderWorkerScheduler(1, 1))
             {
                 scheduler.AddWorkUnit(workUnit, null);
-                Thread.Sleep(10);
+                Thread.Sleep(15);
                 Assert.AreEqual(1, scheduler.CurrentBusyThreadCount);
-                Thread.Sleep(50);
+                Thread.Sleep(60);
                 Assert.AreEqual(0, scheduler.CurrentBusyThreadCount);
             }
         }
