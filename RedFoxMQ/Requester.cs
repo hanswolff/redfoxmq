@@ -35,6 +35,7 @@ namespace RedFoxMQ
         public bool IsDisconnected { get { return _socket.IsDisconnected; } }
 
         public event Action Disconnected = () => { };
+        public event Action<IMessage> ResponseReceived = r => { };
 
         public async Task ConnectAsync(RedFoxEndpoint endpoint)
         {
@@ -57,17 +58,20 @@ namespace RedFoxMQ
             {
                 _messageFrameSender = new MessageFrameSender(_socket);
                 _messageReceiveLoop = new MessageReceiveLoop(_socket);
-                _messageReceiveLoop.MessageReceived += ResponseReceived;
+                _messageReceiveLoop.MessageReceived += MessageReceiveLoopOnMessageReceived;
                 _messageReceiveLoop.Start();
             }
+        }
+
+        private void MessageReceiveLoopOnMessageReceived(IMessage message)
+        {
+            ResponseReceived(message);
         }
 
         private void SocketDisconnected()
         {
             Disconnected();
         }
-
-        public event Action<IMessage> ResponseReceived = r => { };
 
         public async Task RequestAsync(IMessage message)
         {

@@ -21,17 +21,19 @@ namespace RedFoxMQ.Tests
 {
     class TestWorkUnit : IResponderWorkUnit
     {
+        private readonly IMessage _request;
         private readonly int _sleepDelay;
 
-        public TestWorkUnit(int sleepDelay)
+        public TestWorkUnit(IMessage request, int sleepDelay)
         {
+            _request = request;
             _sleepDelay = sleepDelay;
         }
 
         public IMessage GetResponse(object state)
         {
             Thread.Sleep(_sleepDelay);
-            return new TestMessage();
+            return _request;
         }
     }
 }

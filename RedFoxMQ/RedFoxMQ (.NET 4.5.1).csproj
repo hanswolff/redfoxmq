@@ -46,6 +46,9 @@
     <Compile Include="IPublisher.cs" />
     <Compile Include="IRequester.cs" />
     <Compile Include="IResponder.cs" />
+    <Compile Include="IResponderWorkUnitWithState.cs" />
+    <Compile Include="ResponderWorkUnitFactory.cs" />
+    <Compile Include="IResponderWorkUnitFactory.cs" />
     <Compile Include="ResponderWorkerScheduler.cs" />
     <Compile Include="IResponderWorkUnit.cs" />
     <Compile Include="ISubscriber.cs" />
