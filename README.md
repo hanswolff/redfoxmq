@@ -41,7 +41,8 @@ The easiest way is to look at the unit tests. They are a good source of examples
         [Test]
         public void Request_Response_single_message()
         {
-            using (var responder = new Responder())
+            var workUnitFactory = new TestResponderWorkUnitFactory(request => new ResponderWorkUnit(request));
+            using (var responder = new Responder(workUnitFactory))
             using (var requester = new Requester())
             {
                 var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
@@ -77,6 +78,26 @@ The easiest way is to look at the unit tests. They are a good source of examples
         {
             MessageSerialization.Instance.RegisterSerializer(new TestMessage().MessageTypeId, new TestMessageSerializer());
             MessageSerialization.Instance.RegisterDeserializer(new TestMessage().MessageTypeId, new TestMessageDeserializer());
+        }
+    }
+    
+Work unit class (which creates responses):
+
+    class TestResponderWorkUnit : IResponderWorkUnit
+    {
+        private readonly IMessage _request;
+
+        public ResponderWorkUnit(IMessage request)
+        {
+            _request = request;
+        }
+
+        public IMessage GetResponse(object state)
+        {
+            // echo request -> response
+            var response = _request; 
+            // or create a different response here
+            return response;
         }
     }
 
