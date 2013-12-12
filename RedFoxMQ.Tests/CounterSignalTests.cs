@@ -79,7 +79,7 @@ namespace RedFoxMQ.Tests
         [Test]
         public void benchmark_get_value()
         {
-            var counterSignal = new CounterSignal();
+            var counterSignal = new CounterSignal(1, 0);
 
             const int iterations = 10000000;
             var value = false;
@@ -100,7 +100,7 @@ namespace RedFoxMQ.Tests
         [Test]
         public void benchmark_increment_value()
         {
-            var counterSignal = new CounterSignal();
+            var counterSignal = new CounterSignal(1, 0);
 
             const int iterations = 10000000;
             var sw = Stopwatch.StartNew();

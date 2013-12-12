@@ -33,10 +33,10 @@ namespace RedFoxMQ.Tests
             _receivedMessages.Add(message);
         }
 
-        public IMessage TestMustReceiveMessageWithin(int timeoutMillis)
+        public IMessage TestMustReceiveMessageWithin(TimeSpan timeout)
         {
             IMessage receivedMessage;
-            if (!_receivedMessages.TryTake(out receivedMessage, timeoutMillis))
+            if (!_receivedMessages.TryTake(out receivedMessage, timeout))
                 throw new Exception("Subscriber didn't receive message in time");
 
             return receivedMessage;

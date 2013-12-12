@@ -19,13 +19,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace RedFoxMQ.Tests
 {
     [TestFixture]
     public class RequestResponderTests
     {
-        public static readonly TimeSpan TestTimeoutInMillis = !Debugger.IsAttached ? TimeSpan.FromSeconds(10) : TimeSpan.FromMilliseconds(-1);
+        public static readonly TimeSpan Timeout = !Debugger.IsAttached ? TimeSpan.FromSeconds(10) : TimeSpan.FromMilliseconds(-1);
 
         [TestCase(RedFoxTransport.Inproc)]
         [TestCase(RedFoxTransport.Tcp)]
@@ -53,7 +54,7 @@ namespace RedFoxMQ.Tests
                 var messageSent = new TestMessage { Text = "Hello" };
                 requester.Request(messageSent);
 
-                Assert.IsTrue(signal.Wait(TestTimeoutInMillis));
+                Assert.IsTrue(signal.Wait(Timeout));
                 Assert.AreEqual(messageSent.Text, messageReceived.Text);
             }
         }
@@ -84,9 +85,61 @@ namespace RedFoxMQ.Tests
                 requester.Request(messageSent);
                 requester.Request(messageSent);
 
-                Assert.IsTrue(counterSignal.Wait(TestTimeoutInMillis));
+                Assert.IsTrue(counterSignal.Wait(Timeout));
                 Assert.AreEqual(messageSent.Text, messagesReceived[0].Text);
                 Assert.AreEqual(messageSent.Text, messagesReceived[1].Text);
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Request_Response_different_tasks(RedFoxTransport transport)
+        {
+            var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+            var started = new ManualResetEventSlim();
+            var stop = new ManualResetEventSlim();
+
+            Task.Run(() =>
+            {
+                using (var responder = TestHelpers.CreateTestResponder())
+                {
+                    responder.Bind(endpoint);
+                    started.Set();
+                    stop.Wait();
+                }
+            });
+
+            var message = new TestMessage { Text = "Hello" };
+
+            TestMessage messageReceived = null;
+            var signal = new ManualResetEventSlim();
+            Task.Run(() =>
+            {
+                using (var requester = new Requester())
+                {
+                    started.Wait(Timeout);
+
+                    requester.ResponseReceived += m =>
+                    {
+                        messageReceived = (TestMessage)m;
+                        signal.Set();
+                    };
+
+                    requester.Connect(endpoint);
+
+                    requester.Request(message);
+                    stop.Wait();
+                }
+            });
+
+            try
+            {
+                Assert.IsTrue(signal.Wait(Timeout));
+                Assert.AreEqual(message.Text, messageReceived.Text);
+            }
+            finally
+            {
+                stop.Set();
             }
         }
 
@@ -109,7 +162,7 @@ namespace RedFoxMQ.Tests
 
                 requester.Disconnect();
 
-                Assert.IsTrue(eventFired.Wait(TestTimeoutInMillis));
+                Assert.IsTrue(eventFired.Wait(Timeout));
             }
         }
 
@@ -132,7 +185,7 @@ namespace RedFoxMQ.Tests
 
                 requester.Disconnect();
 
-                Assert.IsTrue(eventFired.Wait(TestTimeoutInMillis));
+                Assert.IsTrue(eventFired.Wait(Timeout));
             }
         }
 

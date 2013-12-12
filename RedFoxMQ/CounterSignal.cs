@@ -36,7 +36,7 @@ namespace RedFoxMQ
             set { _counter = value; }
         }
 
-        public CounterSignal(int signalGreaterOrEqual = 1)
+        public CounterSignal(int signalGreaterOrEqual)
             : this(signalGreaterOrEqual, 0)
         {
         }
@@ -49,22 +49,25 @@ namespace RedFoxMQ
             SignalIfNeeded(_counter);
         }
 
-        public void Add(int value)
+        public int Add(int value)
         {
             var oldValue = Interlocked.Add(ref _counter, value);
             SignalIfNeeded(oldValue);
+            return oldValue;
         }
 
-        public void Increment()
+        public int Increment()
         {
             var oldValue = Interlocked.Increment(ref _counter);
             SignalIfNeeded(oldValue);
+            return oldValue;
         }
 
-        public void Decrement()
+        public int Decrement()
         {
             var oldValue = Interlocked.Decrement(ref _counter);
             SignalIfNeeded(oldValue);
+            return oldValue;
         }
 
         public bool Wait()

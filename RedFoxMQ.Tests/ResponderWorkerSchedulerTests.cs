@@ -22,6 +22,8 @@ namespace RedFoxMQ.Tests
     [TestFixture]
     public class ResponderWorkerSchedulerTests
     {
+        private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(1);
+
         [Test]
         public void ResponderWorkerScheduler_constructor_MinThreads_negative_throws_ArgumentOutOfRangeException()
         {
@@ -59,7 +61,7 @@ namespace RedFoxMQ.Tests
                 
                 scheduler.AddWorkUnit(workUnit, null);
 
-                Thread.Sleep(50);
+                scheduler.WaitUntilThreadBusy(Timeout);
                 Assert.AreEqual(1, scheduler.CurrentBusyThreadCount);
             }
         }
@@ -67,13 +69,15 @@ namespace RedFoxMQ.Tests
         [Test]
         public void ResponderWorkerScheduler_CurrentBusyThreadCount_decreased_when_back_idle()
         {
-            var workUnit = new TestWorkUnit(new TestMessage(), 100);
+            var workUnit = new TestWorkUnit(new TestMessage(), 30);
             using (var scheduler = new ResponderWorkerScheduler(1, 1))
             {
                 scheduler.AddWorkUnit(workUnit, null);
-                Thread.Sleep(50);
+
+                scheduler.WaitUntilThreadBusy(Timeout);
                 Assert.AreEqual(1, scheduler.CurrentBusyThreadCount);
-                Thread.Sleep(100);
+
+                Thread.Sleep(60);
                 Assert.AreEqual(0, scheduler.CurrentBusyThreadCount);
             }
         }

@@ -26,17 +26,18 @@ namespace RedFoxMQ
 
         private readonly BlockingCollection<ResponderWorkUnitWithState> _workUnits = new BlockingCollection<ResponderWorkUnitWithState>();
         private readonly ConcurrentDictionary<Guid, Thread> _threads = new ConcurrentDictionary<Guid, Thread>();
+        private readonly SemaphoreSlim _numberOfThreads;
 
         private int _currentWorkerThreadCount;
         public int CurrentWorkerThreadCount
         {
-            get { return _currentWorkerThreadCount; }
+            get { return _numberOfThreads.CurrentCount; }
         }
 
-        private int _currentBusyThreadCount;
+        private readonly CounterSignal _currentBusyThreadCount = new CounterSignal(1, 0);
         public int CurrentBusyThreadCount
         {
-            get { return _currentBusyThreadCount; }
+            get { return _currentBusyThreadCount.CurrentValue; }
         }
 
         public event Action<IResponderWorkUnit, object, IMessage> WorkUnitCompleted = (wu, s, m) => { };
@@ -71,6 +72,8 @@ namespace RedFoxMQ
             _maxThreads = maxThreads;
             MaxIdleTime = maxIdleTime;
 
+            _numberOfThreads = new SemaphoreSlim(minThreads, maxThreads);
+
             CreateNumberOfThreads(minThreads);
         }
 
@@ -100,7 +103,7 @@ namespace RedFoxMQ
                     ResponderWorkUnitWithState workUnitWithState;
                     if (!TryGetWorkUnit(out workUnitWithState, cancellationToken)) continue;
 
-                    Interlocked.Increment(ref _currentBusyThreadCount);
+                    _currentBusyThreadCount.Increment();
                     try
                     {
                         IMessage response = null;
@@ -120,11 +123,11 @@ namespace RedFoxMQ
                     }
                     catch
                     {
-                        // TODO: error handling
+                        // ignore exception from fired events
                     }
                     finally
                     {
-                        Interlocked.Decrement(ref _currentBusyThreadCount);
+                        _currentBusyThreadCount.Decrement();
                     }
                 } while (!ShutdownTaskIfNotNeeded(taskId));
             }
@@ -142,16 +145,12 @@ namespace RedFoxMQ
         {
             if (_currentWorkerThreadCount <= _minThreads) return false;
 
-            // TODO: race condition CurrentWorkerThreadCount could return value below MinThreads for a brief moment of time
-            var workerThreadCount = Interlocked.Decrement(ref _currentWorkerThreadCount);
-            if (workerThreadCount < _minThreads)
+            if (_numberOfThreads.Wait(0))
             {
-                Interlocked.Increment(ref _currentWorkerThreadCount);
-                return false;
+                Thread thread;
+                _threads.TryRemove(threadId, out thread);
             }
 
-            Thread thread;
-            _threads.TryRemove(threadId, out thread);
             return true;
         }
 
@@ -162,11 +161,28 @@ namespace RedFoxMQ
 
             _workUnits.TryAdd(new ResponderWorkUnitWithState(workUnit, state));
 
+            IncreaseWorkerThreadsIfNeeded();
+        }
+
+        private void IncreaseWorkerThreadsIfNeeded()
+        {
             var workerThreadCount = _currentWorkerThreadCount;
-            if (workerThreadCount == 0 || (_currentBusyThreadCount == workerThreadCount && workerThreadCount < _maxThreads))
+            if (workerThreadCount != 0 &&
+                (_currentBusyThreadCount.CurrentValue != workerThreadCount || workerThreadCount >= _maxThreads)) return;
+            try
             {
-                // TODO: increase number of worker threads
+                _numberOfThreads.Release(1);
+
+                CreateNumberOfThreads(1);
             }
+            catch (SemaphoreFullException)
+            {
+            }
+        }
+
+        internal bool WaitUntilThreadBusy(TimeSpan timeout)
+        {
+            return _currentBusyThreadCount.Wait(timeout);
         }
 
         #region Dispose
