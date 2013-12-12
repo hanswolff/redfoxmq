@@ -30,19 +30,17 @@ namespace RedFoxMQ.Transports.InProc
             Stream = stream;
         }
 
-        private volatile bool _isDisconnected;
+        private readonly InterlockedBoolean _isDisconnected = new InterlockedBoolean();
         public bool IsDisconnected
         {
-            get { return _isDisconnected; }
+            get { return _isDisconnected.Value; }
         }
 
         public event Action Disconnected = () => { };
 
         public void Disconnect()
         {
-            // TODO: fix race condition
-            if (_isDisconnected) return;
-            _isDisconnected = true;
+            if (_isDisconnected.Set(true)) return;
 
             Disconnected();
         }

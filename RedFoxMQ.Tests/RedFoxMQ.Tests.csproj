@@ -47,6 +47,7 @@
     </Compile>
     <Compile Include="MessageFromCreatorTests.cs" />
     <Compile Include="PublisherSubscriberBenchmarks.cs" />
+    <Compile Include="InterlockedBooleanTests.cs" />
     <Compile Include="RequestResponderTests.cs" />
     <Compile Include="ResponderWorkerSchedulerTests.cs" />
     <Compile Include="ResponderTests.cs" />
