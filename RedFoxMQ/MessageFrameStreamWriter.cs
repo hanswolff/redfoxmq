@@ -76,6 +76,7 @@ namespace RedFoxMQ
 
                 var toSend = mem.GetBuffer();
                 stream.Write(toSend, 0, sendBufferSize);
+                stream.Flush();
             }
             finally
             {
@@ -100,6 +101,7 @@ namespace RedFoxMQ
 
                 var toSend = mem.GetBuffer();
                 await stream.WriteAsync(toSend, 0, sendBufferSize, cancellationToken);
+                await stream.FlushAsync(cancellationToken);
             }
             finally
             {
@@ -163,6 +165,7 @@ namespace RedFoxMQ
 
                 var toSend = mem.GetBuffer();
                 stream.Write(toSend, 0, sendBufferSize);
+                stream.Flush();
             }
             finally
             {
@@ -191,6 +194,7 @@ namespace RedFoxMQ
 
                 var toSend = mem.GetBuffer();
                 await stream.WriteAsync(toSend, 0, sendBufferSize, cancellationToken);
+                await stream.FlushAsync(cancellationToken);
             }
             finally
             {
