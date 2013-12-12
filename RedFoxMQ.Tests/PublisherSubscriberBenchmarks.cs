@@ -25,7 +25,7 @@ namespace RedFoxMQ.Tests
     [Explicit]
     class PublisherSubscriberBenchmarks
     {
-        private const int Count = 20000;
+        private const int Count = 10000;
         private readonly static TimeSpan TimeOut = TimeSpan.FromSeconds(30);
 
         [Test]

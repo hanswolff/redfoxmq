@@ -102,9 +102,7 @@ namespace RedFoxMQ
             var messageQueue = (MessageQueue) state;
             var responseFrame = MessageFrameCreator.CreateFromMessage(responseMessage);
             messageQueue.Add(responseFrame);
-
-            // TODO: pass cancellation token
-            messageQueue.SendFromQueueAsync(new CancellationToken(false)).Wait();
+            messageQueue.SendFromQueue();
         }
 
         public bool Unbind(RedFoxEndpoint endpoint)
