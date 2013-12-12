@@ -96,6 +96,7 @@ namespace RedFoxMQ.Tests
             Assert.IsTrue(oldValue);
         }
 
+        [Explicit]
         [Test]
         public void benchmark_get_value()
         {
@@ -116,6 +117,7 @@ namespace RedFoxMQ.Tests
             Assert.Inconclusive("{0} ({1:N0} ops/sec)", sw.Elapsed, (decimal)iterations / sw.ElapsedMilliseconds * 1000m);
         }
 
+        [Explicit]
         [Test]
         public void benchmark_set_value()
         {

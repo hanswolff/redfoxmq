@@ -23,7 +23,7 @@ namespace RedFoxMQ
 {
     class MessageQueueProcessor
     {
-        private readonly ConcurrentDictionary<MessageQueue, ManualResetEventSlim> _messageQueues = new ConcurrentDictionary<MessageQueue, ManualResetEventSlim>();
+        private readonly ConcurrentDictionary<MessageQueue, InterlockedBoolean> _messageQueues = new ConcurrentDictionary<MessageQueue, InterlockedBoolean>();
         private readonly AutoResetEvent _messageQueueHasMessage = new AutoResetEvent(false);
         private Task _executeTask;
         private CancellationTokenSource _cts = new CancellationTokenSource();
@@ -31,7 +31,7 @@ namespace RedFoxMQ
         public void Register(MessageQueue messageQueue)
         {
             if (messageQueue == null) throw new ArgumentNullException("messageQueue");
-            _messageQueues[messageQueue] = new ManualResetEventSlim(false);
+            _messageQueues[messageQueue] = new InterlockedBoolean();
             messageQueue.MessageFramesAdded += MessageQueueOnMessageFramesAdded;
 
             StartProcessingIfNotStartedYet();
@@ -46,7 +46,7 @@ namespace RedFoxMQ
         {
             if (messageQueue == null) throw new ArgumentNullException("messageQueue");
 
-            ManualResetEventSlim oldValue;
+            InterlockedBoolean oldValue;
             var removed = _messageQueues.TryRemove(messageQueue, out oldValue);
             if (removed)
             {
@@ -61,14 +61,21 @@ namespace RedFoxMQ
             return removed;
         }
 
-        private int _started;
+        private readonly InterlockedBoolean _started = new InterlockedBoolean();
         private void StartProcessingIfNotStartedYet()
         {
-            var alreadyStarted = Interlocked.Exchange(ref _started, 1);
-            if (alreadyStarted == 1) return;
+            if (_started.Set(true)) return;
 
-            _cts = new CancellationTokenSource();
-            _executeTask = Task.Factory.StartNew(() => Execute(_cts.Token), TaskCreationOptions.LongRunning);
+            try
+            {
+                _cts = new CancellationTokenSource();
+                _executeTask = Task.Factory.StartNew(() => Execute(_cts.Token), TaskCreationOptions.LongRunning);
+            }
+            catch (Exception)
+            {
+                _started.Set(false);
+                throw;
+            }
         }
 
         private void Execute(CancellationToken cancellationToken)
@@ -92,9 +99,8 @@ namespace RedFoxMQ
             foreach (var item in _messageQueues)
             {
                 var isBusy = item.Value;
-                if (isBusy.IsSet) continue;
+                if (isBusy.Set(true)) continue;
 
-                isBusy.Set();
                 try
                 {
                     var messageQueue = item.Key;
@@ -102,7 +108,7 @@ namespace RedFoxMQ
                 }
                 finally
                 {
-                    isBusy.Reset();
+                    isBusy.Set(false);
                 }
             }
         }
@@ -123,7 +129,7 @@ namespace RedFoxMQ
 
             _cts.Cancel(false);
 
-            Interlocked.Exchange(ref _started, 0);
+            _started.Set(false);
         }
     }
 }

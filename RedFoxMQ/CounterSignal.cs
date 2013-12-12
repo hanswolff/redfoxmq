@@ -16,22 +16,43 @@
 using System;
 using System.Threading;
 
-// ReSharper disable once CheckNamespace
-namespace RedFoxMQ.Tests
+namespace RedFoxMQ
 {
     class CounterSignal
     {
         private int _counter;
-        private readonly int _signalAt;
+        private readonly int _signalGreaterOrEqual;
 
         private readonly ManualResetEventSlim _counterSignal = new ManualResetEventSlim();
 
-        public CounterSignal(int signalAt = 1, int initialCounterValue = 0)
+        public bool IsSet
+        {
+            get { return _counterSignal.IsSet; }
+        }
+
+        public int CurrentValue
+        {
+            get { return _counter; }
+            set { _counter = value; }
+        }
+
+        public CounterSignal(int signalGreaterOrEqual = 1)
+            : this(signalGreaterOrEqual, 0)
+        {
+        }
+
+        public CounterSignal(int signalGreaterOrEqual, int initialCounterValue)
         {
             _counter = initialCounterValue;
-            _signalAt = signalAt;
+            _signalGreaterOrEqual = signalGreaterOrEqual;
 
             SignalIfNeeded(_counter);
+        }
+
+        public void Add(int value)
+        {
+            var oldValue = Interlocked.Add(ref _counter, value);
+            SignalIfNeeded(oldValue);
         }
 
         public void Increment()
@@ -46,6 +67,11 @@ namespace RedFoxMQ.Tests
             SignalIfNeeded(oldValue);
         }
 
+        public bool Wait()
+        {
+            return Wait(TimeSpan.FromMilliseconds(-1));
+        }
+
         public bool Wait(TimeSpan timeout)
         {
             return _counterSignal.Wait(timeout);
@@ -53,7 +79,7 @@ namespace RedFoxMQ.Tests
 
         private void SignalIfNeeded(int currentValue)
         {
-            if (currentValue == _signalAt) _counterSignal.Set();
+            if (currentValue >= _signalGreaterOrEqual) _counterSignal.Set();
             else _counterSignal.Reset();
         }
     }

@@ -45,13 +45,13 @@
     <Compile Include="..\GlobalAssemblyInfo.cs">
       <Link>Properties\GlobalAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="CounterSignalTests.cs" />
     <Compile Include="MessageFromCreatorTests.cs" />
     <Compile Include="PublisherSubscriberBenchmarks.cs" />
     <Compile Include="InterlockedBooleanTests.cs" />
     <Compile Include="RequestResponderTests.cs" />
     <Compile Include="ResponderWorkerSchedulerTests.cs" />
     <Compile Include="ResponderTests.cs" />
-    <Compile Include="TestHelpers\CounterSignal.cs" />
     <Compile Include="TestHelpers\TestException.cs" />
     <Compile Include="TestHelpers\ExceptionTestMessage.cs" />
     <Compile Include="TestHelpers\ExceptionTestMessageDeserializer.cs" />
