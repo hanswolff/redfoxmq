@@ -93,10 +93,19 @@ namespace RedFoxMQ
             }
         }
 
+        private readonly SemaphoreSlim _semaphoreRequest = new SemaphoreSlim(1);
         private async Task RequestWithCancellationToken(IMessage message, CancellationToken cancellationToken)
         {
-            var sendMessageFrame = MessageFrameCreator.CreateFromMessage(message);
-            await _messageFrameSender.SendAsync(sendMessageFrame, cancellationToken);
+            await _semaphoreRequest.WaitAsync(cancellationToken);
+            try
+            {
+                var sendMessageFrame = MessageFrameCreator.CreateFromMessage(message);
+                await _messageFrameSender.SendAsync(sendMessageFrame, cancellationToken);
+            }
+            finally
+            {
+                _semaphoreRequest.Release();
+            }
         }
 
         public void Disconnect()

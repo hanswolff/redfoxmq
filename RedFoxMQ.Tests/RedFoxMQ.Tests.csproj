@@ -51,6 +51,7 @@
     <Compile Include="RequestResponderTests.cs" />
     <Compile Include="ResponderWorkerSchedulerTests.cs" />
     <Compile Include="ResponderTests.cs" />
+    <Compile Include="TestHelpers\CounterSignal.cs" />
     <Compile Include="TestHelpers\TestException.cs" />
     <Compile Include="TestHelpers\ExceptionTestMessage.cs" />
     <Compile Include="TestHelpers\ExceptionTestMessageDeserializer.cs" />

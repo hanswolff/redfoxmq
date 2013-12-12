@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -26,7 +26,7 @@ namespace RedFoxMQ.Tests
     class PublisherSubscriberBenchmarks
     {
         private const int Count = 20000;
-        private const int TimeOut = 30000;
+        private readonly static TimeSpan TimeOut = TimeSpan.FromSeconds(30);
 
         [Test]
         public void One_Publisher_One_Subscriber_Single_Broadcasts()
@@ -40,15 +40,8 @@ namespace RedFoxMQ.Tests
 
                 Thread.Sleep(30);
 
-                var isMessageReceived = new ManualResetEventSlim();
-
-                var receivedCount = 0;
-                subscriber.MessageReceived += m =>
-                {
-                    Interlocked.Increment(ref receivedCount);
-
-                    if (receivedCount >= Count) isMessageReceived.Set();
-                };
+                var counterSignal = new CounterSignal(Count);
+                subscriber.MessageReceived += m => counterSignal.Increment();
 
                 var messageSent = new TestMessage { Text = "Hello" };
 
@@ -57,7 +50,7 @@ namespace RedFoxMQ.Tests
                 {
                     publisher.Broadcast(messageSent);
                 }
-                Assert.IsTrue(isMessageReceived.Wait(TimeOut), "Timeout waiting for message");
+                Assert.IsTrue(counterSignal.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
                 Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, Count, Count / sw.Elapsed.TotalSeconds);
@@ -76,15 +69,8 @@ namespace RedFoxMQ.Tests
 
                 Thread.Sleep(30);
 
-                var isMessageReceived = new ManualResetEventSlim();
-
-                var receivedCount = 0;
-                subscriber.MessageReceived += m =>
-                {
-                    Interlocked.Increment(ref receivedCount);
-
-                    if (receivedCount >= Count) isMessageReceived.Set();
-                };
+                var counterSignal = new CounterSignal(Count);
+                subscriber.MessageReceived += m => counterSignal.Increment();
 
                 var messageSent = new TestMessage { Text = "Hello" };
 
@@ -94,7 +80,7 @@ namespace RedFoxMQ.Tests
 
                 var sw = Stopwatch.StartNew();
                 publisher.Broadcast(batch);
-                Assert.IsTrue(isMessageReceived.Wait(TimeOut), "Timeout waiting for message");
+                Assert.IsTrue(counterSignal.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
                 Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, Count, Count / sw.Elapsed.TotalSeconds);
@@ -115,14 +101,8 @@ namespace RedFoxMQ.Tests
 
                 Thread.Sleep(30);
 
-                var isMessageReceived = new ManualResetEventSlim();
-
-                var receivedCount = 0;
-                subscriber2.MessageReceived += m =>
-                {
-                    Interlocked.Increment(ref receivedCount);
-                    if (receivedCount >= Count) isMessageReceived.Set();
-                };
+                var counterSignal = new CounterSignal(Count);
+                subscriber2.MessageReceived += m => counterSignal.Increment();
 
                 var messageSent = new TestMessage { Text = "Hello" };
 
@@ -131,7 +111,7 @@ namespace RedFoxMQ.Tests
                 {
                     publisher.Broadcast(messageSent);
                 }
-                Assert.IsTrue(isMessageReceived.Wait(TimeOut), "Timeout waiting for message");
+                Assert.IsTrue(counterSignal.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
                 Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, Count, Count / sw.Elapsed.TotalSeconds);
@@ -152,14 +132,8 @@ namespace RedFoxMQ.Tests
 
                 Thread.Sleep(30);
 
-                var isMessageReceived = new ManualResetEventSlim();
-
-                var receivedCount = 0;
-                subscriber2.MessageReceived += m =>
-                {
-                    Interlocked.Increment(ref receivedCount);
-                    if (receivedCount >= Count) isMessageReceived.Set();
-                };
+                var counterSignal = new CounterSignal(Count);
+                subscriber2.MessageReceived += m => counterSignal.Increment();
 
                 var messageSent = new TestMessage { Text = "Hello" };
 
@@ -169,7 +143,7 @@ namespace RedFoxMQ.Tests
 
                 var sw = Stopwatch.StartNew();
                 publisher.Broadcast(batch);
-                Assert.IsTrue(isMessageReceived.Wait(TimeOut), "Timeout waiting for message");
+                Assert.IsTrue(counterSignal.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
                 Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, Count, Count / sw.Elapsed.TotalSeconds);
@@ -197,14 +171,8 @@ namespace RedFoxMQ.Tests
 
                 Thread.Sleep(30);
 
-                var isMessageReceived = new ManualResetEventSlim();
-
-                var receivedCount = 0;
-                subscriber.MessageReceived += m =>
-                {
-                    Interlocked.Increment(ref receivedCount);
-                    if (receivedCount >= Count) isMessageReceived.Set();
-                };
+                var counterSignal = new CounterSignal(Count);
+                subscriber.MessageReceived += m => counterSignal.Increment();
 
                 var messageSent = new TestMessage { Text = "Hello" };
 
@@ -213,7 +181,7 @@ namespace RedFoxMQ.Tests
                 {
                     publisher.Broadcast(messageSent);
                 }
-                Assert.IsTrue(isMessageReceived.Wait(TimeOut), "Timeout waiting for message");
+                Assert.IsTrue(counterSignal.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
                 subscribers.ForEach(sub => sub.Dispose());
@@ -243,14 +211,8 @@ namespace RedFoxMQ.Tests
 
                 Thread.Sleep(30);
 
-                var isMessageReceived = new ManualResetEventSlim();
-
-                var receivedCount = 0;
-                subscriber.MessageReceived += m =>
-                {
-                    Interlocked.Increment(ref receivedCount);
-                    if (receivedCount >= Count) isMessageReceived.Set();
-                };
+                var counterSignal = new CounterSignal(Count);
+                subscriber.MessageReceived += m => counterSignal.Increment();
 
                 var messageSent = new TestMessage { Text = "Hello" };
 
@@ -260,7 +222,7 @@ namespace RedFoxMQ.Tests
 
                 var sw = Stopwatch.StartNew();
                 publisher.Broadcast(batch);
-                Assert.IsTrue(isMessageReceived.Wait(TimeOut), "Timeout waiting for message");
+                Assert.IsTrue(counterSignal.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
                 subscribers.ForEach(sub => sub.Dispose());

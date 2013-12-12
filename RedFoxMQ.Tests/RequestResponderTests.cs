@@ -15,6 +15,7 @@
 // 
 using NUnit.Framework;
 using RedFoxMQ.Transports;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -24,7 +25,7 @@ namespace RedFoxMQ.Tests
     [TestFixture]
     public class RequestResponderTests
     {
-        public static readonly int TestTimeoutInMillis = Debugger.IsAttached ? -1 : 10000;
+        public static readonly TimeSpan TestTimeoutInMillis = !Debugger.IsAttached ? TimeSpan.FromSeconds(10) : TimeSpan.FromMilliseconds(-1);
 
         [TestCase(RedFoxTransport.Inproc)]
         [TestCase(RedFoxTransport.Tcp)]
@@ -72,18 +73,18 @@ namespace RedFoxMQ.Tests
                 Thread.Sleep(30);
 
                 var messagesReceived = new List<TestMessage>();
-                var signal = new ManualResetEventSlim();
+                var counterSignal = new CounterSignal(2);
                 requester.ResponseReceived += m =>
                 {
                     messagesReceived.Add((TestMessage)m);
-                    if (messagesReceived.Count == 2) signal.Set();
+                    counterSignal.Increment();
                 };
 
                 var messageSent = new TestMessage { Text = "Hello" };
                 requester.Request(messageSent);
                 requester.Request(messageSent);
 
-                Assert.IsTrue(signal.Wait(TestTimeoutInMillis));
+                Assert.IsTrue(counterSignal.Wait(TestTimeoutInMillis));
                 Assert.AreEqual(messageSent.Text, messagesReceived[0].Text);
                 Assert.AreEqual(messageSent.Text, messagesReceived[1].Text);
             }

@@ -52,14 +52,14 @@ namespace RedFoxMQ.Tests
         [Test]
         public void ResponderWorkerScheduler_CurrentBusyThreadCount_increased_when_busy()
         {
-            var workUnit = new TestWorkUnit(new TestMessage(), 1000);
+            var workUnit = new TestWorkUnit(new TestMessage(), 100);
             using (var scheduler = new ResponderWorkerScheduler(1, 1))
             {
                 Assert.AreEqual(0, scheduler.CurrentBusyThreadCount);
                 
                 scheduler.AddWorkUnit(workUnit, null);
 
-                Thread.Sleep(30);
+                Thread.Sleep(50);
                 Assert.AreEqual(1, scheduler.CurrentBusyThreadCount);
             }
         }
@@ -67,13 +67,13 @@ namespace RedFoxMQ.Tests
         [Test]
         public void ResponderWorkerScheduler_CurrentBusyThreadCount_decreased_when_back_idle()
         {
-            var workUnit = new TestWorkUnit(new TestMessage(), 60);
+            var workUnit = new TestWorkUnit(new TestMessage(), 100);
             using (var scheduler = new ResponderWorkerScheduler(1, 1))
             {
                 scheduler.AddWorkUnit(workUnit, null);
-                Thread.Sleep(30);
+                Thread.Sleep(50);
                 Assert.AreEqual(1, scheduler.CurrentBusyThreadCount);
-                Thread.Sleep(60);
+                Thread.Sleep(100);
                 Assert.AreEqual(0, scheduler.CurrentBusyThreadCount);
             }
         }
