@@ -102,7 +102,7 @@ namespace RedFoxMQ
             var offset = 0;
             while (offset < length)
             {
-                var read = stream.Read(rawMessage, offset, rawMessage.Length);
+                var read = stream.Read(rawMessage, offset, rawMessage.Length - offset);
                 offset += read;
             }
             return rawMessage;

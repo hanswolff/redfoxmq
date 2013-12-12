@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
+using System.Text;
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using System;
@@ -93,7 +95,7 @@ namespace RedFoxMQ.Tests
 
         [TestCase(RedFoxTransport.Inproc)]
         [TestCase(RedFoxTransport.Tcp)]
-        public void Request_Response_different_tasks(RedFoxTransport transport)
+        public void Request_Response_different_threads_large_message(RedFoxTransport transport)
         {
             var endpoint = TestHelpers.CreateEndpointForTransport(transport);
             var started = new ManualResetEventSlim();
@@ -109,7 +111,7 @@ namespace RedFoxMQ.Tests
                 }
             });
 
-            var message = new TestMessage { Text = "Hello" };
+            var largeMessage = new TestMessage { Text = new string('x', 1024 * 1024) };
 
             TestMessage messageReceived = null;
             var signal = new ManualResetEventSlim();
@@ -127,7 +129,7 @@ namespace RedFoxMQ.Tests
 
                     requester.Connect(endpoint);
 
-                    requester.Request(message);
+                    requester.Request(largeMessage);
                     stop.Wait();
                 }
             });
@@ -135,7 +137,7 @@ namespace RedFoxMQ.Tests
             try
             {
                 Assert.IsTrue(signal.Wait(Timeout));
-                Assert.AreEqual(message.Text, messageReceived.Text);
+                Assert.AreEqual(largeMessage.Text, messageReceived.Text);
             }
             finally
             {
