@@ -55,6 +55,8 @@ namespace RedFoxMQ
                 _messageFrameSender = new MessageFrameSender(_socket);
                 _messageReceiveLoop = new MessageReceiveLoop(_socket);
                 _messageReceiveLoop.MessageReceived += MessageReceiveLoopOnMessageReceived;
+                _messageReceiveLoop.MessageDeserializationError += (socket, e) => socket.Disconnect(); // TODO: log error
+                _messageReceiveLoop.SocketError += (socket, e) => socket.Disconnect(); // TODO: log error
                 _messageReceiveLoop.Start();
             }
         }
@@ -71,18 +73,21 @@ namespace RedFoxMQ
 
         public void Request(IMessage message)
         {
-            RequestAsync(message).Wait();
+            _semaphoreRequest.Wait();
+            try
+            {
+                var sendMessageFrame = MessageFrameCreator.CreateFromMessage(message);
+                _messageFrameSender.Send(sendMessageFrame);
+            }
+            finally
+            {
+                _semaphoreRequest.Release();
+            }
         }
 
         public async Task RequestAsync(IMessage message)
         {
             await RequestWithCancellationToken(message, _cts.Token);
-        }
-
-        public void Request(IMessage message, CancellationToken cancellationToken)
-        {
-            // ReSharper disable once MethodSupportsCancellation
-            RequestAsync(message, cancellationToken).Wait();
         }
 
         public async Task RequestAsync(IMessage message, CancellationToken cancellationToken)

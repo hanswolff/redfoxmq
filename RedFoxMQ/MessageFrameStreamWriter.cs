@@ -18,7 +18,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -27,6 +26,15 @@ namespace RedFoxMQ
     class MessageFrameStreamWriter
     {
         private static readonly ConcurrentQueue<WeakReference<MemoryStream>> RecycledMemoryStreams = new ConcurrentQueue<WeakReference<MemoryStream>>();
+
+        public void WriteMessageFrame(Stream stream, MessageFrame messageFrame)
+        {
+            if (stream == null) throw new ArgumentNullException("stream");
+            if (messageFrame == null) throw new ArgumentNullException("messageFrame");
+            if (messageFrame.RawMessage == null) throw new ArgumentException("messageFrame.RawMessage cannot be null");
+
+            CreateBufferWriteSingle(stream, messageFrame);
+        }
 
         public async Task WriteMessageFrameAsync(Stream stream, MessageFrame messageFrame, CancellationToken cancellationToken)
         {
@@ -37,12 +45,43 @@ namespace RedFoxMQ
             await CreateBufferWriteSingleAsync(stream, messageFrame, cancellationToken);
         }
 
+        public void WriteMessageFrames(Stream stream, ICollection<MessageFrame> messageFrames)
+        {
+            if (stream == null) throw new ArgumentNullException("stream");
+            if (messageFrames == null) return;
+
+            CreateBufferWriteMany(stream, messageFrames);
+        }
+
         public async Task WriteMessageFramesAsync(Stream stream, ICollection<MessageFrame> messageFrames, CancellationToken cancellationToken)
         {
             if (stream == null) throw new ArgumentNullException("stream");
             if (messageFrames == null) return;
 
-            await CreateBufferWriteMany(stream, messageFrames, cancellationToken);
+            await CreateBufferWriteManyAsync(stream, messageFrames, cancellationToken);
+        }
+
+        private static void CreateBufferWriteSingle(Stream stream, MessageFrame messageFrame)
+        {
+            var sendBufferSize = MessageFrame.HeaderSize + messageFrame.RawMessage.Length;
+
+            WeakReference<MemoryStream> reference;
+            var mem = GetOrCreateMemoryStream(sendBufferSize, out reference);
+
+            try
+            {
+                WriteTypeId(mem, messageFrame.MessageTypeId);
+                WriteLength(mem, messageFrame.RawMessage.Length);
+                WriteBody(mem, messageFrame.RawMessage);
+
+                var toSend = mem.GetBuffer();
+                stream.Write(toSend, 0, sendBufferSize);
+            }
+            finally
+            {
+                mem.SetLength(0);
+                RecycledMemoryStreams.Enqueue(reference);
+            }
         }
 
         private static async Task CreateBufferWriteSingleAsync(Stream stream, MessageFrame messageFrame,
@@ -105,8 +144,7 @@ namespace RedFoxMQ
             stream.Write(rawMessage, 0, rawMessage.Length);
         }
 
-        private static async Task CreateBufferWriteMany(Stream stream, ICollection<MessageFrame> messageFrames,
-            CancellationToken cancellationToken)
+        private static void CreateBufferWriteMany(Stream stream, ICollection<MessageFrame> messageFrames)
         {
             if (messageFrames == null) return;
             var sendBufferSize = messageFrames.Count * MessageFrame.HeaderSize + messageFrames.Sum(m => m.RawMessage.Length);
@@ -114,6 +152,34 @@ namespace RedFoxMQ
             WeakReference<MemoryStream> reference;
             var mem = GetOrCreateMemoryStream(sendBufferSize, out reference);
 
+            try
+            {
+                foreach (var messageFrame in messageFrames)
+                {
+                    WriteTypeId(mem, messageFrame.MessageTypeId);
+                    WriteLength(mem, messageFrame.RawMessage.Length);
+                    WriteBody(mem, messageFrame.RawMessage);
+                }
+
+                var toSend = mem.GetBuffer();
+                stream.Write(toSend, 0, sendBufferSize);
+            }
+            finally
+            {
+                mem.SetLength(0);
+                RecycledMemoryStreams.Enqueue(reference);
+            }
+        }
+
+        private static async Task CreateBufferWriteManyAsync(Stream stream, ICollection<MessageFrame> messageFrames,
+            CancellationToken cancellationToken)
+        {
+            if (messageFrames == null) return;
+            var sendBufferSize = messageFrames.Count * MessageFrame.HeaderSize + messageFrames.Sum(m => m.RawMessage.Length);
+
+            WeakReference<MemoryStream> reference;
+            var mem = GetOrCreateMemoryStream(sendBufferSize, out reference);
+            
             try
             {
                 foreach (var messageFrame in messageFrames)

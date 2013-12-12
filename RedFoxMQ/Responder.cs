@@ -60,8 +60,9 @@ namespace RedFoxMQ
             var messageFrameSender = new MessageFrameSender(socket);
             var messageQueue = new MessageQueue(_messageQueueProcessor, messageFrameSender);
             var messageReceiveLoop = new MessageReceiveLoop(socket);
-            messageReceiveLoop.SocketError += (s, e) => s.Disconnect();
             messageReceiveLoop.MessageReceived += m => MessageReceivedProcessMessage(m, messageQueue);
+            messageReceiveLoop.MessageDeserializationError += (s, e) => s.Disconnect(); // TODO: log error
+            messageReceiveLoop.SocketError += (s, e) => s.Disconnect(); // TODO: log error
             messageReceiveLoop.Start();
 
             socket.Disconnected += () => SocketDisconnected(socket, messageReceiveLoop);

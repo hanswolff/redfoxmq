@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+using System.Diagnostics;
 using RedFoxMQ.Transports;
 using System;
 using System.IO;
@@ -31,6 +32,7 @@ namespace RedFoxMQ
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
 
         public event Action<IMessage> MessageReceived = m => { };
+        public event Action<ISocket, Exception> MessageDeserializationError = (s, e) => { };
         public event Action<ISocket, Exception> SocketError = (s, e) => { };
 
         private readonly ISocket _socket;
@@ -80,9 +82,11 @@ namespace RedFoxMQ
                         message = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId,
                             messageFrame.RawMessage);
                     }
-                    catch (RedFoxBaseException)
+                    catch (RedFoxBaseException ex)
                     {
-                        // TODO: pass on exception somewhere
+                        Debug.WriteLine(ex);
+
+                        MessageDeserializationError(_socket, ex);
                     }
 
                     FireMessageReceivedEvent(message);
