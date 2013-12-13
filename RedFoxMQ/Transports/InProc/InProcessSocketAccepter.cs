@@ -22,7 +22,7 @@ namespace RedFoxMQ.Transports.InProc
 {
     class InProcessSocketAccepter : ISocketAccepter
     {
-        private BlockingCollection<InProcSocket> _listener;
+        private BlockingCollection<InProcSocketPair> _listener;
         private CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ManualResetEventSlim _started = new ManualResetEventSlim(false);
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
@@ -58,8 +58,8 @@ namespace RedFoxMQ.Transports.InProc
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    var socket = _listener.Take(cancellationToken);
-                    TryFireClientConnectedEvent(socket);
+                    var socketPair = _listener.Take(cancellationToken);
+                    TryFireClientConnectedEvent(socketPair.ServerSocket);
                 }
             }
             catch (OperationCanceledException)

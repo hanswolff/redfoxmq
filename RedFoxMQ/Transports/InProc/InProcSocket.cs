@@ -22,13 +22,20 @@ namespace RedFoxMQ.Transports.InProc
     class InProcSocket : ISocket
     {
         public RedFoxEndpoint Endpoint { get; private set; }
-        private readonly QueueStream _stream;
+        
+        private readonly QueueStream _writeStream;
+        public QueueStream WriteStream { get { return _writeStream; } }
 
-        public InProcSocket(RedFoxEndpoint endpoint, QueueStream stream)
+        private readonly QueueStream _readStream;
+        public QueueStream ReadStream { get { return _readStream; } }
+
+        public InProcSocket(RedFoxEndpoint endpoint, QueueStream writeStream, QueueStream readStream)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (writeStream == null) throw new ArgumentNullException("writeStream");
+            if (readStream == null) throw new ArgumentNullException("readStream");
             Endpoint = endpoint;
-            _stream = stream;
+            _writeStream = writeStream;
+            _readStream = readStream;
         }
 
         private readonly InterlockedBoolean _isDisconnected = new InterlockedBoolean();
@@ -41,27 +48,30 @@ namespace RedFoxMQ.Transports.InProc
 
         public int Read(byte[] buf, int offset, int count)
         {
-            return _stream.Read(buf, offset, count);
+            return _readStream.Read(buf, offset, count);
         }
 
         public async Task<int> ReadAsync(byte[] buf, int offset, int count, CancellationToken cancellationToken)
         {
-            return await _stream.ReadAsync(buf, offset, count, cancellationToken);
+            return await _readStream.ReadAsync(buf, offset, count, cancellationToken);
         }
 
         public void Write(byte[] buf, int offset, int count)
         {
-            _stream.Write(buf, offset, count);
+            _writeStream.Write(buf, offset, count);
         }
 
         public async Task WriteAsync(byte[] buf, int offset, int count, CancellationToken cancellationToken)
         {
-            await _stream.WriteAsync(buf, offset, count, cancellationToken);
+            await _writeStream.WriteAsync(buf, offset, count, cancellationToken);
         }
 
         public void Disconnect()
         {
             if (_isDisconnected.Set(true)) return;
+
+            _readStream.Close();
+            _writeStream.Close();
 
             Disconnected();
         }

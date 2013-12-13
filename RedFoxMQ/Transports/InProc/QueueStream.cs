@@ -45,11 +45,11 @@ namespace RedFoxMQ.Transports.InProc
             _blocking = blocking;
         }
 
-        private readonly CancellationTokenSource _disposeCancellationTokenSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource _closeCancellationTokenSource = new CancellationTokenSource();
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
-            _disposeCancellationTokenSource.Cancel(false);
+            _closeCancellationTokenSource.Cancel(false);
         }
 
         public byte[] ReadAll()
@@ -127,7 +127,7 @@ namespace RedFoxMQ.Transports.InProc
             try
             {
                 using (var tokenSource = 
-                    CancellationTokenSource.CreateLinkedTokenSource(_disposeCancellationTokenSource.Token, cancellationToken))
+                    CancellationTokenSource.CreateLinkedTokenSource(_closeCancellationTokenSource.Token, cancellationToken))
                 {
                     var bytesAlreadyRead = 0;
                     do
@@ -142,7 +142,7 @@ namespace RedFoxMQ.Transports.InProc
                                 }
                                 catch (OperationCanceledException)
                                 {
-                                    if (_disposeCancellationTokenSource.IsCancellationRequested)
+                                    if (_closeCancellationTokenSource.IsCancellationRequested)
                                         throw new ObjectDisposedException(typeof (QueueStream).Name);
                                     throw;
                                 }
@@ -183,13 +183,19 @@ namespace RedFoxMQ.Transports.InProc
             if (offset < 0) throw new ArgumentOutOfRangeException("offset", String.Format("Offset cannot be negative (but was: {0})", offset));
             if (count == 0) return;
             if (count < 0) throw new ArgumentOutOfRangeException("count", String.Format("Cannot write a negative number of bytes (parameter 'count' is: {0})", count));
-            if (_disposeCancellationTokenSource.IsCancellationRequested)
+            if (_closeCancellationTokenSource.IsCancellationRequested)
                 throw new ObjectDisposedException(typeof(QueueStream).Name);
 
             var splice = new byte[count];
             Array.Copy(buffer, offset, splice, 0, count);
             _buffers.Add(splice);
             Interlocked.Add(ref _length, count);
+        }
+
+        public override void Close()
+        {
+            _closeCancellationTokenSource.Cancel();
+            base.Close();
         }
 
         public override void Flush()
@@ -208,7 +214,7 @@ namespace RedFoxMQ.Transports.InProc
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            return Read(buffer, offset, count, _disposeCancellationTokenSource.Token);
+            return Read(buffer, offset, count, _closeCancellationTokenSource.Token);
         }
 
         public override bool CanRead

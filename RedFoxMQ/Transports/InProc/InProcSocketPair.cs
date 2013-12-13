@@ -13,16 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-using System;
 
-namespace RedFoxMQ.Transports
+namespace RedFoxMQ.Transports.InProc
 {
-    [Flags]
-    public enum SocketMode
+    struct InProcSocketPair
     {
-        None = 0,
-        ReadOnly = 1,
-        WriteOnly = 2,
-        ReadWrite = ReadOnly | WriteOnly
+        public InProcSocket ClientSocket;
+        public InProcSocket ServerSocket;
+
+        public InProcSocketPair(InProcSocket clientSocket, InProcSocket serverSocket)
+        {
+            ClientSocket = clientSocket;
+            ServerSocket = serverSocket;
+
+            clientSocket.Disconnected += serverSocket.Disconnect;
+            serverSocket.Disconnected += clientSocket.Disconnect;
+        }
     }
 }
