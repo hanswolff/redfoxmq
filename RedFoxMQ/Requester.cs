@@ -73,15 +73,23 @@ namespace RedFoxMQ
 
         public void Request(IMessage message)
         {
-            _semaphoreRequest.Wait();
-            try
+            Request(message, _cts.Token);
+        }
+
+        public void Request(IMessage message, CancellationToken cancellationToken)
+        {
+            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token, cancellationToken))
             {
-                var sendMessageFrame = MessageFrameCreator.CreateFromMessage(message);
-                _messageFrameSender.Send(sendMessageFrame);
-            }
-            finally
-            {
-                _semaphoreRequest.Release();
+                _semaphoreRequest.Wait(cts.Token);
+                try
+                {
+                    var sendMessageFrame = MessageFrameCreator.CreateFromMessage(message);
+                    _messageFrameSender.Send(sendMessageFrame);
+                }
+                finally
+                {
+                    _semaphoreRequest.Release();
+                }
             }
         }
 
