@@ -104,23 +104,23 @@ namespace RedFoxMQ
                 var messageQueuePayload = item.Value;
 
                 if (messageQueuePayload.Busy.Set(true)) continue;
-                try
-                {
-                    var task = LoopMessageQueue(messageQueue, messageQueuePayload.Sender, cancellationToken);
-                }
-                finally
-                {
-                    messageQueuePayload.Busy.Set(false);
-                }
+                var task = LoopMessageQueue(messageQueue, messageQueuePayload.Sender, messageQueuePayload.Busy, cancellationToken);
             }
         }
 
-        private static async Task LoopMessageQueue(MessageQueue messageQueue, MessageFrameSender sender, CancellationToken cancellationToken)
+        private static async Task LoopMessageQueue(MessageQueue messageQueue, MessageFrameSender sender, InterlockedBoolean busy, CancellationToken cancellationToken)
         {
-            var hasMore = true;
-            while (hasMore && !cancellationToken.IsCancellationRequested)
+            try
             {
-                hasMore = await messageQueue.SendFromQueueAsync(sender, cancellationToken);
+                var hasMore = true;
+                while (hasMore && !cancellationToken.IsCancellationRequested)
+                {
+                    hasMore = await messageQueue.SendFromQueueAsync(sender, cancellationToken);
+                }
+            }
+            finally
+            {
+                busy.Set(false);
             }
         }
 
