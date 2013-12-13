@@ -89,7 +89,8 @@ namespace RedFoxMQ
             var offset = 0;
             while (offset < header.Length)
             {
-                var read = stream.Read(header, 0, header.Length);
+                var read = stream.Read(header, offset, header.Length - offset);
+                if (read == 0) throw new EndOfStreamException();
                 offset += read;
             }
             return header;
@@ -103,6 +104,7 @@ namespace RedFoxMQ
             while (offset < length)
             {
                 var read = stream.Read(rawMessage, offset, rawMessage.Length - offset);
+                if (read == 0) throw new EndOfStreamException();
                 offset += read;
             }
             return rawMessage;

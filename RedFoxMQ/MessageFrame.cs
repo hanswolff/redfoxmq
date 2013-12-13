@@ -13,17 +13,51 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+using System;
+using System.Linq;
+using System.Text;
 
 namespace RedFoxMQ
 {
-    class MessageFrame
+    class MessageFrame : IEquatable<MessageFrame>
     {
-        private const int SizeMessageTypeId = sizeof (ushort);
-        private const int SizeLength = sizeof (int);
+        private const int SizeMessageTypeId = sizeof(ushort);
+        private const int SizeLength = sizeof(int);
 
         public const int HeaderSize = SizeMessageTypeId + SizeLength;
 
         public ushort MessageTypeId;
         public byte[] RawMessage;
+
+        public bool Equals(MessageFrame other)
+        {
+            if (ReferenceEquals(null, other)) return false;
+            if (ReferenceEquals(this, other)) return true;
+
+            return MessageTypeId == other.MessageTypeId &&
+                   RawMessage.LongLength == other.RawMessage.LongLength &&
+                   RawMessage.SequenceEqual(other.RawMessage);
+        }
+
+        public override string ToString()
+        {
+            return String.Format(
+                "MessageFrame: {{ MessageTypeId: {0}, RawMessage[{1}]: {2} }}",
+                MessageTypeId,
+                RawMessage != null ? RawMessage.Length : 0,
+                GetFirstHexBytesOfRawMessage(5));
+        }
+
+        private string GetFirstHexBytesOfRawMessage(int numberOfBytes)
+        {
+            var rawMessage = RawMessage;
+            if (rawMessage == null) return "(null)";
+
+            var hexBytes = rawMessage.Take(numberOfBytes).Select(x => x.ToString("x2"));
+            var result = new StringBuilder(String.Join(" ", hexBytes));
+            if (rawMessage.Length > numberOfBytes) result.Append("...");
+
+            return result.ToString();
+        }
     }
 }

@@ -15,6 +15,7 @@
 // 
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -44,6 +45,38 @@ namespace RedFoxMQ.Tests
                 Assert.AreEqual(messageFrame.RawMessage.Length, BitConverter.ToUInt16(writtenToStream, 2));
 
                 Assert.AreEqual(messageFrame.RawMessage, writtenToStream.Skip(6).ToArray());
+            }
+        }
+
+        [Test]
+        public void MessageFrameStreamWriter_writes_MessageFrameStreamReader_reads()
+        {
+            var writer = new MessageFrameStreamWriter();
+            var reader = new MessageFrameStreamReader();
+
+            var random = TestHelpers.CreateSemiRandomGenerator();
+            var messageFrames = new Queue<MessageFrame>();
+            using (var mem = new MemoryStream())
+            {
+                for (var i = 0; i < 1000; i++)
+                {
+                    var messageFrame = new MessageFrame
+                    {
+                        MessageTypeId = (ushort) random.Next(0, UInt16.MaxValue),
+                        RawMessage = TestHelpers.GetRandomBytes(random, random.Next(100 * i))
+                    };
+                    messageFrames.Enqueue(messageFrame);
+                    writer.WriteMessageFrame(mem, messageFrame);
+                }
+
+                mem.Position = 0;
+                while (messageFrames.Count > 0)
+                {
+                    var messageFrameWritten = messageFrames.Dequeue();
+                    var messageFrameRead = reader.ReadMessageFrame(mem);
+
+                    Assert.AreEqual(messageFrameWritten, messageFrameRead);
+                }
             }
         }
     }

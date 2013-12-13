@@ -13,8 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-
-using System.Threading;
 using RedFoxMQ.Transports;
 using System;
 using System.Collections.Concurrent;
@@ -102,7 +100,8 @@ namespace RedFoxMQ
             var messageQueue = (MessageQueue) state;
             var responseFrame = MessageFrameCreator.CreateFromMessage(responseMessage);
             messageQueue.Add(responseFrame);
-            messageQueue.SendFromQueue();
+            // this is redundant
+            // messageQueue.SendFromQueue();
         }
 
         public bool Unbind(RedFoxEndpoint endpoint)

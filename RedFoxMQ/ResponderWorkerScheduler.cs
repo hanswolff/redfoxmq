@@ -15,6 +15,7 @@
 // 
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Threading;
 
 namespace RedFoxMQ
@@ -121,9 +122,10 @@ namespace RedFoxMQ
                             WorkUnitCompleted(workUnitWithState.WorkUnit, workUnitWithState.State, response);
                         }
                     }
-                    catch
+                    catch (Exception ex)
                     {
                         // ignore exception from fired events
+                        Debug.WriteLine(ex);
                     }
                     finally
                     {
