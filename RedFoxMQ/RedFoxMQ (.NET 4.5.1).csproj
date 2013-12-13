@@ -63,6 +63,7 @@
     <Compile Include="Responder.cs" />
     <Compile Include="Requester.cs" />
     <Compile Include="Transports\InProc\InProcSocket.cs" />
+    <Compile Include="Transports\InProc\InProcSocketPair.cs" />
     <Compile Include="Transports\InProc\QueueStream.cs" />
     <Compile Include="Transports\ISocket.cs" />
     <Compile Include="Transports\SocketFactory.cs" />
