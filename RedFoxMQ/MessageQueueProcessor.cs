@@ -94,6 +94,10 @@ namespace RedFoxMQ
             catch (OperationCanceledException)
             {
             }
+            finally
+            {
+                _started.Set(false);
+            }
         }
 
         private void Loop(CancellationToken cancellationToken)

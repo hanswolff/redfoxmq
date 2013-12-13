@@ -101,8 +101,6 @@ namespace RedFoxMQ
             var messageQueue = (MessageQueue) state;
             var responseFrame = MessageFrameCreator.CreateFromMessage(responseMessage);
             messageQueue.Add(responseFrame);
-            // this is redundant
-            // messageQueue.SendFromQueue();
         }
 
         public bool Unbind(RedFoxEndpoint endpoint)
