@@ -36,6 +36,7 @@ namespace RedFoxMQ
 
         public event Action Disconnected = () => { };
         public event Action<IMessage> ResponseReceived = r => { };
+        public event Action<ISocket, Exception> ResponseException = (socket, exception) => { };
 
         public void Connect(RedFoxEndpoint endpoint)
         {
@@ -55,10 +56,17 @@ namespace RedFoxMQ
                 _messageFrameSender = new MessageFrameSender(_socket);
                 _messageReceiveLoop = new MessageReceiveLoop(_socket);
                 _messageReceiveLoop.MessageReceived += MessageReceiveLoopOnMessageReceived;
-                _messageReceiveLoop.MessageDeserializationError += (socket, e) => socket.Disconnect(); // TODO: log error
-                _messageReceiveLoop.SocketError += (socket, e) => socket.Disconnect(); // TODO: log error
+                _messageReceiveLoop.OnException += MessageReceiveLoopOnException;
                 _messageReceiveLoop.Start();
             }
+        }
+
+        private void MessageReceiveLoopOnException(ISocket socket, Exception exception)
+        {
+            try { ResponseException(socket, exception); }
+            catch { }
+
+            socket.Disconnect();
         }
 
         private void MessageReceiveLoopOnMessageReceived(IMessage message)

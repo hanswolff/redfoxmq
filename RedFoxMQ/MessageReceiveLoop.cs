@@ -31,8 +31,7 @@ namespace RedFoxMQ
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
 
         public event Action<IMessage> MessageReceived = m => { };
-        public event Action<ISocket, Exception> MessageDeserializationError = (s, e) => { };
-        public event Action<ISocket, Exception> SocketError = (s, e) => { };
+        public event Action<ISocket, Exception> OnException = (s, e) => { };
 
         private readonly ISocket _socket;
 
@@ -85,7 +84,7 @@ namespace RedFoxMQ
                     {
                         Debug.WriteLine(ex);
 
-                        MessageDeserializationError(_socket, ex);
+                        OnException(_socket, ex);
                     }
 
                     FireMessageReceivedEvent(message);
@@ -99,7 +98,7 @@ namespace RedFoxMQ
             }
             catch (IOException ex)
             {
-                SocketError(_socket, ex);
+                OnException(_socket, ex);
             }
             finally
             {
