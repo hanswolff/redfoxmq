@@ -17,6 +17,8 @@ using RedFoxMQ.Transports;
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
@@ -26,8 +28,7 @@ namespace RedFoxMQ
         private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
 
         private readonly ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter> _servers;
-        private readonly ConcurrentDictionary<MessageReceiveLoop, MessageQueue> _clientSockets;
-        private readonly MessageQueueProcessor _messageQueueProcessor = new MessageQueueProcessor();
+        private readonly ConcurrentDictionary<ISocket, SenderReceiver> _clientSockets;
         private readonly IResponderWorkUnitFactory _responderWorkUnitFactory;
         private readonly ResponderWorkerScheduler _scheduler;
 
@@ -37,7 +38,7 @@ namespace RedFoxMQ
             _responderWorkUnitFactory = responderWorkUnitFactory;
 
             _servers = new ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter>();
-            _clientSockets = new ConcurrentDictionary<MessageReceiveLoop, MessageQueue>();
+            _clientSockets = new ConcurrentDictionary<ISocket, SenderReceiver>();
             _scheduler = new ResponderWorkerScheduler(minThreads, maxThreads);
             _scheduler.WorkUnitCompleted += SchedulerWorkUnitCompleted;
         }
@@ -56,51 +57,52 @@ namespace RedFoxMQ
             if (socket == null) throw new ArgumentNullException("socket");
 
             var messageFrameSender = new MessageFrameSender(socket);
-            var messageQueue = new MessageQueue();
-            var messageReceiveLoop = new MessageReceiveLoop(socket);
-            messageReceiveLoop.MessageReceived += m => MessageReceivedProcessMessage(m, messageQueue);
-            messageReceiveLoop.OnException += (s, e) => s.Disconnect();
-            messageReceiveLoop.Start();
+            var messageFrameReceiver = new MessageFrameReceiver(socket);
+            var senderReceiver = new SenderReceiver(messageFrameSender, messageFrameReceiver);
 
-            socket.Disconnected += () => SocketDisconnected(socket, messageReceiveLoop);
+            socket.Disconnected += () => SocketDisconnected(socket);
 
-            if (_clientSockets.TryAdd(messageReceiveLoop, messageQueue))
+            if (_clientSockets.TryAdd(socket, senderReceiver))
             {
+                var task = ReceiveRequestMessage(senderReceiver, _disposeCancellationTokenSource.Token);
                 ClientConnected(socket);
-                _messageQueueProcessor.Register(messageQueue, messageFrameSender);
             }
 
             if (socket.IsDisconnected)
             {
                 // this is to fix the race condition if socket was disconnected meanwhile
-                SocketDisconnected(socket, messageReceiveLoop);
+                SocketDisconnected(socket);
             }
         }
 
-        private void SocketDisconnected(ISocket socket, MessageReceiveLoop receiveLoop)
+        private void SocketDisconnected(ISocket socket)
         {
-            MessageQueue messageQueue;
-            if (_clientSockets.TryRemove(receiveLoop, out messageQueue))
+            SenderReceiver senderReceiver;
+            if (_clientSockets.TryRemove(socket, out senderReceiver))
             {
-                _messageQueueProcessor.Unregister(messageQueue);
                 ClientDisconnected(socket);
             }
         }
 
-        private void MessageReceivedProcessMessage(IMessage requestMessage, MessageQueue messageQueue)
+        private async Task ReceiveRequestMessage(SenderReceiver senderReceiver, CancellationToken cancellationToken)
         {
-            if (requestMessage == null) throw new ArgumentNullException("requestMessage");
-            if (messageQueue == null) throw new ArgumentNullException("messageQueue");
+            if (senderReceiver.Receiver == null) throw new ArgumentException("senderReceiver.Receiver must not be null");
+            if (senderReceiver.Sender == null) throw new ArgumentException("senderReceiver.Sender must not be null");
+
+            var messageFrame = await senderReceiver.Receiver.ReceiveAsync(cancellationToken).ConfigureAwait(false);
+            var requestMessage = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId, messageFrame.RawMessage);
 
             var workUnit = _responderWorkUnitFactory.CreateWorkUnit(requestMessage);
-            _scheduler.AddWorkUnit(workUnit, messageQueue);
+            _scheduler.AddWorkUnit(workUnit, senderReceiver);
         }
 
         private void SchedulerWorkUnitCompleted(IResponderWorkUnit workUnit, object state, IMessage responseMessage)
         {
-            var messageQueue = (MessageQueue) state;
+            var senderReceiver = (SenderReceiver)state;
             var responseFrame = MessageFrameCreator.CreateFromMessage(responseMessage);
-            messageQueue.Add(responseFrame);
+            senderReceiver.Sender.Send(responseFrame);
+
+            var task = ReceiveRequestMessage(senderReceiver, _disposeCancellationTokenSource.Token).ConfigureAwait(false);
         }
 
         public bool Unbind(RedFoxEndpoint endpoint)
@@ -128,6 +130,7 @@ namespace RedFoxMQ
 
         #region Dispose
         private bool _disposed;
+        private readonly CancellationTokenSource _disposeCancellationTokenSource = new CancellationTokenSource();
         private readonly object _disposeLock = new object();
 
         protected virtual void Dispose(bool disposing)
@@ -136,6 +139,8 @@ namespace RedFoxMQ
             {
                 if (!_disposed)
                 {
+                    _disposeCancellationTokenSource.Cancel();
+                    
                     UnbindAllEndpoints();
 
                     _disposed = true;
@@ -154,5 +159,17 @@ namespace RedFoxMQ
             Dispose(false);
         }
         #endregion
+    }
+
+    struct SenderReceiver
+    {
+        public MessageFrameReceiver Receiver;
+        public MessageFrameSender Sender;
+
+        public SenderReceiver(MessageFrameSender sender, MessageFrameReceiver receiver)
+        {
+            Sender = sender;
+            Receiver = receiver;
+        }
     }
 }

@@ -59,7 +59,8 @@ namespace RedFoxMQ
             var offset = 0;
             while (offset < length)
             {
-                var read = await stream.ReadAsync(rawMessage, offset, rawMessage.Length, cancellationToken);
+                var read = await stream.ReadAsync(rawMessage, offset, rawMessage.Length - offset, cancellationToken);
+                if (read == 0) throw new EndOfStreamException();
                 offset += read;
             }
             return rawMessage;

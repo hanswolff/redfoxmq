@@ -126,10 +126,8 @@ namespace RedFoxMQ.Transports.InProc
 
             try
             {
-                using (
-                    var tokenSource =
-                        CancellationTokenSource.CreateLinkedTokenSource(_disposeCancellationTokenSource.Token,
-                            cancellationToken))
+                using (var tokenSource = 
+                    CancellationTokenSource.CreateLinkedTokenSource(_disposeCancellationTokenSource.Token, cancellationToken))
                 {
                     var bytesAlreadyRead = 0;
                     do

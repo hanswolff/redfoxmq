@@ -97,7 +97,6 @@ namespace RedFoxMQ.Tests
             var largeMessage = new TestMessage { Text = new string('x', 1024 * 1024) };
 
             TestMessage messageReceived = null;
-            var signal = new ManualResetEventSlim();
             Task.Run(() =>
             {
                 using (var requester = new Requester())
@@ -108,13 +107,13 @@ namespace RedFoxMQ.Tests
 
                     messageReceived = (TestMessage)requester.Request(largeMessage);
 
-                    stop.Wait();
+                    stop.Set();
                 }
             });
 
             try
             {
-                Assert.IsTrue(signal.Wait(Timeout));
+                Assert.IsTrue(stop.Wait(Timeout));
                 Assert.AreEqual(largeMessage.Text, messageReceived.Text);
             }
             finally

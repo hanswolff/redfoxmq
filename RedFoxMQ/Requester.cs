@@ -96,7 +96,7 @@ namespace RedFoxMQ
         {
             using (var cts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token, cancellationToken))
             {
-                return await RequestWithCancellationToken(message, cts.Token);
+                return await RequestWithCancellationToken(message, cts.Token).ConfigureAwait(false);
             }
         }
 
@@ -109,7 +109,7 @@ namespace RedFoxMQ
                 var sendMessageFrame = MessageFrameCreator.CreateFromMessage(message);
                 await _messageFrameSender.SendAsync(sendMessageFrame, cancellationToken);
 
-                var messageFrame = await _messageFrameReceiver.ReceiveAsync(cancellationToken);
+                var messageFrame = await _messageFrameReceiver.ReceiveAsync(cancellationToken).ConfigureAwait(false);
                 var responseMessage = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId, messageFrame.RawMessage);
                 return responseMessage;
             }
