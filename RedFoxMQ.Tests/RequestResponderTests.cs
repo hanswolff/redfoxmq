@@ -49,7 +49,7 @@ namespace RedFoxMQ.Tests
 
                 requester.Connect(endpoint);
 
-                Thread.Sleep(30);
+                Thread.Sleep(100);
 
                 var messageSent = new TestMessage { Text = "Hello" };
                 requester.Request(messageSent);
@@ -71,8 +71,6 @@ namespace RedFoxMQ.Tests
                 responder.Bind(endpoint);
                 requester.Connect(endpoint);
 
-                Thread.Sleep(30);
-
                 var messagesReceived = new List<TestMessage>();
                 var counterSignal = new CounterSignal(2);
                 requester.ResponseReceived += m =>
@@ -80,6 +78,8 @@ namespace RedFoxMQ.Tests
                     messagesReceived.Add((TestMessage)m);
                     counterSignal.Increment();
                 };
+
+                Thread.Sleep(100);
 
                 var messageSent = new TestMessage { Text = "Hello" };
                 requester.Request(messageSent);
@@ -158,7 +158,7 @@ namespace RedFoxMQ.Tests
 
                 requester.Connect(endpoint);
 
-                Thread.Sleep(30);
+                Thread.Sleep(100);
 
                 requester.Disconnect();
 
@@ -181,7 +181,7 @@ namespace RedFoxMQ.Tests
                 requester.Disconnected += eventFired.Set;
                 requester.Connect(endpoint);
 
-                Thread.Sleep(30);
+                Thread.Sleep(100);
 
                 requester.Disconnect();
 

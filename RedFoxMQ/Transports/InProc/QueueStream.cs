@@ -18,7 +18,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace RedFoxMQ.Transports.InProc
 {
@@ -186,12 +185,7 @@ namespace RedFoxMQ.Transports.InProc
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            return Read(buffer, offset, count, CancellationToken.None);
-        }
-
-        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-        {
-            return Task.Run(() => Read(buffer, offset, count, cancellationToken), cancellationToken);
+            return Read(buffer, offset, count, _disposeCancellationTokenSource.Token);
         }
 
         public override bool CanRead

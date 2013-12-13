@@ -38,7 +38,7 @@ namespace RedFoxMQ.Tests
                 publisher.Bind(endpoint);
                 subscriber.Connect(endpoint);
 
-                Thread.Sleep(30);
+                Thread.Sleep(100);
 
                 var broadcastedMessage = new TestMessage { Text = "Hello" };
 
@@ -60,7 +60,7 @@ namespace RedFoxMQ.Tests
                 publisher.Bind(endpoint);
                 subscriber.Connect(endpoint);
 
-                Thread.Sleep(30);
+                Thread.Sleep(100);
 
                 var broadcastedMessage = new TestMessage { Text = "Hello" };
 
@@ -84,7 +84,7 @@ namespace RedFoxMQ.Tests
                 publisher.Bind(endpoint);
                 subscriber.Connect(endpoint);
 
-                Thread.Sleep(30);
+                Thread.Sleep(100);
 
                 var broadcastedMessage = new TestMessage { Text = "Hello" };
 
@@ -183,7 +183,7 @@ namespace RedFoxMQ.Tests
                 publisher.Bind(endpoint);
                 subscriber1.Connect(endpoint);
 
-                Thread.Sleep(30);
+                Thread.Sleep(100);
 
                 var broadcastMessage = new TestMessage { Text = "Hello" };
                 publisher.Broadcast(broadcastMessage);
@@ -192,7 +192,7 @@ namespace RedFoxMQ.Tests
 
                 subscriber2.Connect(endpoint);
 
-                Thread.Sleep(30);
+                Thread.Sleep(100);
 
                 publisher.Broadcast(broadcastMessage);
 

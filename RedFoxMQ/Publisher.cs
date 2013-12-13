@@ -51,7 +51,7 @@ namespace RedFoxMQ
 
             var messageFrameSender = new MessageFrameSender(socket);
             var messageQueue = new MessageQueue();
-            
+
             if (_broadcastSockets.TryAdd(socket, messageQueue))
             {
                 ClientConnected(socket);
