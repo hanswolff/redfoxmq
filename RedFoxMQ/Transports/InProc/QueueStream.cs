@@ -26,6 +26,7 @@ namespace RedFoxMQ.Transports.InProc
         readonly BlockingCollection<byte[]> _buffers = new BlockingCollection<byte[]>();
         byte[] _currentBuffer;
         int _currentBufferOffset;
+        readonly InterlockedBoolean _isBusyReading = new InterlockedBoolean();
 
         private readonly bool _blocking;
         private int _length;
@@ -53,53 +54,64 @@ namespace RedFoxMQ.Transports.InProc
 
         public byte[] ReadAll()
         {
-            var bytesAlreadyRead = 0;
+            if (_isBusyReading.Set(true))
+                throw new InvalidOperationException("Access from different threads, QueueStream is not thread-safe");
 
-            var localBuffers = new Queue<byte[]>();
-            byte[] localBuffer;
-            byte[] firstBuffer = null;
-            int localBuffersSize = 0;
-            while (_buffers.TryTake(out localBuffer))
+            try
             {
-                if (firstBuffer == null) firstBuffer = localBuffer;
-                localBuffersSize += localBuffer.Length;
-                localBuffers.Enqueue(localBuffer);
-            }
+                var bytesAlreadyRead = 0;
 
-            if (firstBuffer != null &&
-                localBuffersSize == firstBuffer.Length &&
-                _currentBuffer == null)
-            {
-                // in many scenarios this is sufficient and prevents unnecessary 
-                // buffer creation and memory copy operations
-                return firstBuffer;
-            }
-
-            var bufferSize = _currentBuffer != null ? _currentBuffer.Length - _currentBufferOffset : 0;
-            bufferSize += localBuffersSize;
-
-            var buffer = new byte[bufferSize];
-
-            do
-            {
-                if (_currentBuffer == null || _currentBufferOffset == _currentBuffer.Length)
+                var localBuffers = new Queue<byte[]>();
+                byte[] localBuffer;
+                byte[] firstBuffer = null;
+                int localBuffersSize = 0;
+                while (_buffers.TryTake(out localBuffer))
                 {
-                    if (localBuffers.Count == 0)
-                        return buffer;
-                    _currentBuffer = localBuffers.Dequeue();
-                    _currentBufferOffset = 0;
+                    if (firstBuffer == null) firstBuffer = localBuffer;
+                    localBuffersSize += localBuffer.Length;
+                    localBuffers.Enqueue(localBuffer);
                 }
 
-                var bytesAvailable = _currentBuffer.Length - _currentBufferOffset;
-                var bytesToReadFromCurrentBuffer = bytesAvailable;
+                if (firstBuffer != null &&
+                    localBuffersSize == firstBuffer.Length &&
+                    _currentBuffer == null)
+                {
+                    // in many scenarios this is sufficient and prevents unnecessary 
+                    // buffer creation and memory copy operations
+                    return firstBuffer;
+                }
 
-                Array.Copy(_currentBuffer, _currentBufferOffset, buffer, bytesAlreadyRead, bytesToReadFromCurrentBuffer);
+                var bufferSize = _currentBuffer != null ? _currentBuffer.Length - _currentBufferOffset : 0;
+                bufferSize += localBuffersSize;
 
-                _currentBufferOffset += bytesToReadFromCurrentBuffer;
-                bytesAlreadyRead += bytesToReadFromCurrentBuffer;
-                Interlocked.Add(ref _length, -bytesToReadFromCurrentBuffer);
+                var buffer = new byte[bufferSize];
 
-            } while (true);
+                do
+                {
+                    if (_currentBuffer == null || _currentBufferOffset == _currentBuffer.Length)
+                    {
+                        if (localBuffers.Count == 0)
+                            return buffer;
+                        _currentBuffer = localBuffers.Dequeue();
+                        _currentBufferOffset = 0;
+                    }
+
+                    var bytesAvailable = _currentBuffer.Length - _currentBufferOffset;
+                    var bytesToReadFromCurrentBuffer = bytesAvailable;
+
+                    Array.Copy(_currentBuffer, _currentBufferOffset, buffer, bytesAlreadyRead,
+                        bytesToReadFromCurrentBuffer);
+
+                    _currentBufferOffset += bytesToReadFromCurrentBuffer;
+                    bytesAlreadyRead += bytesToReadFromCurrentBuffer;
+                    Interlocked.Add(ref _length, -bytesToReadFromCurrentBuffer);
+
+                } while (true);
+            }
+            finally
+            {
+                _isBusyReading.Set(false);
+            }
         }
 
         public int Read(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
@@ -109,48 +121,61 @@ namespace RedFoxMQ.Transports.InProc
             if (count == 0) return 0;
             if (count < 0) throw new ArgumentOutOfRangeException("count", String.Format("Cannot read a negative number of bytes (parameter 'count' is: {0})", count));
 
-            using (var tokenSource = CancellationTokenSource.CreateLinkedTokenSource(_disposeCancellationTokenSource.Token, cancellationToken))
+            if (_isBusyReading.Set(true))
+                throw new InvalidOperationException("Access from different threads, QueueStream is not thread-safe");
+
+            try
             {
-                var bytesAlreadyRead = 0;
-                do
+                using (
+                    var tokenSource =
+                        CancellationTokenSource.CreateLinkedTokenSource(_disposeCancellationTokenSource.Token,
+                            cancellationToken))
                 {
-                    if (_currentBuffer == null || _currentBufferOffset == _currentBuffer.Length)
+                    var bytesAlreadyRead = 0;
+                    do
                     {
-                        if (_blocking)
+                        if (_currentBuffer == null || _currentBufferOffset == _currentBuffer.Length)
                         {
-                            try
+                            if (_blocking)
                             {
-                                _currentBuffer = _buffers.Take(tokenSource.Token);
+                                try
+                                {
+                                    _currentBuffer = _buffers.Take(tokenSource.Token);
+                                }
+                                catch (OperationCanceledException)
+                                {
+                                    if (_disposeCancellationTokenSource.IsCancellationRequested)
+                                        throw new ObjectDisposedException(typeof (QueueStream).Name);
+                                    throw;
+                                }
                             }
-                            catch (OperationCanceledException)
+                            else
                             {
-                                if (_disposeCancellationTokenSource.IsCancellationRequested)
-                                    throw new ObjectDisposedException(typeof(QueueStream).Name);
-                                throw;
+                                if (tokenSource.IsCancellationRequested || !_buffers.TryTake(out _currentBuffer))
+                                    return bytesAlreadyRead;
                             }
+                            _currentBufferOffset = 0;
                         }
-                        else
-                        {
-                            if (tokenSource.IsCancellationRequested || !_buffers.TryTake(out _currentBuffer))
-                                return bytesAlreadyRead;
-                        }
-                        _currentBufferOffset = 0;
-                    }
 
-                    var bytesToRead = count - bytesAlreadyRead;
-                    var bytesAvailable = _currentBuffer.Length - _currentBufferOffset;
+                        var bytesToRead = count - bytesAlreadyRead;
+                        var bytesAvailable = _currentBuffer.Length - _currentBufferOffset;
 
-                    var bytesToReadFromCurrentBuffer = Math.Min(bytesToRead, bytesAvailable);
-                    Array.Copy(_currentBuffer, _currentBufferOffset, buffer, offset + bytesAlreadyRead,
-                        bytesToReadFromCurrentBuffer);
+                        var bytesToReadFromCurrentBuffer = Math.Min(bytesToRead, bytesAvailable);
+                        Array.Copy(_currentBuffer, _currentBufferOffset, buffer, offset + bytesAlreadyRead,
+                            bytesToReadFromCurrentBuffer);
 
-                    _currentBufferOffset += bytesToReadFromCurrentBuffer;
-                    bytesAlreadyRead += bytesToReadFromCurrentBuffer;
-                    Interlocked.Add(ref _length, -bytesToRead);
+                        _currentBufferOffset += bytesToReadFromCurrentBuffer;
+                        bytesAlreadyRead += bytesToReadFromCurrentBuffer;
+                        Interlocked.Add(ref _length, -bytesToRead);
 
-                } while (bytesAlreadyRead < count);
+                    } while (bytesAlreadyRead < count);
 
-                return bytesAlreadyRead;
+                    return bytesAlreadyRead;
+                }
+            }
+            finally
+            {
+                _isBusyReading.Set(false);
             }
         }
 

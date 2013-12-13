@@ -26,7 +26,7 @@ namespace RedFoxMQ
         private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
 
         private MessageFrameSender _messageFrameSender;
-        private MessageReceiveLoop _messageReceiveLoop;
+        private MessageFrameReceiver _messageFrameReceiver;
 
         private ISocket _socket;
         private CancellationTokenSource _cts = new CancellationTokenSource();
@@ -35,8 +35,6 @@ namespace RedFoxMQ
         public bool IsDisconnected { get { return _socket.IsDisconnected; } }
 
         public event Action Disconnected = () => { };
-        public event Action<IMessage> ResponseReceived = r => { };
-        public event Action<ISocket, Exception> ResponseException = (socket, exception) => { };
 
         public void Connect(RedFoxEndpoint endpoint)
         {
@@ -54,24 +52,8 @@ namespace RedFoxMQ
             if (!_cts.IsCancellationRequested)
             {
                 _messageFrameSender = new MessageFrameSender(_socket);
-                _messageReceiveLoop = new MessageReceiveLoop(_socket);
-                _messageReceiveLoop.MessageReceived += MessageReceiveLoopOnMessageReceived;
-                _messageReceiveLoop.OnException += MessageReceiveLoopOnException;
-                _messageReceiveLoop.Start();
+                _messageFrameReceiver = new MessageFrameReceiver(_socket);
             }
-        }
-
-        private void MessageReceiveLoopOnException(ISocket socket, Exception exception)
-        {
-            try { ResponseException(socket, exception); }
-            catch { }
-
-            socket.Disconnect();
-        }
-
-        private void MessageReceiveLoopOnMessageReceived(IMessage message)
-        {
-            ResponseReceived(message);
         }
 
         private void SocketDisconnected()
@@ -79,20 +61,24 @@ namespace RedFoxMQ
             Disconnected();
         }
 
-        public void Request(IMessage message)
+        public IMessage Request(IMessage message)
         {
-            Request(message, _cts.Token);
+            return Request(message, _cts.Token);
         }
 
-        public void Request(IMessage message, CancellationToken cancellationToken)
+        public IMessage Request(IMessage requestMessage, CancellationToken cancellationToken)
         {
             using (var cts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token, cancellationToken))
             {
                 _semaphoreRequest.Wait(cts.Token);
                 try
                 {
-                    var sendMessageFrame = MessageFrameCreator.CreateFromMessage(message);
+                    var sendMessageFrame = MessageFrameCreator.CreateFromMessage(requestMessage);
                     _messageFrameSender.Send(sendMessageFrame);
+                    
+                    var messageFrame = _messageFrameReceiver.Receive();
+                    var responseMessage = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId, messageFrame.RawMessage);
+                    return responseMessage;
                 }
                 finally
                 {
@@ -101,27 +87,31 @@ namespace RedFoxMQ
             }
         }
 
-        public async Task RequestAsync(IMessage message)
+        public async Task<IMessage> RequestAsync(IMessage message)
         {
-            await RequestWithCancellationToken(message, _cts.Token);
+            return await RequestWithCancellationToken(message, _cts.Token);
         }
 
-        public async Task RequestAsync(IMessage message, CancellationToken cancellationToken)
+        public async Task<IMessage> RequestAsync(IMessage message, CancellationToken cancellationToken)
         {
             using (var cts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token, cancellationToken))
             {
-                await RequestWithCancellationToken(message, cts.Token);
+                return await RequestWithCancellationToken(message, cts.Token);
             }
         }
 
         private readonly SemaphoreSlim _semaphoreRequest = new SemaphoreSlim(1);
-        private async Task RequestWithCancellationToken(IMessage message, CancellationToken cancellationToken)
+        private async Task<IMessage> RequestWithCancellationToken(IMessage message, CancellationToken cancellationToken)
         {
             await _semaphoreRequest.WaitAsync(cancellationToken);
             try
             {
                 var sendMessageFrame = MessageFrameCreator.CreateFromMessage(message);
                 await _messageFrameSender.SendAsync(sendMessageFrame, cancellationToken);
+
+                var messageFrame = await _messageFrameReceiver.ReceiveAsync(cancellationToken);
+                var responseMessage = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId, messageFrame.RawMessage);
+                return responseMessage;
             }
             finally
             {
@@ -141,7 +131,6 @@ namespace RedFoxMQ
 
             _cts.Cancel(false);
 
-            _messageReceiveLoop.Dispose();
             if (waitForExit) _stopped.Wait();
 
             socket.Disconnect();

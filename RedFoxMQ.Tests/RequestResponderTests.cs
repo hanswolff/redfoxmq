@@ -39,22 +39,14 @@ namespace RedFoxMQ.Tests
 
                 responder.Bind(endpoint);
 
-                TestMessage messageReceived = null;
-                var signal = new ManualResetEventSlim();
-                requester.ResponseReceived += m =>
-                {
-                    messageReceived = (TestMessage)m;
-                    signal.Set();
-                };
-
                 requester.Connect(endpoint);
 
                 Thread.Sleep(100);
 
+                var cts = new CancellationTokenSource(Timeout);
                 var messageSent = new TestMessage { Text = "Hello" };
-                requester.Request(messageSent);
+                var messageReceived = (TestMessage)requester.Request(messageSent, cts.Token);
 
-                Assert.IsTrue(signal.Wait(Timeout));
                 Assert.AreEqual(messageSent.Text, messageReceived.Text);
             }
         }
@@ -72,20 +64,13 @@ namespace RedFoxMQ.Tests
                 requester.Connect(endpoint);
 
                 var messagesReceived = new List<TestMessage>();
-                var counterSignal = new CounterSignal(2);
-                requester.ResponseReceived += m =>
-                {
-                    messagesReceived.Add((TestMessage)m);
-                    counterSignal.Increment();
-                };
-
                 Thread.Sleep(100);
 
                 var messageSent = new TestMessage { Text = "Hello" };
-                requester.Request(messageSent);
-                requester.Request(messageSent);
+                var cts = new CancellationTokenSource(Timeout);
+                messagesReceived.Add((TestMessage)requester.Request(messageSent, cts.Token));
+                messagesReceived.Add((TestMessage)requester.Request(messageSent, cts.Token));
 
-                Assert.IsTrue(counterSignal.Wait(Timeout));
                 Assert.AreEqual(messageSent.Text, messagesReceived[0].Text);
                 Assert.AreEqual(messageSent.Text, messagesReceived[1].Text);
             }
@@ -119,15 +104,10 @@ namespace RedFoxMQ.Tests
                 {
                     started.Wait(Timeout);
 
-                    requester.ResponseReceived += m =>
-                    {
-                        messageReceived = (TestMessage)m;
-                        signal.Set();
-                    };
-
                     requester.Connect(endpoint);
 
-                    requester.Request(largeMessage);
+                    messageReceived = (TestMessage)requester.Request(largeMessage);
+
                     stop.Wait();
                 }
             });

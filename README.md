@@ -49,27 +49,18 @@ The easiest way is to look at the unit tests. They are a good source of examples
 
                 // start listening to requests
                 responder.Bind(endpoint);
-                
-                IMessage messageReceived = null;
-                var signal = new ManualResetEventSlim();
-                
-                // subscribe to response events
-                requester.ResponseReceived += response =>
-                {
-                    messageReceived = response;
-                    signal.Set();
-                };
 
                 // connect to listening endpoint
                 requester.Connect(endpoint);
 
-                // send request
-                var messageToSent = new TestMessage { Text = "Hello" };
-                requester.Request(messageSent);
+				// create request/response timeout if needed
+				var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+				
+                // send request and wait for response
+                var requestMessage = new TestMessage { Text = "Hello" };
+                var responseMessage = (TestMessage)requester.Request(requestMessage, timeout.Token);
 
-                // wait for response event to fire
-                Assert.IsTrue(signal.Wait());
-                Assert.AreEqual(messageSent.Text, messageReceived.Text);
+                Assert.AreEqual(requestMessage.Text, responseMessage.Text);
             }
         }
 

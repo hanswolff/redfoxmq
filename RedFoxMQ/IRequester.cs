@@ -21,9 +21,10 @@ namespace RedFoxMQ
 {
     interface IRequester : IConnectToEndpoint, IDisconnect, IDisposable
     {
-        event Action<IMessage> ResponseReceived;
+        IMessage Request(IMessage message);
+        IMessage Request(IMessage message, CancellationToken cancellationToken);
 
-        Task RequestAsync(IMessage message);
-        Task RequestAsync(IMessage message, CancellationToken cancellationToken);
+        Task<IMessage> RequestAsync(IMessage message);
+        Task<IMessage> RequestAsync(IMessage message, CancellationToken cancellationToken);
     }
 }
