@@ -14,8 +14,9 @@
 // limitations under the License.
 // 
 using System;
-using System.IO;
 using System.Net.Sockets;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace RedFoxMQ.Transports.Tcp
 {
@@ -23,11 +24,7 @@ namespace RedFoxMQ.Transports.Tcp
     {
         private readonly TcpClient _tcpClient;
 
-        private readonly Stream _stream;
-        public Stream Stream
-        {
-            get { return _stream; }
-        }
+        private readonly NetworkStream _stream;
 
         public RedFoxEndpoint Endpoint { get; private set; }
 
@@ -49,6 +46,26 @@ namespace RedFoxMQ.Transports.Tcp
         }
 
         public event Action Disconnected = () => { };
+
+        public int Read(byte[] buf, int offset, int count)
+        {
+            return _stream.Read(buf, offset, count);
+        }
+
+        public async Task<int> ReadAsync(byte[] buf, int offset, int count, CancellationToken cancellationToken)
+        {
+            return await _stream.ReadAsync(buf, offset, count, cancellationToken);
+        }
+
+        public void Write(byte[] buf, int offset, int count)
+        {
+            _stream.Write(buf, offset, count);
+        }
+
+        public async Task WriteAsync(byte[] buf, int offset, int count, CancellationToken cancellationToken)
+        {
+            await _stream.WriteAsync(buf, offset, count, cancellationToken);
+        }
 
         public void Disconnect()
         {

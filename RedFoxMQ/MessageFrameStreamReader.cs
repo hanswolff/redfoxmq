@@ -17,21 +17,22 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using RedFoxMQ.Transports;
 
 namespace RedFoxMQ
 {
     class MessageFrameStreamReader
     {
-        public async Task<MessageFrame> ReadMessageFrameAsync(Stream stream, CancellationToken cancellationToken)
+        public async Task<MessageFrame> ReadMessageFrameAsync(ISocket socket, CancellationToken cancellationToken)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
+            if (socket == null) throw new ArgumentNullException("socket");
 
-            var header = await ReadHeaderAsync(stream, cancellationToken);
+            var header = await ReadHeaderAsync(socket, cancellationToken);
 
             var messageTypeId = BitConverter.ToUInt16(header, 0);
             var length = BitConverter.ToInt32(header, 2);
 
-            var rawMessage = await ReadBodyAsync(stream, length, cancellationToken);
+            var rawMessage = await ReadBodyAsync(socket, length, cancellationToken);
 
             return new MessageFrame
             {
@@ -40,33 +41,33 @@ namespace RedFoxMQ
             };
         }
 
-        private static async Task<byte[]> ReadHeaderAsync(Stream stream, CancellationToken cancellationToken)
+        private static async Task<byte[]> ReadHeaderAsync(ISocket socket, CancellationToken cancellationToken)
         {
             var header = new byte[6];
             var offset = 0;
             while (offset < header.Length)
             {
-                var read = await stream.ReadAsync(header, 0, header.Length, cancellationToken);
+                var read = await socket.ReadAsync(header, 0, header.Length, cancellationToken);
                 offset += read;
             }
             return header;
         }
 
-        private static async Task<byte[]> ReadBodyAsync(Stream stream, int length, CancellationToken cancellationToken)
+        private static async Task<byte[]> ReadBodyAsync(ISocket socket, int length, CancellationToken cancellationToken)
         {
             var rawMessage = new byte[length];
 
             var offset = 0;
             while (offset < length)
             {
-                var read = await stream.ReadAsync(rawMessage, offset, rawMessage.Length - offset, cancellationToken);
+                var read = await socket.ReadAsync(rawMessage, offset, rawMessage.Length - offset, cancellationToken);
                 if (read == 0) throw new EndOfStreamException();
                 offset += read;
             }
             return rawMessage;
         }
 
-        public MessageFrame ReadMessageFrame(Stream stream)
+        public MessageFrame ReadMessageFrame(ISocket stream)
         {
             if (stream == null) throw new ArgumentNullException("stream");
 
@@ -84,7 +85,7 @@ namespace RedFoxMQ
             };
         }
 
-        private static byte[] ReadHeader(Stream stream)
+        private static byte[] ReadHeader(ISocket stream)
         {
             var header = new byte[6];
             var offset = 0;
@@ -97,7 +98,7 @@ namespace RedFoxMQ
             return header;
         }
 
-        private static byte[] ReadBody(Stream stream, int length)
+        private static byte[] ReadBody(ISocket stream, int length)
         {
             var rawMessage = new byte[length];
 

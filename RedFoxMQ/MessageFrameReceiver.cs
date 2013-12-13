@@ -39,12 +39,12 @@ namespace RedFoxMQ
 
         public async Task<MessageFrame> ReceiveAsync(CancellationToken cancellationToken)
         {
-            return await MessageFrameStreamReader.ReadMessageFrameAsync(_socket.Stream, cancellationToken);
+            return await MessageFrameStreamReader.ReadMessageFrameAsync(_socket, cancellationToken);
         }
 
         public MessageFrame Receive()
         {
-            return MessageFrameStreamReader.ReadMessageFrame(_socket.Stream);
+            return MessageFrameStreamReader.ReadMessageFrame(_socket);
         }
 
         public bool IsDisconnected { get { return _socket.IsDisconnected; } }
@@ -53,7 +53,6 @@ namespace RedFoxMQ
 
         public void Disconnect()
         {
-            _socket.Stream.Close();
             _socket.Disconnect();
         }
     }

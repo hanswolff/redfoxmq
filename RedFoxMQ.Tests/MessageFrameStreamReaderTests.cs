@@ -29,9 +29,10 @@ namespace RedFoxMQ.Tests
             var serializedMessageFrame = new byte[] {49, 212, 5, 0, 0, 0, 1, 2, 3, 4, 5};
 
             using (var mem = new MemoryStream(serializedMessageFrame))
+            using (var socket = new TestSocket(mem))
             {
                 var reader = new MessageFrameStreamReader();
-                var messageFrame = reader.ReadMessageFrameAsync(mem, CancellationToken.None).Result;
+                var messageFrame = reader.ReadMessageFrameAsync(socket, CancellationToken.None).Result;
 
                 Assert.AreEqual(54321, messageFrame.MessageTypeId);
                 Assert.AreEqual(rawMessage, messageFrame.RawMessage);

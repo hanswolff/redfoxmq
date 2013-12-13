@@ -12,14 +12,20 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
-using System.IO;
+//
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace RedFoxMQ.Transports
 {
     public interface ISocket : IDisconnect
     {
         RedFoxEndpoint Endpoint { get; }
-        Stream Stream { get; }
+
+        int Read(byte[] buf, int offset, int count);
+        Task<int> ReadAsync(byte[] buf, int offset, int count, CancellationToken cancellationToken);
+
+        void Write(byte[] buf, int offset, int count);
+        Task WriteAsync(byte[] buf, int offset, int count, CancellationToken cancellationToken);
     }
 }

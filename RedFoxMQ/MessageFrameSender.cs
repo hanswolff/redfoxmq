@@ -38,28 +38,28 @@ namespace RedFoxMQ
         {
             if (messageFrame == null) throw new ArgumentNullException("messageFrame");
 
-            MessageFrameStreamWriter.WriteMessageFrame(_socket.Stream, messageFrame);
+            MessageFrameStreamWriter.WriteMessageFrame(_socket, messageFrame);
         }
 
         public async Task SendAsync(MessageFrame messageFrame, CancellationToken cancellationToken)
         {
             if (messageFrame == null) throw new ArgumentNullException("messageFrame");
 
-            await MessageFrameStreamWriter.WriteMessageFrameAsync(_socket.Stream, messageFrame, cancellationToken);
+            await MessageFrameStreamWriter.WriteMessageFrameAsync(_socket, messageFrame, cancellationToken);
         }
 
         public void Send(ICollection<MessageFrame> messageFrames)
         {
             if (messageFrames == null) return;
 
-            MessageFrameStreamWriter.WriteMessageFrames(_socket.Stream, messageFrames);
+            MessageFrameStreamWriter.WriteMessageFrames(_socket, messageFrames);
         }
 
         public async Task SendAsync(ICollection<MessageFrame> messageFrames, CancellationToken cancellationToken)
         {
             if (messageFrames == null) return;
 
-            await MessageFrameStreamWriter.WriteMessageFramesAsync(_socket.Stream, messageFrames, cancellationToken);
+            await MessageFrameStreamWriter.WriteMessageFramesAsync(_socket, messageFrames, cancellationToken);
         }
 
         public bool IsDisconnected { get { return _socket.IsDisconnected; } }

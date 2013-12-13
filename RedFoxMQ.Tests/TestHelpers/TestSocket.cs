@@ -13,31 +13,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
+using System.IO;
+using RedFoxMQ.Transports;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace RedFoxMQ.Transports.InProc
+// ReSharper disable once CheckNamespace
+namespace RedFoxMQ.Tests
 {
-    class InProcSocket : ISocket
+    sealed class TestSocket : ISocket, IDisposable
     {
-        public RedFoxEndpoint Endpoint { get; private set; }
-        private readonly QueueStream _stream;
+        private readonly Stream _stream;
 
-        public InProcSocket(RedFoxEndpoint endpoint, QueueStream stream)
+        public TestSocket(Stream stream)
         {
-            if (stream == null) throw new ArgumentNullException("stream");
-            Endpoint = endpoint;
             _stream = stream;
         }
 
+        public bool IsDisconnected { get { return _isDisconnected.Value; }}
+
         private readonly InterlockedBoolean _isDisconnected = new InterlockedBoolean();
-        public bool IsDisconnected
+        public event Action Disconnected = () => { };
+
+        public void Disconnect()
         {
-            get { return _isDisconnected.Value; }
+            if (_isDisconnected.Set(true)) return;
+
+            _stream.Close();
+
+            Disconnected();
         }
 
-        public event Action Disconnected = () => { };
+        public RedFoxEndpoint Endpoint { get; private set; }
 
         public int Read(byte[] buf, int offset, int count)
         {
@@ -59,16 +68,9 @@ namespace RedFoxMQ.Transports.InProc
             await _stream.WriteAsync(buf, offset, count, cancellationToken);
         }
 
-        public void Disconnect()
+        public void Dispose()
         {
-            if (_isDisconnected.Set(true)) return;
-
-            Disconnected();
-        }
-
-        public override string ToString()
-        {
-            return GetType().Name + ", " + Endpoint;
+            Disconnect();
         }
     }
 }

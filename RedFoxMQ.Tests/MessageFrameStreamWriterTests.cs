@@ -35,9 +35,10 @@ namespace RedFoxMQ.Tests
             };
 
             using (var mem = new MemoryStream())
+            using (var socket = new TestSocket(mem))
             {
                 var writer = new MessageFrameStreamWriter();
-                writer.WriteMessageFrameAsync(mem, messageFrame, CancellationToken.None).Wait();
+                writer.WriteMessageFrameAsync(socket, messageFrame, CancellationToken.None).Wait();
 
                 var writtenToStream = mem.ToArray();
                 
@@ -57,6 +58,7 @@ namespace RedFoxMQ.Tests
             var random = TestHelpers.CreateSemiRandomGenerator();
             var messageFrames = new Queue<MessageFrame>();
             using (var mem = new MemoryStream())
+            using (var socket = new TestSocket(mem))
             {
                 for (var i = 0; i < 1000; i++)
                 {
@@ -66,14 +68,14 @@ namespace RedFoxMQ.Tests
                         RawMessage = TestHelpers.GetRandomBytes(random, random.Next(100 * i))
                     };
                     messageFrames.Enqueue(messageFrame);
-                    writer.WriteMessageFrame(mem, messageFrame);
+                    writer.WriteMessageFrame(socket, messageFrame);
                 }
 
                 mem.Position = 0;
                 while (messageFrames.Count > 0)
                 {
                     var messageFrameWritten = messageFrames.Dequeue();
-                    var messageFrameRead = reader.ReadMessageFrame(mem);
+                    var messageFrameRead = reader.ReadMessageFrame(socket);
 
                     Assert.AreEqual(messageFrameWritten, messageFrameRead);
                 }
