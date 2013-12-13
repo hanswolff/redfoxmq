@@ -22,24 +22,12 @@ using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
-    class MessageQueue : IDisposable
+    class MessageQueue
     {
-        private readonly MessageQueueProcessor _messageQueueProcessor;
-        private readonly MessageFrameSender _sender;
         private readonly BlockingCollection<MessageFrame> _singleMessageFrames = new BlockingCollection<MessageFrame>();
         private readonly BlockingCollection<List<MessageFrame>> _batchMessageFrames = new BlockingCollection<List<MessageFrame>>();
 
         public event Action<IReadOnlyCollection<MessageFrame>> MessageFramesAdded = m => { };
-
-        public MessageQueue(MessageQueueProcessor messageQueueProcessor, MessageFrameSender sender)
-        {
-            if (messageQueueProcessor == null) throw new ArgumentNullException("messageQueueProcessor");
-            if (sender == null) throw new ArgumentNullException("sender");
-            _sender = sender;
-
-            _messageQueueProcessor = messageQueueProcessor;
-            messageQueueProcessor.Register(this);
-        }
 
         public void Add(MessageFrame messageFrame)
         {
@@ -61,80 +49,50 @@ namespace RedFoxMQ
             }
         }
 
-        internal bool SendFromQueue()
+        internal bool SendFromQueue(MessageFrameSender sender)
         {
             List<MessageFrame> batch;
             if (!_batchMessageFrames.TryTake(out batch))
             {
-                return SendSingleMessageFrameFromQueue();
+                return SendSingleMessageFrameFromQueue(sender);
             }
 
             MessageFrame messageFrame;
             if (_singleMessageFrames.TryTake(out messageFrame)) batch.Add(messageFrame);
 
-            _sender.Send(batch);
+            sender.Send(batch);
             return true;
         }
 
-        internal async Task<bool> SendFromQueueAsync(CancellationToken cancellationToken)
+        internal async Task<bool> SendFromQueueAsync(MessageFrameSender sender, CancellationToken cancellationToken)
         {
             List<MessageFrame> batch;
             if (!_batchMessageFrames.TryTake(out batch))
             {
-                return await SendSingleMessageFrameFromQueueAsync(cancellationToken);
+                return await SendSingleMessageFrameFromQueueAsync(sender, cancellationToken);
             }
 
             MessageFrame messageFrame;
             if (_singleMessageFrames.TryTake(out messageFrame)) batch.Add(messageFrame);
 
-            await _sender.SendAsync(batch, cancellationToken);
+            await sender.SendAsync(batch, cancellationToken);
             return true;
         }
 
-        private bool SendSingleMessageFrameFromQueue()
+        private bool SendSingleMessageFrameFromQueue(MessageFrameSender sender)
         {
             MessageFrame messageFrame;
             if (!_singleMessageFrames.TryTake(out messageFrame)) return false;
-            _sender.Send(messageFrame);
+            sender.Send(messageFrame);
             return true;
         }
 
-        private async Task<bool> SendSingleMessageFrameFromQueueAsync(CancellationToken cancellationToken)
+        private async Task<bool> SendSingleMessageFrameFromQueueAsync(MessageFrameSender sender, CancellationToken cancellationToken)
         {
             MessageFrame messageFrame;
             if (!_singleMessageFrames.TryTake(out messageFrame)) return false;
-            await _sender.SendAsync(messageFrame, cancellationToken);
+            await sender.SendAsync(messageFrame, cancellationToken);
             return true;
         }
-
-        #region Dispose
-        private bool _disposed;
-        private readonly object _disposeLock = new object();
-
-        protected virtual void Dispose(bool disposing)
-        {
-            lock (_disposeLock)
-            {
-                if (!_disposed)
-                {
-                    _messageQueueProcessor.Unregister(this);
-
-                    _disposed = true;
-                    if (disposing) GC.SuppressFinalize(this);
-                }
-            }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-        }
-
-        ~MessageQueue()
-        {
-            Dispose(false);
-        }
-        #endregion
-
     }
 }

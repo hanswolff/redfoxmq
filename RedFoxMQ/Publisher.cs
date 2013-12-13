@@ -50,11 +50,12 @@ namespace RedFoxMQ
             if (socket == null) throw new ArgumentNullException("socket");
 
             var messageFrameSender = new MessageFrameSender(socket);
-            var messageQueue = new MessageQueue(_messageQueueProcessor, messageFrameSender);
+            var messageQueue = new MessageQueue();
             
             if (_broadcastSockets.TryAdd(socket, messageQueue))
             {
                 ClientConnected(socket);
+                _messageQueueProcessor.Register(messageQueue, messageFrameSender);
             }
 
             if (socket.IsDisconnected)
@@ -69,7 +70,7 @@ namespace RedFoxMQ
             MessageQueue messageQueue;
             if (_broadcastSockets.TryRemove(socket, out messageQueue))
             {
-                messageQueue.Dispose();
+                _messageQueueProcessor.Unregister(messageQueue);
                 ClientDisconnected(socket);
             }
         }

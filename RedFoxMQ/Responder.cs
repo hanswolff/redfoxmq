@@ -56,7 +56,7 @@ namespace RedFoxMQ
             if (socket == null) throw new ArgumentNullException("socket");
 
             var messageFrameSender = new MessageFrameSender(socket);
-            var messageQueue = new MessageQueue(_messageQueueProcessor, messageFrameSender);
+            var messageQueue = new MessageQueue();
             var messageReceiveLoop = new MessageReceiveLoop(socket);
             messageReceiveLoop.MessageReceived += m => MessageReceivedProcessMessage(m, messageQueue);
             messageReceiveLoop.MessageDeserializationError += (s, e) => s.Disconnect(); // TODO: log error
@@ -68,6 +68,7 @@ namespace RedFoxMQ
             if (_clientSockets.TryAdd(messageReceiveLoop, messageQueue))
             {
                 ClientConnected(socket);
+                _messageQueueProcessor.Register(messageQueue, messageFrameSender);
             }
 
             if (socket.IsDisconnected)
@@ -82,6 +83,7 @@ namespace RedFoxMQ
             MessageQueue messageQueue;
             if (_clientSockets.TryRemove(receiveLoop, out messageQueue))
             {
+                _messageQueueProcessor.Unregister(messageQueue);
                 ClientDisconnected(socket);
             }
         }
