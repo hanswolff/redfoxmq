@@ -154,25 +154,20 @@ namespace RedFoxMQ.Tests
         public void One_Publisher_Ten_Subscribers_Single_Broadcasts()
         {
             using (var publisher = new Publisher())
-            using (var subscriber = new Subscriber())
             {
                 var endpoint = TestHelpers.TcpTestEndpoint;
                 publisher.Bind(endpoint);
 
-                var subscribers = Enumerable.Range(1, 9).Select(i =>
+                var counterSignal = new CounterSignal(10 * Count);
+                var subscribers = Enumerable.Range(1, 10).Select(i =>
                 {
                     var sub = new Subscriber();
+                    sub.MessageReceived += m => counterSignal.Increment();
                     sub.Connect(endpoint);
-
                     return sub;
                 }).ToList();
 
-                subscriber.Connect(endpoint);
-
                 Thread.Sleep(30);
-
-                var counterSignal = new CounterSignal(Count);
-                subscriber.MessageReceived += m => counterSignal.Increment();
 
                 var messageSent = new TestMessage { Text = "Hello" };
 
@@ -194,25 +189,20 @@ namespace RedFoxMQ.Tests
         public void One_Publisher_Ten_Subscribers_Batch_Broadcast()
         {
             using (var publisher = new Publisher())
-            using (var subscriber = new Subscriber())
             {
                 var endpoint = TestHelpers.TcpTestEndpoint;
                 publisher.Bind(endpoint);
 
-                var subscribers = Enumerable.Range(1, 9).Select(i =>
+                var counterSignal = new CounterSignal(10 * Count);
+                var subscribers = Enumerable.Range(1, 10).Select(i =>
                 {
                     var sub = new Subscriber();
+                    sub.MessageReceived += m => counterSignal.Increment();
                     sub.Connect(endpoint);
-
                     return sub;
                 }).ToList();
 
-                subscriber.Connect(endpoint);
-
                 Thread.Sleep(30);
-
-                var counterSignal = new CounterSignal(Count);
-                subscriber.MessageReceived += m => counterSignal.Increment();
 
                 var messageSent = new TestMessage { Text = "Hello" };
 
