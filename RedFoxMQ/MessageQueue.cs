@@ -17,6 +17,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -49,16 +50,28 @@ namespace RedFoxMQ
             }
         }
 
+        private const int TryMakeBatchSizeLargerThan = 65536;
         internal bool SendFromQueue(MessageFrameSender sender)
         {
             List<MessageFrame> batch;
             if (!_batchMessageFrames.TryTake(out batch))
             {
-                return SendSingleMessageFrameFromQueue(sender);
+                batch = new List<MessageFrame>();
             }
 
             MessageFrame messageFrame;
-            if (_singleMessageFrames.TryTake(out messageFrame)) batch.Add(messageFrame);
+            if (_singleMessageFrames.TryTake(out messageFrame))
+            {
+                var batchSize = batch.Sum(x => x.RawMessage.LongLength);
+                batch.Add(messageFrame);
+                batchSize += messageFrame.RawMessage.LongLength;
+
+                while (batchSize < TryMakeBatchSizeLargerThan && _singleMessageFrames.TryTake(out messageFrame))
+                {
+                    batch.Add(messageFrame);
+                    batchSize += messageFrame.RawMessage.LongLength;
+                }
+            }
 
             sender.Send(batch);
             return true;
@@ -69,29 +82,24 @@ namespace RedFoxMQ
             List<MessageFrame> batch;
             if (!_batchMessageFrames.TryTake(out batch))
             {
-                return await SendSingleMessageFrameFromQueueAsync(sender, cancellationToken);
+                batch = new List<MessageFrame>();
             }
 
             MessageFrame messageFrame;
-            if (_singleMessageFrames.TryTake(out messageFrame)) batch.Add(messageFrame);
+            if (_singleMessageFrames.TryTake(out messageFrame))
+            {
+                var batchSize = batch.Sum(x => x.RawMessage.LongLength);
+                batch.Add(messageFrame);
+                batchSize += messageFrame.RawMessage.LongLength;
+
+                while (batchSize < TryMakeBatchSizeLargerThan && _singleMessageFrames.TryTake(out messageFrame))
+                {
+                    batch.Add(messageFrame);
+                    batchSize += messageFrame.RawMessage.LongLength;
+                }
+            }
 
             await sender.SendAsync(batch, cancellationToken);
-            return true;
-        }
-
-        private bool SendSingleMessageFrameFromQueue(MessageFrameSender sender)
-        {
-            MessageFrame messageFrame;
-            if (!_singleMessageFrames.TryTake(out messageFrame)) return false;
-            sender.Send(messageFrame);
-            return true;
-        }
-
-        private async Task<bool> SendSingleMessageFrameFromQueueAsync(MessageFrameSender sender, CancellationToken cancellationToken)
-        {
-            MessageFrame messageFrame;
-            if (!_singleMessageFrames.TryTake(out messageFrame)) return false;
-            await sender.SendAsync(messageFrame, cancellationToken);
             return true;
         }
     }
