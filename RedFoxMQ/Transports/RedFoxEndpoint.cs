@@ -20,6 +20,8 @@ namespace RedFoxMQ.Transports
 {
     public struct RedFoxEndpoint : IEquatable<RedFoxEndpoint>, IEqualityComparer<RedFoxEndpoint>
     {
+        public static readonly RedFoxEndpoint Empty = new RedFoxEndpoint();
+
         public RedFoxTransport Transport;
         public string Host;
         public int Port;
@@ -61,10 +63,10 @@ namespace RedFoxMQ.Transports
 
         public bool Equals(RedFoxEndpoint x, RedFoxEndpoint y)
         {
-            return 
-                x.Port == y.Port && 
-                x.Host == y.Host && 
-                x.Path == y.Path && 
+            return
+                x.Port == y.Port &&
+                x.Host == y.Host &&
+                x.Path == y.Path &&
                 x.Transport == y.Transport;
         }
 
@@ -88,6 +90,49 @@ namespace RedFoxMQ.Transports
         public override string ToString()
         {
             return Transport.ToString().ToLowerInvariant() + "://" + Host + ":" + Port + Path;
+        }
+
+        public static RedFoxEndpoint Parse(string endpointUri)
+        {
+            if (endpointUri == null) throw new ArgumentNullException("endpointUri");
+
+            RedFoxEndpoint endpoint;
+            if (!TryParse(endpointUri, out endpoint))
+                throw new FormatException(String.Format("Invalid endpoint format: {0}", endpointUri));
+
+            return endpoint;
+        }
+
+        public static bool TryParse(string endpointUri, out RedFoxEndpoint endpoint)
+        {
+            endpoint = Empty;
+            if (endpointUri == null) 
+                return false;
+
+            Uri uri;
+            if (!Uri.TryCreate(endpointUri, UriKind.Absolute, out uri))
+                return false;
+
+            var scheme = uri.Scheme.ToLowerInvariant();
+            switch (scheme)
+            {
+                case "tcp":
+                    endpoint.Transport = RedFoxTransport.Tcp;
+                    break;
+                case "inproc":
+                    endpoint.Transport = RedFoxTransport.Inproc;
+                    break;
+                default:
+                    return false;
+            }
+
+            endpoint.Host = uri.DnsSafeHost;
+            endpoint.Port = uri.Port;
+
+            if (endpoint.Transport != RedFoxTransport.Tcp)
+                endpoint.Path = uri.PathAndQuery;
+
+            return true;
         }
     }
 }

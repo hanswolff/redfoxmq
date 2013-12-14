@@ -32,7 +32,14 @@ namespace RedFoxMQ
         private CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
 
-        public bool IsDisconnected { get { return _socket.IsDisconnected; } }
+        public bool IsDisconnected
+        {
+            get
+            {
+                var socket = _socket;
+                return socket == null || socket.IsDisconnected;
+            }
+        }
 
         public event Action Disconnected = () => { };
 
@@ -61,29 +68,22 @@ namespace RedFoxMQ
             Disconnected();
         }
 
-        public IMessage Request(IMessage message)
-        {
-            return Request(message, _cts.Token);
-        }
 
-        public IMessage Request(IMessage requestMessage, CancellationToken cancellationToken)
+        public IMessage Request(IMessage requestMessage)
         {
-            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token, cancellationToken))
+            _semaphoreRequest.Wait(_cts.Token);
+            try
             {
-                _semaphoreRequest.Wait(cts.Token);
-                try
-                {
-                    var sendMessageFrame = MessageFrameCreator.CreateFromMessage(requestMessage);
-                    _messageFrameSender.Send(sendMessageFrame);
-                    
-                    var messageFrame = _messageFrameReceiver.Receive();
-                    var responseMessage = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId, messageFrame.RawMessage);
-                    return responseMessage;
-                }
-                finally
-                {
-                    _semaphoreRequest.Release();
-                }
+                var sendMessageFrame = MessageFrameCreator.CreateFromMessage(requestMessage);
+                _messageFrameSender.Send(sendMessageFrame);
+
+                var messageFrame = _messageFrameReceiver.Receive();
+                var responseMessage = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId, messageFrame.RawMessage);
+                return responseMessage;
+            }
+            finally
+            {
+                _semaphoreRequest.Release();
             }
         }
 

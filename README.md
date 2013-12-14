@@ -41,24 +41,17 @@ The easiest way is to look at the unit tests. They are a good source of examples
         [Test]
         public void Request_Response_single_message()
         {
-            var workUnitFactory = new TestResponderWorkUnitFactory(request => new ResponderWorkUnit(request));
+            var workUnitFactory = new ResponderWorkUnitFactory(request => new TestResponderWorkUnit(request));
             using (var responder = new Responder(workUnitFactory))
             using (var requester = new Requester())
             {
                 var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
-
-                // start listening to requests
                 responder.Bind(endpoint);
 
-                // connect to listening endpoint
                 requester.Connect(endpoint);
 
-				// create request/response timeout if needed
-				var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-				
-                // send request and wait for response
                 var requestMessage = new TestMessage { Text = "Hello" };
-                var responseMessage = (TestMessage)requester.Request(requestMessage, timeout.Token);
+                var responseMessage = (TestMessage)requester.Request(requestMessage);
 
                 Assert.AreEqual(requestMessage.Text, responseMessage.Text);
             }

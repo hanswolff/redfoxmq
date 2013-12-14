@@ -43,9 +43,8 @@ namespace RedFoxMQ.Tests
 
                 Thread.Sleep(100);
 
-                var cts = new CancellationTokenSource(Timeout);
                 var messageSent = new TestMessage { Text = "Hello" };
-                var messageReceived = (TestMessage)requester.Request(messageSent, cts.Token);
+                var messageReceived = (TestMessage)requester.Request(messageSent);
 
                 Assert.AreEqual(messageSent.Text, messageReceived.Text);
             }
@@ -67,9 +66,8 @@ namespace RedFoxMQ.Tests
                 Thread.Sleep(100);
 
                 var messageSent = new TestMessage { Text = "Hello" };
-                var cts = new CancellationTokenSource(Timeout);
-                messagesReceived.Add((TestMessage)requester.Request(messageSent, cts.Token));
-                messagesReceived.Add((TestMessage)requester.Request(messageSent, cts.Token));
+                messagesReceived.Add((TestMessage)requester.Request(messageSent));
+                messagesReceived.Add((TestMessage)requester.Request(messageSent));
 
                 Assert.AreEqual(messageSent.Text, messagesReceived[0].Text);
                 Assert.AreEqual(messageSent.Text, messagesReceived[1].Text);
