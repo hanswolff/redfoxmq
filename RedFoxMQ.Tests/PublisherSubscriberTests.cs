@@ -26,16 +26,14 @@ namespace RedFoxMQ.Tests
     {
         public static readonly TimeSpan Timeout = !Debugger.IsAttached ? TimeSpan.FromSeconds(10) : TimeSpan.FromMilliseconds(-1);
 
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Sync)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Sync)]
-        public void Subscribe_to_Publisher_receive_single_broadcasted_message(RedFoxTransport transport, AsyncOrSyncPreference preference)
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Subscribe_to_Publisher_receive_single_broadcasted_message(RedFoxTransport transport)
         {
             using (var publisher = new Publisher())
             using (var subscriber = new TestSubscriber())
             {
-                var endpoint = TestHelpers.CreateEndpointForTransport(transport, preference);
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
 
                 publisher.Bind(endpoint);
                 subscriber.Connect(endpoint);
@@ -50,18 +48,16 @@ namespace RedFoxMQ.Tests
             }
         }
 
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Sync)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Sync)]
-        public void Subscribe_to_Publisher_twice_on_same_endpoint(RedFoxTransport transport, AsyncOrSyncPreference preference)
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Subscribe_to_Publisher_twice_on_same_endpoint(RedFoxTransport transport)
         {
             for (var i = 0; i < 2; i++)
             {
                 using (var publisher = new Publisher())
                 using (var subscriber = new TestSubscriber())
                 {
-                    var endpoint = TestHelpers.CreateEndpointForTransport(transport, preference);
+                    var endpoint = TestHelpers.CreateEndpointForTransport(transport);
 
                     publisher.Bind(endpoint);
                     subscriber.Connect(endpoint);
@@ -72,16 +68,14 @@ namespace RedFoxMQ.Tests
             }
         }
 
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Sync)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Sync)]
-        public void Subscribe_to_Publisher_receive_two_single_broadcasted_messages(RedFoxTransport transport, AsyncOrSyncPreference preference)
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Subscribe_to_Publisher_receive_two_single_broadcasted_messages(RedFoxTransport transport)
         {
             using (var publisher = new Publisher())
             using (var subscriber = new TestSubscriber())
             {
-                var endpoint = TestHelpers.CreateEndpointForTransport(transport, preference);
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
 
                 publisher.Bind(endpoint);
                 subscriber.Connect(endpoint);
@@ -98,16 +92,14 @@ namespace RedFoxMQ.Tests
             }
         }
 
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Sync)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Sync)]
-        public void Subscribe_to_Publisher_receive_two_broadcasted_messages_from_batch(RedFoxTransport transport, AsyncOrSyncPreference preference)
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Subscribe_to_Publisher_receive_two_broadcasted_messages_from_batch(RedFoxTransport transport)
         {
             using (var publisher = new Publisher())
             using (var subscriber = new TestSubscriber())
             {
-                var endpoint = TestHelpers.CreateEndpointForTransport(transport, preference);
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
 
                 publisher.Bind(endpoint);
                 subscriber.Connect(endpoint);
@@ -124,16 +116,14 @@ namespace RedFoxMQ.Tests
             }
         }
 
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Sync)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Sync)]
-        public void Publisher_ClientConnected_event_fires(RedFoxTransport transport, AsyncOrSyncPreference preference)
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Publisher_ClientConnected_event_fires(RedFoxTransport transport)
         {
             using (var publisher = new Publisher())
             using (var subscriber = new TestSubscriber())
             {
-                var endpoint = TestHelpers.CreateEndpointForTransport(transport, preference);
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
                 var eventFired = new ManualResetEventSlim();
 
                 publisher.Bind(endpoint);
@@ -145,16 +135,14 @@ namespace RedFoxMQ.Tests
             }
         }
 
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Sync)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Sync)]
-        public void Publisher_ClientDisconnected_event_fires(RedFoxTransport transport, AsyncOrSyncPreference preference)
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Publisher_ClientDisconnected_event_fires(RedFoxTransport transport)
         {
             using (var publisher = new Publisher())
             using (var subscriber = new TestSubscriber())
             {
-                var endpoint = TestHelpers.CreateEndpointForTransport(transport, preference);
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
                 var eventFired = new ManualResetEventSlim();
 
                 publisher.ClientDisconnected += s => eventFired.Set();
@@ -167,16 +155,14 @@ namespace RedFoxMQ.Tests
             }
         }
 
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Sync)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Sync)]
-        public void Subscriber_Disconnected_event_fires(RedFoxTransport transport, AsyncOrSyncPreference preference)
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Subscriber_Disconnected_event_fires(RedFoxTransport transport)
         {
             using (var publisher = new Publisher())
             using (var subscriber = new TestSubscriber())
             {
-                var endpoint = TestHelpers.CreateEndpointForTransport(transport, preference);
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
                 var eventFired = new ManualResetEventSlim();
 
                 publisher.Bind(endpoint);
@@ -189,16 +175,14 @@ namespace RedFoxMQ.Tests
             }
         }
 
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Sync)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Sync)]
-        public void Subscriber_Disconnect_doesnt_hang(RedFoxTransport transport, AsyncOrSyncPreference preference)
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Subscriber_Disconnect_doesnt_hang(RedFoxTransport transport)
         {
             using (var publisher = new Publisher())
             using (var subscriber = new TestSubscriber())
             {
-                var endpoint = TestHelpers.CreateEndpointForTransport(transport, preference);
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
                 publisher.Bind(endpoint);
 
                 subscriber.Connect(endpoint);
@@ -206,17 +190,15 @@ namespace RedFoxMQ.Tests
             }
         }
 
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Sync)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Async)]
-        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Sync)]
-        public void one_subscriber_connects_to_one_publisher_receives_message_then_second_subscriber_connects_both_receive_message(RedFoxTransport transport, AsyncOrSyncPreference preference)
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void one_subscriber_connects_to_one_publisher_receives_message_then_second_subscriber_connects_both_receive_message(RedFoxTransport transport)
         {
             using (var publisher = new Publisher())
             using (var subscriber1 = new TestSubscriber())
             using (var subscriber2 = new TestSubscriber())
             {
-                var endpoint = TestHelpers.CreateEndpointForTransport(transport, preference);
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
 
                 publisher.Bind(endpoint);
                 subscriber1.Connect(endpoint);

@@ -25,8 +25,8 @@ namespace RedFoxMQ.Tests.Benchmarks
 {
     abstract class PublisherSubscriberBenchmarks
     {
-        private const int Count = 10000;
-        private readonly static TimeSpan TimeOut = TimeSpan.FromSeconds(30);
+        private const int NumberOfMessagesToReceive = 2000;
+        private readonly static TimeSpan TimeOut = TimeSpan.FromSeconds(120);
 
         public abstract RedFoxEndpoint GetEndpoint();
 
@@ -40,22 +40,22 @@ namespace RedFoxMQ.Tests.Benchmarks
                 publisher.Bind(endpoint);
                 subscriber.Connect(endpoint);
 
-                Thread.Sleep(30);
+                Thread.Sleep(100);
 
-                var counterSignal = new CounterSignal(Count);
+                var counterSignal = new CounterSignal(NumberOfMessagesToReceive);
                 subscriber.MessageReceived += m => counterSignal.Increment();
 
-                var messageSent = new TestMessage { Text = "Hello" };
+                var messageSent = new TestMessage();
 
                 var sw = Stopwatch.StartNew();
-                for (var i = 0; i < Count; i++)
+                for (var i = 0; i < NumberOfMessagesToReceive; i++)
                 {
                     publisher.Broadcast(messageSent);
                 }
                 Assert.IsTrue(counterSignal.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, Count, Count / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
             }
         }
 
@@ -69,15 +69,15 @@ namespace RedFoxMQ.Tests.Benchmarks
                 publisher.Bind(endpoint);
                 subscriber.Connect(endpoint);
 
-                Thread.Sleep(30);
+                Thread.Sleep(100);
 
-                var counterSignal = new CounterSignal(Count);
+                var counterSignal = new CounterSignal(NumberOfMessagesToReceive);
                 subscriber.MessageReceived += m => counterSignal.Increment();
 
-                var messageSent = new TestMessage { Text = "Hello" };
+                var messageSent = new TestMessage();
 
                 var batch = new List<TestMessage>();
-                for (var i = 0; i < Count; i++)
+                for (var i = 0; i < NumberOfMessagesToReceive; i++)
                     batch.Add(messageSent);
 
                 var sw = Stopwatch.StartNew();
@@ -85,7 +85,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 Assert.IsTrue(counterSignal.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, Count, Count / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
             }
         }
 
@@ -101,22 +101,23 @@ namespace RedFoxMQ.Tests.Benchmarks
                 subscriber1.Connect(endpoint);
                 subscriber2.Connect(endpoint);
 
-                Thread.Sleep(30);
+                Thread.Sleep(100);
 
-                var counterSignal = new CounterSignal(Count);
+                var counterSignal = new CounterSignal(NumberOfMessagesToReceive);
+                subscriber1.MessageReceived += m => counterSignal.Increment();
                 subscriber2.MessageReceived += m => counterSignal.Increment();
 
-                var messageSent = new TestMessage { Text = "Hello" };
+                var messageSent = new TestMessage();
 
                 var sw = Stopwatch.StartNew();
-                for (var i = 0; i < Count; i++)
+                for (var i = 0; i < NumberOfMessagesToReceive / 2; i++)
                 {
                     publisher.Broadcast(messageSent);
                 }
                 Assert.IsTrue(counterSignal.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, Count, Count / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
             }
         }
 
@@ -132,15 +133,16 @@ namespace RedFoxMQ.Tests.Benchmarks
                 subscriber1.Connect(endpoint);
                 subscriber2.Connect(endpoint);
 
-                Thread.Sleep(30);
+                Thread.Sleep(100);
 
-                var counterSignal = new CounterSignal(Count);
+                var counterSignal = new CounterSignal(NumberOfMessagesToReceive);
+                subscriber1.MessageReceived += m => counterSignal.Increment();
                 subscriber2.MessageReceived += m => counterSignal.Increment();
 
-                var messageSent = new TestMessage { Text = "Hello" };
+                var messageSent = new TestMessage();
 
                 var batch = new List<TestMessage>();
-                for (var i = 0; i < Count; i++)
+                for (var i = 0; i < NumberOfMessagesToReceive / 2; i++)
                     batch.Add(messageSent);
 
                 var sw = Stopwatch.StartNew();
@@ -148,7 +150,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 Assert.IsTrue(counterSignal.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, Count, Count / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
             }
         }
 
@@ -160,7 +162,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 var endpoint = GetEndpoint();
                 publisher.Bind(endpoint);
 
-                var counterSignal = new CounterSignal(10 * Count);
+                var counterSignal = new CounterSignal(NumberOfMessagesToReceive);
                 var subscribers = Enumerable.Range(1, 10).Select(i =>
                 {
                     var sub = new Subscriber();
@@ -169,12 +171,12 @@ namespace RedFoxMQ.Tests.Benchmarks
                     return sub;
                 }).ToList();
 
-                Thread.Sleep(30);
+                Thread.Sleep(100);
 
-                var messageSent = new TestMessage { Text = "Hello" };
+                var messageSent = new TestMessage();
 
                 var sw = Stopwatch.StartNew();
-                for (var i = 0; i < Count; i++)
+                for (var i = 0; i < NumberOfMessagesToReceive / 10; i++)
                 {
                     publisher.Broadcast(messageSent);
                 }
@@ -183,7 +185,7 @@ namespace RedFoxMQ.Tests.Benchmarks
 
                 subscribers.ForEach(sub => sub.Dispose());
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, Count, Count / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
             }
         }
 
@@ -195,7 +197,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 var endpoint = GetEndpoint();
                 publisher.Bind(endpoint);
 
-                var counterSignal = new CounterSignal(10 * Count);
+                var counterSignal = new CounterSignal(NumberOfMessagesToReceive);
                 var subscribers = Enumerable.Range(1, 10).Select(i =>
                 {
                     var sub = new Subscriber();
@@ -204,12 +206,12 @@ namespace RedFoxMQ.Tests.Benchmarks
                     return sub;
                 }).ToList();
 
-                Thread.Sleep(30);
+                Thread.Sleep(100);
 
-                var messageSent = new TestMessage { Text = "Hello" };
+                var messageSent = new TestMessage();
 
                 var batch = new List<TestMessage>();
-                for (var i = 0; i < Count; i++)
+                for (var i = 0; i < NumberOfMessagesToReceive / 10; i++)
                     batch.Add(messageSent);
 
                 var sw = Stopwatch.StartNew();
@@ -219,7 +221,78 @@ namespace RedFoxMQ.Tests.Benchmarks
 
                 subscribers.ForEach(sub => sub.Dispose());
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, Count, Count / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
+            }
+        }
+
+        [Test]
+        public void One_Publisher_Hundred_Subscribers_Single_Broadcasts()
+        {
+            using (var publisher = new Publisher())
+            {
+                var endpoint = GetEndpoint();
+                publisher.Bind(endpoint);
+
+                var counterSignal = new CounterSignal(NumberOfMessagesToReceive);
+                var subscribers = Enumerable.Range(1, 100).Select(i =>
+                {
+                    var sub = new Subscriber();
+                    sub.MessageReceived += m => counterSignal.Increment();
+                    sub.Connect(endpoint);
+                    return sub;
+                }).ToList();
+
+                Thread.Sleep(100);
+
+                var messageSent = new TestMessage();
+
+                var sw = Stopwatch.StartNew();
+                for (var i = 0; i < NumberOfMessagesToReceive / 100; i++)
+                {
+                    publisher.Broadcast(messageSent);
+                }
+                Assert.IsTrue(counterSignal.Wait(TimeOut), "Timeout waiting for message");
+                sw.Stop();
+
+                subscribers.ForEach(sub => sub.Dispose());
+
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
+            }
+        }
+
+        [Test]
+        public void One_Publisher_Hundred_Subscribers_Batch_Broadcast()
+        {
+            using (var publisher = new Publisher())
+            {
+                var endpoint = GetEndpoint();
+                publisher.Bind(endpoint);
+
+                var counterSignal = new CounterSignal(NumberOfMessagesToReceive);
+                var subscribers = Enumerable.Range(1, 100).Select(i =>
+                {
+                    var sub = new Subscriber();
+                    sub.MessageReceived += m => counterSignal.Increment();
+                    sub.Connect(endpoint);
+                    return sub;
+                }).ToList();
+
+                Thread.Sleep(100);
+
+                var messageSent = new TestMessage();
+
+                var batch = new List<TestMessage>();
+                for (var i = 0; i < NumberOfMessagesToReceive / 100; i++)
+                    batch.Add(messageSent);
+
+                var sw = Stopwatch.StartNew();
+                publisher.Broadcast(batch);
+                Assert.IsTrue(counterSignal.Wait(TimeOut), "Timeout waiting for message");
+                sw.Stop();
+
+                subscribers.ForEach(sub => sub.Dispose());
+
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
             }
         }
 

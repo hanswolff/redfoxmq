@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-using RedFoxMQ.Transports;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -26,20 +25,18 @@ namespace RedFoxMQ
     {
         private readonly ConcurrentDictionary<MessageQueue, MessageQueuePayload> _messageQueues = new ConcurrentDictionary<MessageQueue, MessageQueuePayload>();
         private readonly AutoResetEvent _messageQueueHasMessage = new AutoResetEvent(false);
-        private Task _executeTask;
-        private AsyncOrSyncPreference _preference;
+        private Task _asyncSchedulerTask;
         private CancellationTokenSource _cts = new CancellationTokenSource();
 
-        public void Register(MessageQueue messageQueue, MessageFrameSender sender, AsyncOrSyncPreference preference)
+        public void Register(MessageQueue messageQueue, MessageFrameSender sender)
         {
             if (messageQueue == null) throw new ArgumentNullException("messageQueue");
             if (sender == null) throw new ArgumentNullException("sender");
 
-            _preference = preference;
-            _messageQueues[messageQueue] = new MessageQueuePayload(sender);
+            var messageQueuePayload = new MessageQueuePayload(sender);
             messageQueue.MessageFramesAdded += MessageQueueOnMessageFramesAdded;
-
-            StartProcessingIfNotStartedYet();
+            _messageQueues[messageQueue] = messageQueuePayload;
+            StartAsyncProcessingIfNotStartedYet();
         }
 
         private void MessageQueueOnMessageFramesAdded(IReadOnlyCollection<MessageFrame> messageFrame)
@@ -51,10 +48,11 @@ namespace RedFoxMQ
         {
             if (messageQueue == null) throw new ArgumentNullException("messageQueue");
 
-            MessageQueuePayload oldValue;
-            var removed = _messageQueues.TryRemove(messageQueue, out oldValue);
+            MessageQueuePayload messageQueuePayload;
+            var removed = _messageQueues.TryRemove(messageQueue, out messageQueuePayload);
             if (removed)
             {
+                messageQueuePayload.Cancelled.Set(true);
                 messageQueue.MessageFramesAdded -= MessageQueueOnMessageFramesAdded;
             }
 
@@ -67,14 +65,14 @@ namespace RedFoxMQ
         }
 
         private readonly InterlockedBoolean _started = new InterlockedBoolean();
-        private void StartProcessingIfNotStartedYet()
+        private void StartAsyncProcessingIfNotStartedYet()
         {
             if (_started.Set(true)) return;
 
             try
             {
                 _cts = new CancellationTokenSource();
-                _executeTask = Task.Factory.StartNew(() => Execute(_cts.Token), TaskCreationOptions.LongRunning);
+                _asyncSchedulerTask = Task.Factory.StartNew(() => ExecuteAsyncLoop(_cts.Token), TaskCreationOptions.LongRunning);
             }
             catch (Exception)
             {
@@ -83,17 +81,15 @@ namespace RedFoxMQ
             }
         }
 
-        private void Execute(CancellationToken cancellationToken)
+        private void ExecuteAsyncLoop(CancellationToken cancellationToken)
         {
-            var loopAction = GetLoopActionForPreference(_preference);
-
             try
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     _messageQueueHasMessage.WaitOne(10);
 
-                    loopAction(cancellationToken);
+                    LoopUsingAsync(cancellationToken);
                 }
             }
             catch (OperationCanceledException)
@@ -105,24 +101,6 @@ namespace RedFoxMQ
             }
         }
 
-        private Action<CancellationToken> GetLoopActionForPreference(AsyncOrSyncPreference preference)
-        {
-            Action<CancellationToken> action;
-            switch (preference)
-            {
-                case AsyncOrSyncPreference.Async:
-                    action = LoopUsingAsync;
-                    break;
-                case AsyncOrSyncPreference.Sync:
-                    action = LoopUsingSync;
-                    break;
-                default:
-                    throw new NotSupportedException(
-                        String.Format("Unsupported preference {0}.{1}", typeof(AsyncOrSyncPreference).Name, preference));
-            }
-            return action;
-        }
-
         private void LoopUsingAsync(CancellationToken cancellationToken)
         {
             foreach (var item in _messageQueues)
@@ -131,62 +109,25 @@ namespace RedFoxMQ
                 var messageQueuePayload = item.Value;
 
                 if (messageQueuePayload.Busy.Set(true)) continue;
-                var task = LoopMessageQueueAsync(messageQueue, messageQueuePayload.Sender, messageQueuePayload.Busy, cancellationToken).ConfigureAwait(false);
+                var task = LoopMessageQueueAsync(messageQueue, messageQueuePayload, cancellationToken).ConfigureAwait(false);
             }
         }
 
-        private void LoopUsingSync(CancellationToken cancellationToken)
-        {
-            foreach (var item in _messageQueues)
-            {
-                var messageQueue = item.Key;
-                var messageQueuePayload = item.Value;
-
-                if (messageQueuePayload.Busy.Set(true)) continue;
-                var task = Task.Factory.StartNew(
-                    () => LoopMessageQueueSync(
-                        messageQueue, 
-                        messageQueuePayload.Sender, 
-                        messageQueuePayload.Busy, 
-                        cancellationToken), cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Default);
-            }
-        }
-
-        private static async Task LoopMessageQueueAsync(MessageQueue messageQueue, MessageFrameSender sender, InterlockedBoolean busy, CancellationToken cancellationToken)
+        private static async Task LoopMessageQueueAsync(MessageQueue messageQueue, MessageQueuePayload messageQueuePayload, CancellationToken cancellationToken)
         {
             try
             {
-                var hasMore = true;
-                while (hasMore && !cancellationToken.IsCancellationRequested)
-                {
-                    hasMore = await messageQueue.SendFromQueueAsync(sender, cancellationToken).ConfigureAwait(false);
-                }
+                await messageQueue.SendFromQueueAsync(messageQueuePayload.Sender, cancellationToken);
             }
             finally
             {
-                busy.Set(false);
-            }
-        }
-
-        private static void LoopMessageQueueSync(MessageQueue messageQueue, MessageFrameSender sender, InterlockedBoolean busy, CancellationToken cancellationToken)
-        {
-            try
-            {
-                var hasMore = true;
-                while (hasMore && !cancellationToken.IsCancellationRequested)
-                {
-                    hasMore = messageQueue.SendFromQueue(sender);
-                }
-            }
-            finally
-            {
-                busy.Set(false);
+                messageQueuePayload.Busy.Set(false);
             }
         }
 
         private void StopProcessing()
         {
-            var task = Interlocked.Exchange(ref _executeTask, null);
+            var task = Interlocked.Exchange(ref _asyncSchedulerTask, null);
             if (task == null) return;
 
             _cts.Cancel(false);
@@ -199,11 +140,13 @@ namespace RedFoxMQ
     {
         public MessageFrameSender Sender;
         public InterlockedBoolean Busy;
+        public InterlockedBoolean Cancelled;
 
         public MessageQueuePayload(MessageFrameSender sender)
         {
             Sender = sender;
             Busy = new InterlockedBoolean();
+            Cancelled = new InterlockedBoolean();
         }
     }
 }

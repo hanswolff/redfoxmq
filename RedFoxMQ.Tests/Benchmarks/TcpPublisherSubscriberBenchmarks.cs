@@ -19,7 +19,7 @@ using RedFoxMQ.Transports;
 namespace RedFoxMQ.Tests.Benchmarks
 {
     [Explicit]
-    class TcpAsyncPublisherSubscriberBenchmarks : PublisherSubscriberBenchmarks
+    class TcpPublisherSubscriberBenchmarks : PublisherSubscriberBenchmarks
     {
         public override RedFoxEndpoint GetEndpoint()
         {
@@ -27,8 +27,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 RedFoxTransport.Tcp, 
                 "localhost", 
                 TestHelpers.GetFreePort(), 
-                null, 
-                AsyncOrSyncPreference.Async);
+                null);
         }
     }
 }
