@@ -19,11 +19,16 @@ using RedFoxMQ.Transports;
 namespace RedFoxMQ.Tests.Benchmarks
 {
     [Explicit]
-    class TcpPublisherSubscriberBenchmarks : PublisherSubscriberBenchmarks
+    class TcpAsyncPublisherSubscriberBenchmarks : PublisherSubscriberBenchmarks
     {
         public override RedFoxEndpoint GetEndpoint()
         {
-            return new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", TestHelpers.GetFreePort(), null);
+            return new RedFoxEndpoint(
+                RedFoxTransport.Tcp, 
+                "localhost", 
+                TestHelpers.GetFreePort(), 
+                null, 
+                AsyncOrSyncPreference.Async);
         }
     }
 }

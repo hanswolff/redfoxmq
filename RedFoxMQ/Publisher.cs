@@ -54,7 +54,7 @@ namespace RedFoxMQ
 
             if (_broadcastSockets.TryAdd(socket, messageQueue))
             {
-                _messageQueueProcessor.Register(messageQueue, messageFrameSender);
+                _messageQueueProcessor.Register(messageQueue, messageFrameSender, socket.Endpoint.AsyncOrSyncPreference);
                 ClientConnected(socket);
             }
 

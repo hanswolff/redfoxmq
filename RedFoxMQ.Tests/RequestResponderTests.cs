@@ -28,14 +28,16 @@ namespace RedFoxMQ.Tests
     {
         public static readonly TimeSpan Timeout = !Debugger.IsAttached ? TimeSpan.FromSeconds(10) : TimeSpan.FromMilliseconds(-1);
 
-        [TestCase(RedFoxTransport.Inproc)]
-        [TestCase(RedFoxTransport.Tcp)]
-        public void Request_Response_single_message(RedFoxTransport transport)
+        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Async)]
+        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Sync)]
+        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Async)]
+        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Sync)]
+        public void Request_Response_single_message(RedFoxTransport transport, AsyncOrSyncPreference preference)
         {
             using (var responder = TestHelpers.CreateTestResponder())
             using (var requester = new Requester())
             {
-                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport, preference);
 
                 responder.Bind(endpoint);
 
@@ -50,14 +52,16 @@ namespace RedFoxMQ.Tests
             }
         }
 
-        [TestCase(RedFoxTransport.Inproc)]
-        [TestCase(RedFoxTransport.Tcp)]
-        public void Request_Response_two_messages(RedFoxTransport transport)
+        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Async)]
+        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Sync)]
+        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Async)]
+        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Sync)]
+        public void Request_Response_two_messages(RedFoxTransport transport, AsyncOrSyncPreference preference)
         {
             using (var responder = TestHelpers.CreateTestResponder())
             using (var requester = new Requester())
             {
-                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport, preference);
 
                 responder.Bind(endpoint);
                 requester.Connect(endpoint);
@@ -74,11 +78,13 @@ namespace RedFoxMQ.Tests
             }
         }
 
-        [TestCase(RedFoxTransport.Inproc)]
-        [TestCase(RedFoxTransport.Tcp)]
-        public void Request_Response_different_threads_large_message(RedFoxTransport transport)
+        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Async)]
+        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Sync)]
+        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Async)]
+        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Sync)]
+        public void Request_Response_different_threads_large_message(RedFoxTransport transport, AsyncOrSyncPreference preference)
         {
-            var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+            var endpoint = TestHelpers.CreateEndpointForTransport(transport, preference);
             var started = new ManualResetEventSlim();
             var stop = new ManualResetEventSlim();
 
@@ -120,15 +126,17 @@ namespace RedFoxMQ.Tests
             }
         }
 
-        [TestCase(RedFoxTransport.Inproc)]
-        [TestCase(RedFoxTransport.Tcp)]
-        public void Responder_ClientConnected_event_fired(RedFoxTransport transport)
+        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Async)]
+        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Sync)]
+        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Async)]
+        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Sync)]
+        public void Responder_ClientConnected_event_fired(RedFoxTransport transport, AsyncOrSyncPreference preference)
         {
             using (var responder = TestHelpers.CreateTestResponder())
             using (var requester = new Requester())
             {
                 var eventFired = new ManualResetEventSlim();
-                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport, preference);
 
                 responder.ClientConnected += s => eventFired.Set();
                 responder.Bind(endpoint);
@@ -143,15 +151,17 @@ namespace RedFoxMQ.Tests
             }
         }
 
-        [TestCase(RedFoxTransport.Inproc)]
-        [TestCase(RedFoxTransport.Tcp)]
-        public void Requester_Disconnected_event_fired(RedFoxTransport transport)
+        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Async)]
+        [TestCase(RedFoxTransport.Inproc, AsyncOrSyncPreference.Sync)]
+        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Async)]
+        [TestCase(RedFoxTransport.Tcp, AsyncOrSyncPreference.Sync)]
+        public void Requester_Disconnected_event_fired(RedFoxTransport transport, AsyncOrSyncPreference preference)
         {
             using (var responder = TestHelpers.CreateTestResponder())
             using (var requester = new Requester())
             {
                 var eventFired = new ManualResetEventSlim();
-                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport, preference);
 
                 responder.Bind(endpoint);
 

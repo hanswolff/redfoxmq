@@ -38,7 +38,7 @@ namespace RedFoxMQ.Tests.Transports
         {
             var endpoint = new RedFoxEndpoint("host", 1234);
 
-            Assert.AreEqual(RedFoxTransport.Inproc, endpoint.Transport);
+            Assert.AreEqual(RedFoxTransport.Tcp, endpoint.Transport);
             Assert.AreEqual("host", endpoint.Host);
             Assert.AreEqual(1234, endpoint.Port);
             Assert.AreEqual(null, endpoint.Path);
@@ -49,7 +49,7 @@ namespace RedFoxMQ.Tests.Transports
         {
             var endpoint = new RedFoxEndpoint("host", 1234, "/path");
 
-            Assert.AreEqual(RedFoxTransport.Inproc, endpoint.Transport);
+            Assert.AreEqual(RedFoxTransport.Tcp, endpoint.Transport);
             Assert.AreEqual("host", endpoint.Host);
             Assert.AreEqual(1234, endpoint.Port);
             Assert.AreEqual("/path", endpoint.Path);

@@ -12,18 +12,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
-using NUnit.Framework;
-using RedFoxMQ.Transports;
-
-namespace RedFoxMQ.Tests.Benchmarks
+//
+namespace RedFoxMQ.Transports
 {
-    [Explicit]
-    class InprocPublisherSubscriberBenchmarks : PublisherSubscriberBenchmarks
+    public enum AsyncOrSyncPreference
     {
-        public override RedFoxEndpoint GetEndpoint()
-        {
-            return new RedFoxEndpoint(RedFoxTransport.Inproc, "localhost", 5555, null);
-        }
+        /// <summary>
+        /// Prefer sending/receiving data using async/await
+        /// </summary>
+        Async,
+
+        /// <summary>
+        /// Prefer sending/receiving data using blocking operations
+        /// </summary>
+        Sync
     }
 }

@@ -26,9 +26,10 @@ namespace RedFoxMQ.Transports
         public string Host;
         public int Port;
         public string Path;
+        public AsyncOrSyncPreference AsyncOrSyncPreference;
 
         public RedFoxEndpoint(string path)
-            : this(RedFoxTransport.Inproc, null, 0, path)
+            : this(RedFoxTransport.Inproc, null, 0, path, AsyncOrSyncPreference.Sync)
         {
         }
 
@@ -38,16 +39,22 @@ namespace RedFoxMQ.Transports
         }
 
         public RedFoxEndpoint(string host, int port, string path)
-            : this(RedFoxTransport.Inproc, host, port, path)
+            : this(RedFoxTransport.Tcp, host, port, path, AsyncOrSyncPreference.Async)
         {
         }
 
         public RedFoxEndpoint(RedFoxTransport transport, string host, int port, string path)
+            : this(transport, host, port, path, AsyncOrSyncPreference.Async)
+        {
+        }
+
+        public RedFoxEndpoint(RedFoxTransport transport, string host, int port, string path, AsyncOrSyncPreference preference)
         {
             Transport = transport;
             Host = host;
             Port = port;
             Path = path;
+            AsyncOrSyncPreference = preference;
         }
 
         public override bool Equals(object obj)

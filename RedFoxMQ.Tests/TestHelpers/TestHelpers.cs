@@ -24,14 +24,14 @@ namespace RedFoxMQ.Tests
 {
     public static class TestHelpers
     {
-        public static RedFoxEndpoint CreateEndpointForTransport(RedFoxTransport transport)
+        public static RedFoxEndpoint CreateEndpointForTransport(RedFoxTransport transport, AsyncOrSyncPreference preference)
         {
-            return new RedFoxEndpoint(transport, "localhost", GetFreePort(), null);
+            return new RedFoxEndpoint(transport, "localhost", GetFreePort(), null, preference);
         }
 
-        public static RedFoxEndpoint CreateEndpointForTransport(RedFoxTransport transport, int port)
+        public static RedFoxEndpoint CreateEndpointForTransport(RedFoxTransport transport, int port, AsyncOrSyncPreference preference)
         {
-            return new RedFoxEndpoint(transport, "localhost", port, null);
+            return new RedFoxEndpoint(transport, "localhost", port, null, preference);
         }
 
         public static int GetFreePort()
