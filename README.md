@@ -41,7 +41,10 @@ The easiest way is to look at the unit tests. They are a good source of examples
         [Test]
         public void Request_Response_single_message()
         {
-            var workUnitFactory = new ResponderWorkUnitFactory(request => new TestResponderWorkUnit());
+            Func<IMessage, IMessage> echoFunc = request => request;
+			
+            var workUnitFactory = new ResponderWorkUnitFactory(request => new ResponderWorkUnit(echoFunc));
+            
             using (var responder = new Responder(workUnitFactory))
             using (var requester = new Requester())
             {
@@ -62,19 +65,6 @@ The easiest way is to look at the unit tests. They are a good source of examples
         {
             MessageSerialization.Instance.RegisterSerializer(new TestMessage().MessageTypeId, new TestMessageSerializer());
             MessageSerialization.Instance.RegisterDeserializer(new TestMessage().MessageTypeId, new TestMessageDeserializer());
-        }
-    }
-    
-Work unit class (which creates responses):
-
-    class TestResponderWorkUnit : IResponderWorkUnit
-    {
-        public IMessage GetResponse(IMessage request, object state)
-        {
-            // echo request -> response
-            var response = request; 
-            // or create a different response here
-            return response;
         }
     }
 
