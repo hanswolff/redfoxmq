@@ -41,9 +41,9 @@ The easiest way is to look at the unit tests. They are a good source of examples
         [Test]
         public void Request_Response_single_message()
         {
-            Func<IMessage, IMessage> echoFunc = request => request;
-			
-            var workUnitFactory = new ResponderWorkUnitFactory(request => new ResponderWorkUnit(echoFunc));
+            Func<IMessage, IMessage> echoFunc = request => request; // alternatively implement IResponderWorkUnit
+            var echoWorkUnit = new ResponderWorkUnit(echoFunc);
+            var workUnitFactory = new ResponderWorkUnitFactory(request => echoWorkUnit);
             
             using (var responder = new Responder(workUnitFactory))
             using (var requester = new Requester())
