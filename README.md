@@ -41,7 +41,7 @@ The easiest way is to look at the unit tests. They are a good source of examples
         [Test]
         public void Request_Response_single_message()
         {
-            var workUnitFactory = new ResponderWorkUnitFactory(request => new TestResponderWorkUnit(request));
+            var workUnitFactory = new ResponderWorkUnitFactory(request => new TestResponderWorkUnit());
             using (var responder = new Responder(workUnitFactory))
             using (var requester = new Requester())
             {
@@ -69,17 +69,10 @@ Work unit class (which creates responses):
 
     class TestResponderWorkUnit : IResponderWorkUnit
     {
-        private readonly IMessage _request;
-
-        public ResponderWorkUnit(IMessage request)
-        {
-            _request = request;
-        }
-
-        public IMessage GetResponse(object state)
+        public IMessage GetResponse(IMessage request, object state)
         {
             // echo request -> response
-            var response = _request; 
+            var response = request; 
             // or create a different response here
             return response;
         }

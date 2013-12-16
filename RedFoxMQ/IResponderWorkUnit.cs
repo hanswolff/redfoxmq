@@ -18,6 +18,6 @@ namespace RedFoxMQ
 {
     public interface IResponderWorkUnit
     {
-        IMessage GetResponse(object state);
+        IMessage GetResponse(IMessage requestMessage, object state);
     }
 }

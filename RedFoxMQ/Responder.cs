@@ -93,7 +93,7 @@ namespace RedFoxMQ
             var requestMessage = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId, messageFrame.RawMessage);
 
             var workUnit = _responderWorkUnitFactory.CreateWorkUnit(requestMessage);
-            _scheduler.AddWorkUnit(workUnit, senderReceiver);
+            _scheduler.AddWorkUnit(workUnit, requestMessage, senderReceiver);
         }
 
         private void SchedulerWorkUnitCompleted(IResponderWorkUnit workUnit, object state, IMessage responseMessage)

@@ -19,11 +19,13 @@ namespace RedFoxMQ
     struct ResponderWorkUnitWithState
     {
         public IResponderWorkUnit WorkUnit;
+        public IMessage RequestMessage;
         public object State;
 
-        public ResponderWorkUnitWithState(IResponderWorkUnit workUnit, object state)
+        public ResponderWorkUnitWithState(IResponderWorkUnit workUnit, IMessage requestMessage, object state)
         {
             WorkUnit = workUnit;
+            RequestMessage = requestMessage;
             State = state;
         }
     }

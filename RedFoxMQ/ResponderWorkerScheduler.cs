@@ -110,7 +110,7 @@ namespace RedFoxMQ
                         IMessage response = null;
                         try
                         {
-                            response = workUnitWithState.WorkUnit.GetResponse(workUnitWithState.State);
+                            response = workUnitWithState.WorkUnit.GetResponse(workUnitWithState.RequestMessage, workUnitWithState.State);
                         }
                         catch (Exception ex)
                         {
@@ -156,12 +156,12 @@ namespace RedFoxMQ
             return true;
         }
 
-        public void AddWorkUnit(IResponderWorkUnit workUnit, object state)
+        public void AddWorkUnit(IResponderWorkUnit workUnit, IMessage requestMessage, object state)
         {
             if (workUnit == null) throw new ArgumentNullException("workUnit");
             if (_disposed) throw new ObjectDisposedException(GetType().FullName);
 
-            _workUnits.TryAdd(new ResponderWorkUnitWithState(workUnit, state));
+            _workUnits.TryAdd(new ResponderWorkUnitWithState(workUnit, requestMessage, state));
 
             IncreaseWorkerThreadsIfNeeded();
         }
