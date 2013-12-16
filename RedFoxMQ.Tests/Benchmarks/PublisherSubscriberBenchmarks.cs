@@ -14,19 +14,21 @@
 // limitations under the License.
 // 
 using NUnit.Framework;
+using RedFoxMQ.Transports;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 
-namespace RedFoxMQ.Tests
+namespace RedFoxMQ.Tests.Benchmarks
 {
-    [Explicit]
-    class PublisherSubscriberBenchmarks
+    abstract class PublisherSubscriberBenchmarks
     {
         private const int Count = 10000;
         private readonly static TimeSpan TimeOut = TimeSpan.FromSeconds(30);
+
+        public abstract RedFoxEndpoint GetEndpoint();
 
         [Test]
         public void One_Publisher_One_Subscriber_Single_Broadcasts()
@@ -34,7 +36,7 @@ namespace RedFoxMQ.Tests
             using (var publisher = new Publisher())
             using (var subscriber = new Subscriber())
             {
-                var endpoint = TestHelpers.TcpTestEndpoint;
+                var endpoint = GetEndpoint();
                 publisher.Bind(endpoint);
                 subscriber.Connect(endpoint);
 
@@ -63,7 +65,7 @@ namespace RedFoxMQ.Tests
             using (var publisher = new Publisher())
             using (var subscriber = new Subscriber())
             {
-                var endpoint = TestHelpers.TcpTestEndpoint;
+                var endpoint = GetEndpoint();
                 publisher.Bind(endpoint);
                 subscriber.Connect(endpoint);
 
@@ -94,7 +96,7 @@ namespace RedFoxMQ.Tests
             using (var subscriber1 = new Subscriber())
             using (var subscriber2 = new Subscriber())
             {
-                var endpoint = TestHelpers.TcpTestEndpoint;
+                var endpoint = GetEndpoint();
                 publisher.Bind(endpoint);
                 subscriber1.Connect(endpoint);
                 subscriber2.Connect(endpoint);
@@ -125,7 +127,7 @@ namespace RedFoxMQ.Tests
             using (var subscriber1 = new Subscriber())
             using (var subscriber2 = new Subscriber())
             {
-                var endpoint = TestHelpers.TcpTestEndpoint;
+                var endpoint = GetEndpoint();
                 publisher.Bind(endpoint);
                 subscriber1.Connect(endpoint);
                 subscriber2.Connect(endpoint);
@@ -155,7 +157,7 @@ namespace RedFoxMQ.Tests
         {
             using (var publisher = new Publisher())
             {
-                var endpoint = TestHelpers.TcpTestEndpoint;
+                var endpoint = GetEndpoint();
                 publisher.Bind(endpoint);
 
                 var counterSignal = new CounterSignal(10 * Count);
@@ -190,7 +192,7 @@ namespace RedFoxMQ.Tests
         {
             using (var publisher = new Publisher())
             {
-                var endpoint = TestHelpers.TcpTestEndpoint;
+                var endpoint = GetEndpoint();
                 publisher.Bind(endpoint);
 
                 var counterSignal = new CounterSignal(10 * Count);
