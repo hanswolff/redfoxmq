@@ -36,16 +36,20 @@ namespace RedFoxMQ.Transports.InProc
             get { return _length; }
         }
 
-        public QueueStream()
+        public QueueStream() : this(false)
         {
         }
 
         public QueueStream(bool blocking)
         {
             _blocking = blocking;
+
+            _closeCancellationTokenSource = new CancellationTokenSource();
+            _closeCancellationToken = _closeCancellationTokenSource.Token;
         }
 
-        private readonly CancellationTokenSource _closeCancellationTokenSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource _closeCancellationTokenSource;
+        private readonly CancellationToken _closeCancellationToken;
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
@@ -114,7 +118,7 @@ namespace RedFoxMQ.Transports.InProc
             }
         }
 
-        public int Read(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        public override int Read(byte[] buffer, int offset, int count)
         {
             if (buffer == null) throw new ArgumentNullException("buffer");
             if (offset < 0) throw new ArgumentOutOfRangeException("offset", String.Format("Offset cannot be negative (but was: {0})", offset));
@@ -126,9 +130,6 @@ namespace RedFoxMQ.Transports.InProc
 
             try
             {
-                using (var tokenSource = 
-                    CancellationTokenSource.CreateLinkedTokenSource(_closeCancellationTokenSource.Token, cancellationToken))
-                {
                     var bytesAlreadyRead = 0;
                     do
                     {
@@ -138,7 +139,7 @@ namespace RedFoxMQ.Transports.InProc
                             {
                                 try
                                 {
-                                    _currentBuffer = _buffers.Take(tokenSource.Token);
+                                    _currentBuffer = _buffers.Take(_closeCancellationToken);
                                 }
                                 catch (OperationCanceledException)
                                 {
@@ -149,7 +150,7 @@ namespace RedFoxMQ.Transports.InProc
                             }
                             else
                             {
-                                if (tokenSource.IsCancellationRequested || !_buffers.TryTake(out _currentBuffer))
+                                if (!_buffers.TryTake(out _currentBuffer))
                                     return bytesAlreadyRead;
                             }
                             _currentBufferOffset = 0;
@@ -169,7 +170,6 @@ namespace RedFoxMQ.Transports.InProc
                     } while (bytesAlreadyRead < count);
 
                     return bytesAlreadyRead;
-                }
             }
             finally
             {
@@ -210,11 +210,6 @@ namespace RedFoxMQ.Transports.InProc
         public override void SetLength(long value)
         {
             throw new NotSupportedException("Cannot set stream length");
-        }
-
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            return Read(buffer, offset, count, _closeCancellationTokenSource.Token);
         }
 
         public override bool CanRead

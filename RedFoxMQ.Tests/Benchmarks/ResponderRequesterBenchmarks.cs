@@ -94,6 +94,11 @@ namespace RedFoxMQ.Tests.Benchmarks
                 Assert.IsTrue(Task.WhenAll(tasks).Wait(TimeSpan.FromMinutes(1)));
                 sw.Stop();
 
+                foreach (var requester in requesters)
+                {
+                    requester.Disconnect();
+                }
+
                 Assert.Inconclusive("{0} elapsed sending/receiving {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfRequests, NumberOfRequests / sw.Elapsed.TotalSeconds);
             }
         }
@@ -137,6 +142,11 @@ namespace RedFoxMQ.Tests.Benchmarks
                 startSignal.Set();
                 Assert.IsTrue(Task.WhenAll(tasks).Wait(TimeSpan.FromMinutes(1)));
                 sw.Stop();
+
+                foreach (var requester in requesters)
+                {
+                    requester.Disconnect();
+                }
 
                 Assert.Inconclusive("{0} elapsed sending/receiving {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfRequests, NumberOfRequests / sw.Elapsed.TotalSeconds);
             }

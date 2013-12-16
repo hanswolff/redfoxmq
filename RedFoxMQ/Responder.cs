@@ -37,6 +37,9 @@ namespace RedFoxMQ
             if (responderWorkUnitFactory == null) throw new ArgumentNullException("responderWorkUnitFactory");
             _responderWorkUnitFactory = responderWorkUnitFactory;
 
+            _disposeCancellationTokenSource = new CancellationTokenSource();
+            _disposeCancellationToken = _disposeCancellationTokenSource.Token;
+
             _servers = new ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter>();
             _clientSockets = new ConcurrentDictionary<ISocket, SenderReceiver>();
             _scheduler = new ResponderWorkerScheduler(minThreads, maxThreads);
@@ -64,7 +67,7 @@ namespace RedFoxMQ
 
             if (_clientSockets.TryAdd(socket, senderReceiver))
             {
-                var task = ReceiveRequestMessage(senderReceiver, _disposeCancellationTokenSource.Token);
+                var task = ReceiveRequestMessage(senderReceiver, _disposeCancellationToken);
                 ClientConnected(socket);
             }
 
@@ -102,7 +105,7 @@ namespace RedFoxMQ
             var responseFrame = MessageFrameCreator.CreateFromMessage(responseMessage);
             senderReceiver.Sender.Send(responseFrame);
 
-            var task = ReceiveRequestMessage(senderReceiver, _disposeCancellationTokenSource.Token).ConfigureAwait(false);
+            var task = ReceiveRequestMessage(senderReceiver, _disposeCancellationToken).ConfigureAwait(false);
         }
 
         public bool Unbind(RedFoxEndpoint endpoint)
@@ -130,7 +133,8 @@ namespace RedFoxMQ
 
         #region Dispose
         private bool _disposed;
-        private readonly CancellationTokenSource _disposeCancellationTokenSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource _disposeCancellationTokenSource;
+        private readonly CancellationToken _disposeCancellationToken;
         private readonly object _disposeLock = new object();
 
         protected virtual void Dispose(bool disposing)
