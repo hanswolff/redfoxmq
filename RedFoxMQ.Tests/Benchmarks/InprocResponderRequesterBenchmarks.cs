@@ -19,14 +19,14 @@ using RedFoxMQ.Transports;
 namespace RedFoxMQ.Tests.Benchmarks
 {
     [Explicit]
-    class InprocPublisherSubscriberBenchmarks : PublisherSubscriberBenchmarks
+    public class InprocResponderRequesterBenchmarks : ResponderRequesterBenchmarks
     {
         public override RedFoxEndpoint GetEndpoint()
         {
             return new RedFoxEndpoint(
-                RedFoxTransport.Inproc, 
-                "localhost", 
-                1, 
+                RedFoxTransport.Inproc,
+                "localhost",
+                1,
                 null);
         }
     }
