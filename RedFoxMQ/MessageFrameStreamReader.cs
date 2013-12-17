@@ -13,11 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+using RedFoxMQ.Transports;
 using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using RedFoxMQ.Transports;
 
 namespace RedFoxMQ
 {
@@ -48,6 +48,7 @@ namespace RedFoxMQ
             while (offset < header.Length)
             {
                 var read = await socket.ReadAsync(header, 0, header.Length, cancellationToken);
+                if (read == 0) throw new EndOfStreamException();
                 offset += read;
             }
             return header;
