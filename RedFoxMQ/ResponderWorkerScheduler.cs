@@ -22,7 +22,7 @@ namespace RedFoxMQ
 {
     public class ResponderWorkerScheduler : IDisposable
     {
-        private readonly int _minThreads;
+        private int _minThreads;
         private readonly int _maxThreads;
 
         private readonly BlockingCollection<ResponderWorkerWithState> _workers = new BlockingCollection<ResponderWorkerWithState>();
@@ -199,6 +199,8 @@ namespace RedFoxMQ
             {
                 if (!_disposed)
                 {
+                    _minThreads = 0;
+
                     try { _disposedTokenSource.Cancel(); } 
                     catch (AggregateException) { }
 

@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
+using System.Diagnostics;
 using NUnit.Framework;
 using System;
 using System.Threading;
@@ -52,16 +54,43 @@ namespace RedFoxMQ.Tests
         }
 
         [Test]
+        public void ResponderWorkerScheduler_many_MinThreads_created_but_should_be_idle()
+        {
+            var minThreads = Environment.ProcessorCount * 4;
+            using (var scheduler = new ResponderWorkerScheduler(minThreads, minThreads))
+            {
+                Assert.AreEqual(minThreads, scheduler.CurrentWorkerThreadCount);
+
+                var timeout = TimeSpan.FromSeconds(5);
+                var started = DateTime.UtcNow;
+                double oldTime;
+                var time = Process.GetCurrentProcess().TotalProcessorTime.TotalMilliseconds;
+                do
+                {
+                    oldTime = time;
+                    Thread.Sleep(1000);
+                    time = Process.GetCurrentProcess().TotalProcessorTime.TotalMilliseconds;
+
+                    if (DateTime.UtcNow - started > timeout)
+                        Assert.Fail("Worker threads should be idle, when no worker is added");
+
+                } while (time - oldTime > 100);
+
+                Assert.Pass();
+            }
+        }
+
+        [Test]
         public void ResponderWorkerScheduler_CurrentBusyThreadCount_increased_when_busy()
         {
             var worker = new TestWorker(30);
             using (var scheduler = new ResponderWorkerScheduler(1, 1))
             {
                 Assert.AreEqual(0, scheduler.CurrentBusyThreadCount);
-                
+
                 scheduler.AddWorker(worker, new TestMessage(), null);
 
-                worker.WaitStarted();
+                worker.WaitStarted(Timeout);
                 Assert.AreEqual(1, scheduler.CurrentBusyThreadCount);
             }
         }
@@ -74,10 +103,10 @@ namespace RedFoxMQ.Tests
             {
                 scheduler.AddWorker(worker, new TestMessage(), null);
 
-                worker.WaitStarted();
+                worker.WaitStarted(Timeout);
                 Assert.AreEqual(1, scheduler.CurrentBusyThreadCount);
 
-                worker.WaitCompleted();
+                worker.WaitCompleted(Timeout);
                 Thread.Sleep(15);
                 Assert.AreEqual(0, scheduler.CurrentBusyThreadCount);
             }
@@ -91,17 +120,17 @@ namespace RedFoxMQ.Tests
                 var worker1 = new TestWorker(30);
                 scheduler.AddWorker(worker1, new TestMessage(), null);
 
-                worker1.WaitStarted();
+                worker1.WaitStarted(Timeout);
                 Assert.AreEqual(1, scheduler.CurrentBusyThreadCount);
 
-                worker1.WaitCompleted();
+                worker1.WaitCompleted(Timeout);
                 Thread.Sleep(10);
                 Assert.AreEqual(0, scheduler.CurrentBusyThreadCount);
 
                 var worker2 = new TestWorker(30);
                 scheduler.AddWorker(worker2, new TestMessage(), null);
 
-                worker2.WaitStarted();
+                worker2.WaitStarted(Timeout);
                 Assert.AreEqual(1, scheduler.CurrentBusyThreadCount);
             }
         }
@@ -115,12 +144,12 @@ namespace RedFoxMQ.Tests
 
                 var worker1 = new TestWorker(10);
                 scheduler.AddWorker(worker1, new TestMessage(), null);
-                worker1.WaitStarted();
+                worker1.WaitStarted(Timeout);
                 Assert.AreEqual(1, scheduler.CurrentBusyThreadCount);
 
                 var worker2 = new TestWorker(10);
                 scheduler.AddWorker(worker2, new TestMessage(), null);
-                worker2.WaitStarted();
+                worker2.WaitStarted(Timeout);
                 Assert.AreEqual(2, scheduler.CurrentBusyThreadCount);
             }
         }
