@@ -35,10 +35,10 @@ namespace RedFoxMQ
             get { return _numberOfThreads.CurrentCount; }
         }
 
-        private readonly CounterSignal _currentBusyThreadCount = new CounterSignal(1, 0);
+        private int _currentBusyThreadCount;
         public int CurrentBusyThreadCount
         {
-            get { return _currentBusyThreadCount.CurrentValue; }
+            get { return _currentBusyThreadCount; }
         }
 
         public event Action<IResponderWorkUnit, object, IMessage> WorkUnitCompleted = (wu, s, m) => { };
@@ -104,7 +104,8 @@ namespace RedFoxMQ
                     ResponderWorkUnitWithState workUnitWithState;
                     if (!TryGetWorkUnit(out workUnitWithState, cancellationToken)) continue;
 
-                    _currentBusyThreadCount.Increment();
+                    Interlocked.Increment(ref _currentBusyThreadCount);
+
                     try
                     {
                         IMessage response = null;
@@ -129,7 +130,7 @@ namespace RedFoxMQ
                     }
                     finally
                     {
-                        _currentBusyThreadCount.Decrement();
+                        Interlocked.Decrement(ref _currentBusyThreadCount);
                     }
                 } while (!ShutdownTaskIfNotNeeded(taskId));
             }
@@ -170,7 +171,7 @@ namespace RedFoxMQ
         {
             var workerThreadCount = _currentWorkerThreadCount;
             if (workerThreadCount != 0 &&
-                (_currentBusyThreadCount.CurrentValue != workerThreadCount || workerThreadCount >= _maxThreads)) return;
+                (_currentBusyThreadCount != workerThreadCount || workerThreadCount >= _maxThreads)) return;
             try
             {
                 _numberOfThreads.Release(1);
@@ -180,11 +181,6 @@ namespace RedFoxMQ
             catch (SemaphoreFullException)
             {
             }
-        }
-
-        internal bool WaitUntilThreadBusy(TimeSpan timeout)
-        {
-            return _currentBusyThreadCount.Wait(timeout);
         }
 
         #region Dispose

@@ -54,14 +54,14 @@ namespace RedFoxMQ.Tests
         [Test]
         public void ResponderWorkerScheduler_CurrentBusyThreadCount_increased_when_busy()
         {
-            var workUnit = new TestWorkUnit(100);
+            var workUnit = new TestWorkUnit(30);
             using (var scheduler = new ResponderWorkerScheduler(1, 1))
             {
                 Assert.AreEqual(0, scheduler.CurrentBusyThreadCount);
                 
                 scheduler.AddWorkUnit(workUnit, new TestMessage(), null);
 
-                scheduler.WaitUntilThreadBusy(Timeout);
+                workUnit.WaitStarted();
                 Assert.AreEqual(1, scheduler.CurrentBusyThreadCount);
             }
         }
@@ -74,11 +74,54 @@ namespace RedFoxMQ.Tests
             {
                 scheduler.AddWorkUnit(workUnit, new TestMessage(), null);
 
-                scheduler.WaitUntilThreadBusy(Timeout);
+                workUnit.WaitStarted();
                 Assert.AreEqual(1, scheduler.CurrentBusyThreadCount);
 
-                Thread.Sleep(60);
+                workUnit.WaitCompleted();
+                Thread.Sleep(15);
                 Assert.AreEqual(0, scheduler.CurrentBusyThreadCount);
+            }
+        }
+
+        [Test]
+        public void ResponderWorkerScheduler_CurrentBusyThreadCount_increased_then_decreased_then_increased()
+        {
+            using (var scheduler = new ResponderWorkerScheduler(1, 1))
+            {
+                var workUnit1 = new TestWorkUnit(30);
+                scheduler.AddWorkUnit(workUnit1, new TestMessage(), null);
+
+                workUnit1.WaitStarted();
+                Assert.AreEqual(1, scheduler.CurrentBusyThreadCount);
+
+                workUnit1.WaitCompleted();
+                Thread.Sleep(10);
+                Assert.AreEqual(0, scheduler.CurrentBusyThreadCount);
+
+                var workUnit2 = new TestWorkUnit(30);
+                scheduler.AddWorkUnit(workUnit2, new TestMessage(), null);
+
+                workUnit2.WaitStarted();
+                Assert.AreEqual(1, scheduler.CurrentBusyThreadCount);
+            }
+        }
+
+        [Test]
+        public void ResponderWorkerScheduler_CurrentBusyThreadCount_increased_twice()
+        {
+            using (var scheduler = new ResponderWorkerScheduler(0, 2))
+            {
+                Assert.AreEqual(0, scheduler.CurrentBusyThreadCount);
+
+                var workUnit1 = new TestWorkUnit(10);
+                scheduler.AddWorkUnit(workUnit1, new TestMessage(), null);
+                workUnit1.WaitStarted();
+                Assert.AreEqual(1, scheduler.CurrentBusyThreadCount);
+
+                var workUnit2 = new TestWorkUnit(10);
+                scheduler.AddWorkUnit(workUnit2, new TestMessage(), null);
+                workUnit2.WaitStarted();
+                Assert.AreEqual(2, scheduler.CurrentBusyThreadCount);
             }
         }
     }

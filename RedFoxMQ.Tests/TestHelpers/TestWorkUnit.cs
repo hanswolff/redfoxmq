@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-
+using System;
 using System.Threading;
 
 // ReSharper disable once CheckNamespace
@@ -22,6 +22,8 @@ namespace RedFoxMQ.Tests
     class TestWorkUnit : IResponderWorkUnit
     {
         private readonly int _sleepDelay;
+        private readonly ManualResetEventSlim _started = new ManualResetEventSlim();
+        private readonly ManualResetEventSlim _completed = new ManualResetEventSlim();
 
         public TestWorkUnit(int sleepDelay)
         {
@@ -30,8 +32,30 @@ namespace RedFoxMQ.Tests
 
         public IMessage GetResponse(IMessage requestMessage, object state)
         {
+            _started.Set();
             Thread.Sleep(_sleepDelay);
+            _completed.Set();
             return requestMessage;
+        }
+
+        public bool WaitStarted()
+        {
+            return WaitStarted(TimeSpan.FromMilliseconds(-1));
+        }
+
+        public bool WaitStarted(TimeSpan timeout)
+        {
+            return _started.Wait(timeout);
+        }
+
+        public bool WaitCompleted()
+        {
+            return WaitCompleted(TimeSpan.FromMilliseconds(-1));
+        }
+
+        public bool WaitCompleted(TimeSpan timeout)
+        {
+            return _completed.Wait(timeout);
         }
     }
 }
