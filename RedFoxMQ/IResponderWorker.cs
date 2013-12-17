@@ -16,17 +16,8 @@
 
 namespace RedFoxMQ
 {
-    struct ResponderWorkUnitWithState
+    public interface IResponderWorker
     {
-        public IResponderWorkUnit WorkUnit;
-        public IMessage RequestMessage;
-        public object State;
-
-        public ResponderWorkUnitWithState(IResponderWorkUnit workUnit, IMessage requestMessage, object state)
-        {
-            WorkUnit = workUnit;
-            RequestMessage = requestMessage;
-            State = state;
-        }
+        IMessage GetResponse(IMessage requestMessage, object state);
     }
 }

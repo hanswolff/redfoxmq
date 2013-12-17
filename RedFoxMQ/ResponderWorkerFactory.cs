@@ -13,11 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+using System;
 
 namespace RedFoxMQ
 {
-    public interface IResponderWorkUnitFactory
+    public class ResponderWorkerFactory : IResponderWorkerFactory
     {
-        IResponderWorkUnit CreateWorkUnit(IMessage requestMessage);
+        private readonly Func<IMessage, IResponderWorker> _factory;
+
+        public ResponderWorkerFactory(Func<IMessage, IResponderWorker> factory)
+        {
+            if (factory == null) throw new ArgumentNullException("factory");
+            _factory = factory;
+        }
+
+        public IResponderWorker GetWorkerFor(IMessage requestMessage)
+        {
+            return _factory(requestMessage);
+        }
     }
 }

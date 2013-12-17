@@ -13,30 +13,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using System;
 
 namespace RedFoxMQ
 {
-    public class ResponderWorkUnit : IResponderWorkUnit
+    struct ResponderWorkerWithState
     {
-        private static readonly Func<IMessage, IMessage> EchoFunction = request => request;
+        public IResponderWorker Worker;
+        public IMessage RequestMessage;
+        public object State;
 
-        private readonly Func<IMessage, IMessage> _responderFunc;
-
-        public ResponderWorkUnit()
+        public ResponderWorkerWithState(IResponderWorker worker, IMessage requestMessage, object state)
         {
-            _responderFunc = EchoFunction;
-        }
+            if (worker == null) throw new ArgumentNullException("worker");
 
-        public ResponderWorkUnit(Func<IMessage, IMessage> responderFunc)
-        {
-            if (responderFunc == null) throw new ArgumentNullException("responderFunc");
-            _responderFunc = responderFunc;
-        }
-
-        public IMessage GetResponse(IMessage requestMessage, object state)
-        {
-            return _responderFunc(requestMessage);
+            Worker = worker;
+            RequestMessage = requestMessage;
+            State = state;
         }
     }
 }

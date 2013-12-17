@@ -61,7 +61,7 @@
     <Compile Include="TestHelpers\ExceptionTestMessage.cs" />
     <Compile Include="TestHelpers\ExceptionTestMessageDeserializer.cs" />
     <Compile Include="TestHelpers\TestSocket.cs" />
-    <Compile Include="TestHelpers\TestWorkUnit.cs" />
+    <Compile Include="TestHelpers\TestWorker.cs" />
     <Compile Include="TestHelpers\TestMessageDeserializer.cs" />
     <Compile Include="TestHelpers\ExceptionTestMessageSerializer.cs" />
     <Compile Include="TestHelpers\TestMessageSerializer.cs" />

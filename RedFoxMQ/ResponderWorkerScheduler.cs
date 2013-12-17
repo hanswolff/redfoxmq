@@ -25,7 +25,7 @@ namespace RedFoxMQ
         private readonly int _minThreads;
         private readonly int _maxThreads;
 
-        private readonly BlockingCollection<ResponderWorkUnitWithState> _workUnits = new BlockingCollection<ResponderWorkUnitWithState>();
+        private readonly BlockingCollection<ResponderWorkerWithState> _workers = new BlockingCollection<ResponderWorkerWithState>();
         private readonly ConcurrentDictionary<Guid, Thread> _threads = new ConcurrentDictionary<Guid, Thread>();
         private readonly SemaphoreSlim _numberOfThreads;
 
@@ -41,8 +41,8 @@ namespace RedFoxMQ
             get { return _currentBusyThreadCount; }
         }
 
-        public event Action<IResponderWorkUnit, object, IMessage> WorkUnitCompleted = (wu, s, m) => { };
-        public event Action<IResponderWorkUnit, object, Exception> WorkUnitException = (wu, s, e) => { };
+        public event Action<IResponderWorker, object, IMessage> WorkerCompleted = (wu, s, m) => { };
+        public event Action<IResponderWorker, object, Exception> WorkerException = (wu, s, e) => { };
 
         private TimeSpan _maxIdleTime;
         /// <summary>
@@ -53,6 +53,11 @@ namespace RedFoxMQ
         {
             get { return _maxIdleTime; }
             set { _maxIdleTime = value; }
+        }
+
+        public ResponderWorkerScheduler()
+            : this(0, 1, TimeSpan.FromMinutes(1))
+        {
         }
 
         public ResponderWorkerScheduler(int minThreads, int maxThreads)
@@ -101,8 +106,8 @@ namespace RedFoxMQ
             {
                 do
                 {
-                    ResponderWorkUnitWithState workUnitWithState;
-                    if (!TryGetWorkUnit(out workUnitWithState, cancellationToken)) continue;
+                    ResponderWorkerWithState workerWithState;
+                    if (!TryGetWorkerWithState(out workerWithState, cancellationToken)) continue;
 
                     Interlocked.Increment(ref _currentBusyThreadCount);
 
@@ -111,16 +116,16 @@ namespace RedFoxMQ
                         IMessage response = null;
                         try
                         {
-                            response = workUnitWithState.WorkUnit.GetResponse(workUnitWithState.RequestMessage, workUnitWithState.State);
+                            response = workerWithState.Worker.GetResponse(workerWithState.RequestMessage, workerWithState.State);
                         }
                         catch (Exception ex)
                         {
-                            WorkUnitException(workUnitWithState.WorkUnit, workUnitWithState.State, ex);
+                            WorkerException(workerWithState.Worker, workerWithState.State, ex);
                         }
 
                         if (response != null)
                         {
-                            WorkUnitCompleted(workUnitWithState.WorkUnit, workUnitWithState.State, response);
+                            WorkerCompleted(workerWithState.Worker, workerWithState.State, response);
                         }
                     }
                     catch (Exception ex)
@@ -139,9 +144,9 @@ namespace RedFoxMQ
             }
         }
 
-        private bool TryGetWorkUnit(out ResponderWorkUnitWithState workUnitWithState, CancellationToken cancellationToken)
+        private bool TryGetWorkerWithState(out ResponderWorkerWithState workerWithState, CancellationToken cancellationToken)
         {
-            return _workUnits.TryTake(out workUnitWithState, (int)MaxIdleTime.TotalMilliseconds, cancellationToken);
+            return _workers.TryTake(out workerWithState, (int)MaxIdleTime.TotalMilliseconds, cancellationToken);
         }
 
         private bool ShutdownTaskIfNotNeeded(Guid threadId)
@@ -157,12 +162,12 @@ namespace RedFoxMQ
             return true;
         }
 
-        public void AddWorkUnit(IResponderWorkUnit workUnit, IMessage requestMessage, object state)
+        public void AddWorker(IResponderWorker worker, IMessage requestMessage, object state)
         {
-            if (workUnit == null) throw new ArgumentNullException("workUnit");
+            if (worker == null) throw new ArgumentNullException("worker");
             if (_disposed) throw new ObjectDisposedException(GetType().FullName);
 
-            _workUnits.TryAdd(new ResponderWorkUnitWithState(workUnit, requestMessage, state));
+            _workers.TryAdd(new ResponderWorkerWithState(worker, requestMessage, state));
 
             IncreaseWorkerThreadsIfNeeded();
         }

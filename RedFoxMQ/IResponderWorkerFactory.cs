@@ -16,8 +16,8 @@
 
 namespace RedFoxMQ
 {
-    public interface IResponderWorkUnit
+    public interface IResponderWorkerFactory
     {
-        IMessage GetResponse(IMessage requestMessage, object state);
+        IResponderWorker GetWorkerFor(IMessage requestMessage);
     }
 }

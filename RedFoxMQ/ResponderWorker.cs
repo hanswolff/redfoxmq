@@ -17,19 +17,26 @@ using System;
 
 namespace RedFoxMQ
 {
-    public class ResponderWorkUnitFactory : IResponderWorkUnitFactory
+    public class ResponderWorker : IResponderWorker
     {
-        private readonly Func<IMessage, IResponderWorkUnit> _factory;
+        private static readonly Func<IMessage, IMessage> EchoFunction = request => request;
 
-        public ResponderWorkUnitFactory(Func<IMessage, IResponderWorkUnit> factory)
+        private readonly Func<IMessage, IMessage> _responderFunc;
+
+        public ResponderWorker()
         {
-            if (factory == null) throw new ArgumentNullException("factory");
-            _factory = factory;
+            _responderFunc = EchoFunction;
         }
 
-        public IResponderWorkUnit CreateWorkUnit(IMessage requestMessage)
+        public ResponderWorker(Func<IMessage, IMessage> responderFunc)
         {
-            return _factory(requestMessage);
+            if (responderFunc == null) throw new ArgumentNullException("responderFunc");
+            _responderFunc = responderFunc;
+        }
+
+        public IMessage GetResponse(IMessage requestMessage, object state)
+        {
+            return _responderFunc(requestMessage);
         }
     }
 }

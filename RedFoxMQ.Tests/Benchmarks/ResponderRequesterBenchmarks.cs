@@ -33,8 +33,9 @@ namespace RedFoxMQ.Tests.Benchmarks
         [Test]
         public void One_Responder_One_Requester()
         {
-            var echoWorkUnitFactory = new ResponderWorkUnitFactory(request => new ResponderWorkUnit());
-            using (var responder = new Responder(echoWorkUnitFactory))
+            var echoWorker = new ResponderWorker();
+            var workerFactory = new ResponderWorkerFactory(request => echoWorker);
+            using (var responder = new Responder(workerFactory))
             using (var requester = new Requester())
             {
                 var endpoint = GetEndpoint();
@@ -58,8 +59,9 @@ namespace RedFoxMQ.Tests.Benchmarks
         [Test]
         public void One_Responder_Two_Requesters()
         {
-            var echoWorkUnitFactory = new ResponderWorkUnitFactory(request => new ResponderWorkUnit());
-            using (var responder = new Responder(echoWorkUnitFactory, 10, 10))
+            var echoWorker = new ResponderWorker();
+            var workerFactory = new ResponderWorkerFactory(request => echoWorker);
+            using (var responder = new Responder(workerFactory, 10, 10))
             {
                 var endpoint = GetEndpoint();
                 responder.Bind(endpoint);
@@ -107,8 +109,9 @@ namespace RedFoxMQ.Tests.Benchmarks
         [Test]
         public void One_Responder_Ten_Requesters()
         {
-            var echoWorkUnitFactory = new ResponderWorkUnitFactory(request => new ResponderWorkUnit());
-            using (var responder = new Responder(echoWorkUnitFactory, 2, 2))
+            var echoWorker = new ResponderWorker();
+            var workerFactory = new ResponderWorkerFactory(request => echoWorker);
+            using (var responder = new Responder(workerFactory, 2, 2))
             {
                 var endpoint = GetEndpoint();
                 responder.Bind(endpoint);

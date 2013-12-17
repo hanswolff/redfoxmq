@@ -19,13 +19,13 @@ using System.Threading;
 // ReSharper disable once CheckNamespace
 namespace RedFoxMQ.Tests
 {
-    class TestWorkUnit : IResponderWorkUnit
+    class TestWorker : IResponderWorker
     {
         private readonly int _sleepDelay;
         private readonly ManualResetEventSlim _started = new ManualResetEventSlim();
         private readonly ManualResetEventSlim _completed = new ManualResetEventSlim();
 
-        public TestWorkUnit(int sleepDelay)
+        public TestWorker(int sleepDelay)
         {
             _sleepDelay = sleepDelay;
         }

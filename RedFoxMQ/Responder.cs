@@ -29,13 +29,13 @@ namespace RedFoxMQ
 
         private readonly ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter> _servers;
         private readonly ConcurrentDictionary<ISocket, SenderReceiver> _clientSockets;
-        private readonly IResponderWorkUnitFactory _responderWorkUnitFactory;
+        private readonly IResponderWorkerFactory _responderWorkerFactory;
         private readonly ResponderWorkerScheduler _scheduler;
 
-        public Responder(IResponderWorkUnitFactory responderWorkUnitFactory, int minThreads = 1, int maxThreads = 1)
+        public Responder(IResponderWorkerFactory responderWorkerFactory, int minThreads = 1, int maxThreads = 1)
         {
-            if (responderWorkUnitFactory == null) throw new ArgumentNullException("responderWorkUnitFactory");
-            _responderWorkUnitFactory = responderWorkUnitFactory;
+            if (responderWorkerFactory == null) throw new ArgumentNullException("responderWorkerFactory");
+            _responderWorkerFactory = responderWorkerFactory;
 
             _disposeCancellationTokenSource = new CancellationTokenSource();
             _disposeCancellationToken = _disposeCancellationTokenSource.Token;
@@ -43,7 +43,7 @@ namespace RedFoxMQ
             _servers = new ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter>();
             _clientSockets = new ConcurrentDictionary<ISocket, SenderReceiver>();
             _scheduler = new ResponderWorkerScheduler(minThreads, maxThreads);
-            _scheduler.WorkUnitCompleted += SchedulerWorkUnitCompleted;
+            _scheduler.WorkerCompleted += SchedulerWorkerCompleted;
         }
 
         public event Action<ISocket> ClientConnected = s => { };
@@ -95,11 +95,11 @@ namespace RedFoxMQ
             var messageFrame = await senderReceiver.Receiver.ReceiveAsync(cancellationToken).ConfigureAwait(false);
             var requestMessage = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId, messageFrame.RawMessage);
 
-            var workUnit = _responderWorkUnitFactory.CreateWorkUnit(requestMessage);
-            _scheduler.AddWorkUnit(workUnit, requestMessage, senderReceiver);
+            var worker = _responderWorkerFactory.GetWorkerFor(requestMessage);
+            _scheduler.AddWorker(worker, requestMessage, senderReceiver);
         }
 
-        private void SchedulerWorkUnitCompleted(IResponderWorkUnit workUnit, object state, IMessage responseMessage)
+        private void SchedulerWorkerCompleted(IResponderWorker worker, object state, IMessage responseMessage)
         {
             var senderReceiver = (SenderReceiver)state;
             var responseFrame = MessageFrameCreator.CreateFromMessage(responseMessage);

@@ -41,11 +41,11 @@ The easiest way is to look at the unit tests. They are a good source of examples
         [Test]
         public void Request_Response_single_message()
         {
-            Func<IMessage, IMessage> echoFunc = request => request; // alternatively implement IResponderWorkUnit
-            var echoWorkUnit = new ResponderWorkUnit(echoFunc);
-            var workUnitFactory = new ResponderWorkUnitFactory(request => echoWorkUnit);
+            Func<IMessage, IMessage> echoFunc = request => request; // alternatively implement IResponderWorker instead
+            var echoWorker = new ResponderWorker(echoFunc);
+            var workerFactory = new ResponderWorkerFactory(request => echoWorker);
             
-            using (var responder = new Responder(workUnitFactory))
+            using (var responder = new Responder(workerFactory))
             using (var requester = new Requester())
             {
                 var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);

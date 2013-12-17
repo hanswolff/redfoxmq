@@ -64,7 +64,7 @@ namespace RedFoxMQ.Tests
 
         public static Responder CreateTestResponder(int sleepDelay = 0)
         {
-            var factory = new ResponderWorkUnitFactory(m => new TestWorkUnit(sleepDelay));
+            var factory = new ResponderWorkerFactory(m => new TestWorker(sleepDelay));
             return new Responder(factory);
         }
 

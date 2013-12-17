@@ -48,12 +48,12 @@
     <Compile Include="IPublisher.cs" />
     <Compile Include="IRequester.cs" />
     <Compile Include="IResponder.cs" />
-    <Compile Include="ResponderWorkUnit.cs" />
-    <Compile Include="IResponderWorkUnitWithState.cs" />
-    <Compile Include="ResponderWorkUnitFactory.cs" />
-    <Compile Include="IResponderWorkUnitFactory.cs" />
+    <Compile Include="ResponderWorker.cs" />
+    <Compile Include="IResponderWorkerWithState.cs" />
+    <Compile Include="ResponderWorkerFactory.cs" />
+    <Compile Include="IResponderWorkerFactory.cs" />
     <Compile Include="ResponderWorkerScheduler.cs" />
-    <Compile Include="IResponderWorkUnit.cs" />
+    <Compile Include="IResponderWorker.cs" />
     <Compile Include="ISubscriber.cs" />
     <Compile Include="MessageFrameCreator.cs" />
     <Compile Include="MessageFrameSender.cs" />
