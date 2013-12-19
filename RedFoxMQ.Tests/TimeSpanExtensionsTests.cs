@@ -14,19 +14,24 @@
 // limitations under the License.
 // 
 
-using RedFoxMQ.Transports;
+using NUnit.Framework;
 using System;
 
-namespace RedFoxMQ
+namespace RedFoxMQ.Tests
 {
-    interface IBindSockets
+    [TestFixture]
+    public class TimeSpanExtensionsTests
     {
-        event Action<ISocket> ClientConnected;
-        event Action<ISocket> ClientDisconnected;
+        [Test]
+        public void ToMillisOrZero_infinity_should_be_zero()
+        {
+            Assert.AreEqual(0, TimeSpan.FromMilliseconds(-1).ToMillisOrZero());
+        }
 
-        void Bind(RedFoxEndpoint endpoint);
-        void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration);
-
-        bool Unbind(RedFoxEndpoint endpoint);
+        [Test]
+        public void ToMillisOrZero_should_be_milliseconds()
+        {
+            Assert.AreEqual(12345, TimeSpan.FromMilliseconds(12345).ToMillisOrZero());
+        }
     }
 }

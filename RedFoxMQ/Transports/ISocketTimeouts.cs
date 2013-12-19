@@ -14,19 +14,15 @@
 // limitations under the License.
 // 
 
-using RedFoxMQ.Transports;
 using System;
 
-namespace RedFoxMQ
+namespace RedFoxMQ.Transports
 {
-    interface IBindSockets
+    public interface ISocketTimeouts : ICloneable
     {
-        event Action<ISocket> ClientConnected;
-        event Action<ISocket> ClientDisconnected;
+        TimeSpan ConnectTimeout { get; }
 
-        void Bind(RedFoxEndpoint endpoint);
-        void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration);
-
-        bool Unbind(RedFoxEndpoint endpoint);
+        TimeSpan ReceiveTimeout { get; }
+        TimeSpan SendTimeout { get; }
     }
 }

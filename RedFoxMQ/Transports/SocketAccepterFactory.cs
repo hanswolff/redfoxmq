@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using RedFoxMQ.Transports.InProc;
 using RedFoxMQ.Transports.Tcp;
 using System;
@@ -23,20 +24,33 @@ namespace RedFoxMQ.Transports
     {
         public ISocketAccepter CreateForTransport(RedFoxTransport transport)
         {
+            return CreateForTransport(transport, SocketConfiguration.Default);
+        }
+
+        public ISocketAccepter CreateForTransport(RedFoxTransport transport, ISocketConfiguration socketConfiguration)
+        {
+            if (socketConfiguration == null) throw new ArgumentNullException("socketConfiguration");
+
             switch (transport)
             {
                 case RedFoxTransport.Inproc:
-                    return new InProcessSocketAccepter();
+                    return new InProcessSocketAccepter(socketConfiguration);
                 case RedFoxTransport.Tcp:
-                    return new TcpSocketAccepter();
+                    return new TcpSocketAccepter(socketConfiguration);
                 default:
                     throw new NotSupportedException(String.Format("Transport {0} not supported", transport));
             }
         }
 
-        public ISocketAccepter CreateAndBind(RedFoxEndpoint endpoint, SocketMode socketMode, Action<ISocket> onClientConnected = null, Action<ISocket> onClientDisconnected = null)
+        public ISocketAccepter CreateAndBind(RedFoxEndpoint endpoint,
+            ISocketConfiguration socketConfiguration,
+            SocketMode socketMode = SocketMode.ReadWrite, 
+            Action<ISocket> onClientConnected = null, 
+            Action<ISocket> onClientDisconnected = null)
         {
-            var server = CreateForTransport(endpoint.Transport);
+            if (socketConfiguration == null) throw new ArgumentNullException("socketConfiguration");
+
+            var server = CreateForTransport(endpoint.Transport, socketConfiguration);
             server.Bind(endpoint, socketMode, onClientConnected, onClientDisconnected);
             return server;
         }

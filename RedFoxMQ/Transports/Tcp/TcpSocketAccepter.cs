@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using System;
 using System.Net.Sockets;
 using System.Threading;
@@ -22,6 +23,7 @@ namespace RedFoxMQ.Transports.Tcp
 {
     class TcpSocketAccepter : ISocketAccepter
     {
+        private readonly ISocketConfiguration _socketConfiguration;
         private static readonly IpAddressFromHostTranslator IpAddressFromHostTranslator = new IpAddressFromHostTranslator();
 
         private RedFoxEndpoint _endpoint;
@@ -33,6 +35,11 @@ namespace RedFoxMQ.Transports.Tcp
 
         public event Action<ISocket> ClientConnected = client => { };
         public event Action<ISocket> ClientDisconnected = client => { };
+
+        public TcpSocketAccepter(ISocketConfiguration socketConfiguration = null)
+        {
+            _socketConfiguration = socketConfiguration ?? SocketConfiguration.Default;
+        }
 
         public void Bind(RedFoxEndpoint endpoint, SocketMode socketMode, Action<ISocket> onClientConnected = null, Action<ISocket> onClientDisconnected = null)
         {
@@ -86,6 +93,9 @@ namespace RedFoxMQ.Transports.Tcp
                     }
                 }
             }
+            catch (ThreadAbortException)
+            {
+            }
             catch (OperationCanceledException)
             {
             }
@@ -119,6 +129,9 @@ namespace RedFoxMQ.Transports.Tcp
                     }
                 }
             }
+            catch (ThreadAbortException)
+            {
+            }
             catch (OperationCanceledException)
             {
             }
@@ -133,11 +146,14 @@ namespace RedFoxMQ.Transports.Tcp
             }
         }
 
-        private static void SetupTcpClientParameters(TcpClient tcpClient)
+        private void SetupTcpClientParameters(TcpClient tcpClient)
         {
+            tcpClient.ReceiveTimeout = _socketConfiguration.ReceiveTimeout.ToMillisOrZero();
+            tcpClient.SendTimeout = _socketConfiguration.SendTimeout.ToMillisOrZero();
+
             tcpClient.NoDelay = true;
-            tcpClient.ReceiveBufferSize = 16384;
-            tcpClient.SendBufferSize = 16384;
+            tcpClient.ReceiveBufferSize = _socketConfiguration.ReceiveBufferSize;
+            tcpClient.SendBufferSize = _socketConfiguration.SendBufferSize;
         }
 
         private bool TryFireClientConnectedEvent(ISocket socket)

@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using RedFoxMQ.Transports.InProc;
 using RedFoxMQ.Transports.Tcp;
 using System;
@@ -27,14 +28,22 @@ namespace RedFoxMQ.Transports
             return CreateAndConnectAsync(endpoint, TimeSpan.FromMilliseconds(-1));
         }
 
-        public ISocket CreateAndConnectAsync(RedFoxEndpoint endpoint, TimeSpan timeout)
+        public ISocket CreateAndConnectAsync(RedFoxEndpoint endpoint, TimeSpan connectTimeout)
+        {
+            var socketConfiguration = (SocketConfiguration)SocketConfiguration.Default.Clone();
+            socketConfiguration.ConnectTimeout = connectTimeout;
+
+            return CreateAndConnectAsync(endpoint, socketConfiguration);
+        }
+
+        public ISocket CreateAndConnectAsync(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration)
         {
             switch (endpoint.Transport)
             {
                 case RedFoxTransport.Inproc:
                     return CreateInProcSocket(endpoint);
                 case RedFoxTransport.Tcp:
-                    return CreateTcpSocket(endpoint, timeout);
+                    return CreateTcpSocket(endpoint, socketConfiguration);
                 default:
                     throw new NotSupportedException(String.Format("Transport {0} not supported", endpoint.Transport));
             }
@@ -45,10 +54,15 @@ namespace RedFoxMQ.Transports
             return InProcessEndpoints.Instance.Connect(endpoint);
         }
 
-        private static ISocket CreateTcpSocket(RedFoxEndpoint endpoint, TimeSpan timeout)
+        private static ISocket CreateTcpSocket(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration)
         {
-            var tcpClient = new TcpClient { ReceiveBufferSize = 65536, SendBufferSize = 65536 };
-            ConnectTcpSocket(tcpClient, endpoint.Host, endpoint.Port, timeout);
+            var tcpClient = new TcpClient
+            {
+                NoDelay = true,
+                ReceiveBufferSize = socketConfiguration.ReceiveBufferSize,
+                SendBufferSize = socketConfiguration.SendBufferSize
+            };
+            ConnectTcpSocket(tcpClient, endpoint.Host, endpoint.Port, socketConfiguration.ConnectTimeout);
 
             return new TcpSocket(endpoint, tcpClient);
         }

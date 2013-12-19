@@ -22,6 +22,7 @@ namespace RedFoxMQ.Transports.InProc
 {
     class InProcessSocketAccepter : ISocketAccepter
     {
+        private readonly ISocketConfiguration _socketConfiguration;
         private BlockingCollection<InProcSocketPair> _listener;
         private CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ManualResetEventSlim _started = new ManualResetEventSlim(false);
@@ -29,6 +30,11 @@ namespace RedFoxMQ.Transports.InProc
 
         public event Action<ISocket> ClientConnected = client => { };
         public event Action<ISocket> ClientDisconnected = client => { };
+
+        public InProcessSocketAccepter(ISocketConfiguration socketConfiguration = null)
+        {
+            _socketConfiguration = socketConfiguration ?? SocketConfiguration.Default;
+        }
 
         private RedFoxEndpoint _endpoint;
         public void Bind(RedFoxEndpoint endpoint, SocketMode socketMode, Action<ISocket> onClientConnected = null, Action<ISocket> onClientDisconnected = null)

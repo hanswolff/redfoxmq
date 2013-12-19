@@ -14,19 +14,18 @@
 // limitations under the License.
 // 
 
-using RedFoxMQ.Transports;
 using System;
 
 namespace RedFoxMQ
 {
-    interface IBindSockets
+    static class TimeSpanExtensions
     {
-        event Action<ISocket> ClientConnected;
-        event Action<ISocket> ClientDisconnected;
+        private static readonly TimeSpan Infinite = TimeSpan.FromMilliseconds(-1);
 
-        void Bind(RedFoxEndpoint endpoint);
-        void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration);
-
-        bool Unbind(RedFoxEndpoint endpoint);
+        public static int ToMillisOrZero(this TimeSpan timeSpan)
+        {
+            if (timeSpan == Infinite) return 0;
+            return (int)timeSpan.TotalMilliseconds;
+        }
     }
 }

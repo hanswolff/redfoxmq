@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using RedFoxMQ.Transports;
 using System;
 using System.Collections.Concurrent;
@@ -41,7 +42,12 @@ namespace RedFoxMQ
 
         public void Bind(RedFoxEndpoint endpoint)
         {
-            var server = SocketAccepterFactory.CreateAndBind(endpoint, SocketMode.WriteOnly, OnClientConnected, SocketDisconnected);
+            Bind(endpoint, SocketConfiguration.Default);
+        }
+
+        public void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration)
+        {
+            var server = SocketAccepterFactory.CreateAndBind(endpoint, socketConfiguration, SocketMode.WriteOnly, OnClientConnected, SocketDisconnected);
             _servers[endpoint] = server;
         }
 

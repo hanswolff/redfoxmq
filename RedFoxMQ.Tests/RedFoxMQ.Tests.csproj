@@ -50,6 +50,7 @@
     <Compile Include="Benchmarks\InprocResponderRequesterBenchmarks.cs" />
     <Compile Include="Benchmarks\ResponderRequesterBenchmarks.cs" />
     <Compile Include="Benchmarks\TcpPublisherSubscriberBenchmarks.cs" />
+    <Compile Include="TimeSpanExtensionsTests.cs" />
     <Compile Include="CounterSignalTests.cs" />
     <Compile Include="MessageFromCreatorTests.cs" />
     <Compile Include="Benchmarks\PublisherSubscriberBenchmarks.cs" />
@@ -77,6 +78,7 @@
     <Compile Include="Transports\InProc\QueueStreamTests.cs" />
     <Compile Include="TestHelpers\TestHelpers.cs" />
     <Compile Include="TestHelpers\TestMessage.cs" />
+    <Compile Include="Transports\SocketConfigurationTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
