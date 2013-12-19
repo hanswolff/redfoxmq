@@ -46,15 +46,23 @@ namespace RedFoxMQ
 
         public void Connect(RedFoxEndpoint endpoint)
         {
-            Connect(endpoint, TimeSpan.FromMilliseconds(-1));
+            Connect(endpoint, SocketConfiguration.Default);
         }
 
-        public void Connect(RedFoxEndpoint endpoint, TimeSpan timeout)
+        public void Connect(RedFoxEndpoint endpoint, TimeSpan connectTimeout)
+        {
+            var socketConfiguration = (SocketConfiguration)SocketConfiguration.Default.Clone();
+            socketConfiguration.ConnectTimeout = connectTimeout;
+
+            Connect(endpoint, socketConfiguration);
+        }
+
+        public void Connect(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration)
         {
             if (_socket != null) throw new InvalidOperationException("Subscriber already connected");
             _cts = new CancellationTokenSource();
 
-            _socket = SocketFactory.CreateAndConnectAsync(endpoint, timeout);
+            _socket = SocketFactory.CreateAndConnectAsync(endpoint, socketConfiguration);
             _socket.Disconnected += SocketDisconnected;
 
             if (!_cts.IsCancellationRequested)

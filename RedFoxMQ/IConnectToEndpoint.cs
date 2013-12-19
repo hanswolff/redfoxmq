@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using RedFoxMQ.Transports;
 using System;
 
@@ -22,5 +23,6 @@ namespace RedFoxMQ
     {
         void Connect(RedFoxEndpoint endpoint);
         void Connect(RedFoxEndpoint endpoint, TimeSpan timeout);
+        void Connect(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration);
     }
 }

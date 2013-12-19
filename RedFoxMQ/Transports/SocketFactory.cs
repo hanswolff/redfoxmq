@@ -23,19 +23,6 @@ namespace RedFoxMQ.Transports
 {
     class SocketFactory
     {
-        public ISocket CreateAndConnectAsync(RedFoxEndpoint endpoint)
-        {
-            return CreateAndConnectAsync(endpoint, TimeSpan.FromMilliseconds(-1));
-        }
-
-        public ISocket CreateAndConnectAsync(RedFoxEndpoint endpoint, TimeSpan connectTimeout)
-        {
-            var socketConfiguration = (SocketConfiguration)SocketConfiguration.Default.Clone();
-            socketConfiguration.ConnectTimeout = connectTimeout;
-
-            return CreateAndConnectAsync(endpoint, socketConfiguration);
-        }
-
         public ISocket CreateAndConnectAsync(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration)
         {
             switch (endpoint.Transport)
