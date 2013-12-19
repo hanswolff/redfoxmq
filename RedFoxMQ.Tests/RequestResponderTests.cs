@@ -130,7 +130,7 @@ namespace RedFoxMQ.Tests
                 var eventFired = new ManualResetEventSlim();
                 var endpoint = TestHelpers.CreateEndpointForTransport(transport);
 
-                responder.ClientConnected += s => eventFired.Set();
+                responder.ClientConnected += (s, c) => eventFired.Set();
                 responder.Bind(endpoint);
 
                 requester.Connect(endpoint);

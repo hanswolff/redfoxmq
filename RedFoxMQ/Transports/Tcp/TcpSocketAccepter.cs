@@ -23,7 +23,6 @@ namespace RedFoxMQ.Transports.Tcp
 {
     class TcpSocketAccepter : ISocketAccepter
     {
-        private readonly ISocketConfiguration _socketConfiguration;
         private static readonly IpAddressFromHostTranslator IpAddressFromHostTranslator = new IpAddressFromHostTranslator();
 
         private RedFoxEndpoint _endpoint;
@@ -33,15 +32,10 @@ namespace RedFoxMQ.Transports.Tcp
         private readonly ManualResetEventSlim _started = new ManualResetEventSlim(false);
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
 
-        public event Action<ISocket> ClientConnected = client => { };
+        public event Action<ISocket, ISocketConfiguration> ClientConnected = (socket, socketConfig) => { };
         public event Action<ISocket> ClientDisconnected = client => { };
 
-        public TcpSocketAccepter(ISocketConfiguration socketConfiguration = null)
-        {
-            _socketConfiguration = socketConfiguration ?? SocketConfiguration.Default;
-        }
-
-        public void Bind(RedFoxEndpoint endpoint, SocketMode socketMode, Action<ISocket> onClientConnected = null, Action<ISocket> onClientDisconnected = null)
+        public void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration, SocketMode socketMode, Action<ISocket, ISocketConfiguration> onClientConnected = null, Action<ISocket> onClientDisconnected = null)
         {
             if (_listener != null || !_stopped.IsSet)
                 throw new InvalidOperationException("Server already bound, please use Unbind first");
@@ -63,15 +57,15 @@ namespace RedFoxMQ.Transports.Tcp
 
             _cts = new CancellationTokenSource();
 
-            StartAcceptLoop(socketMode, _cts.Token);
+            StartAcceptLoop(socketMode, socketConfiguration, _cts.Token);
         }
 
-        private void StartAcceptLoop(SocketMode socketMode, CancellationToken cancellationToken)
+        private void StartAcceptLoop(SocketMode socketMode, ISocketConfiguration socketConfiguration, CancellationToken cancellationToken)
         {
-            var task = AcceptLoopAsync(socketMode, cancellationToken);
+            var task = AcceptLoopAsync(socketMode, socketConfiguration, cancellationToken);
         }
 
-        private async Task AcceptLoopAsync(SocketMode socketMode, CancellationToken cancellationToken)
+        private async Task AcceptLoopAsync(SocketMode socketMode, ISocketConfiguration socketConfiguration, CancellationToken cancellationToken)
         {
             _started.Set();
 
@@ -80,12 +74,12 @@ namespace RedFoxMQ.Transports.Tcp
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     var tcpClient = await _listener.AcceptTcpClientAsync();
-                    SetupTcpClientParameters(tcpClient);
+                    SetupTcpClientParameters(tcpClient, socketConfiguration);
 
                     var socket = new TcpSocket(_endpoint, tcpClient);
                     socket.Disconnected += () => ClientDisconnected(socket);
 
-                    TryFireClientConnectedEvent(socket);
+                    TryFireClientConnectedEvent(socket, socketConfiguration);
 
                     if (socketMode == SocketMode.WriteOnly)
                     {
@@ -146,21 +140,21 @@ namespace RedFoxMQ.Transports.Tcp
             }
         }
 
-        private void SetupTcpClientParameters(TcpClient tcpClient)
+        private static void SetupTcpClientParameters(TcpClient tcpClient, ISocketConfiguration socketConfiguration)
         {
-            tcpClient.ReceiveTimeout = _socketConfiguration.ReceiveTimeout.ToMillisOrZero();
-            tcpClient.SendTimeout = _socketConfiguration.SendTimeout.ToMillisOrZero();
+            tcpClient.ReceiveTimeout = socketConfiguration.ReceiveTimeout.ToMillisOrZero();
+            tcpClient.SendTimeout = socketConfiguration.SendTimeout.ToMillisOrZero();
 
             tcpClient.NoDelay = true;
-            tcpClient.ReceiveBufferSize = _socketConfiguration.ReceiveBufferSize;
-            tcpClient.SendBufferSize = _socketConfiguration.SendBufferSize;
+            tcpClient.ReceiveBufferSize = socketConfiguration.ReceiveBufferSize;
+            tcpClient.SendBufferSize = socketConfiguration.SendBufferSize;
         }
 
-        private bool TryFireClientConnectedEvent(ISocket socket)
+        private bool TryFireClientConnectedEvent(ISocket socket, ISocketConfiguration socketConfiguration)
         {
             try
             {
-                ClientConnected(socket);
+                ClientConnected(socket, socketConfiguration);
                 return true;
             }
             catch

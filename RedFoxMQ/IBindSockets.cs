@@ -21,7 +21,7 @@ namespace RedFoxMQ
 {
     interface IBindSockets
     {
-        event Action<ISocket> ClientConnected;
+        event Action<ISocket, ISocketConfiguration> ClientConnected;
         event Action<ISocket> ClientDisconnected;
 
         void Bind(RedFoxEndpoint endpoint);

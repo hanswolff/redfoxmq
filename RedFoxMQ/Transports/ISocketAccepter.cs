@@ -13,16 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using System;
 
 namespace RedFoxMQ.Transports
 {
     interface ISocketAccepter
     {
-        event Action<ISocket> ClientConnected;
+        event Action<ISocket, ISocketConfiguration> ClientConnected;
         event Action<ISocket> ClientDisconnected;
 
-        void Bind(RedFoxEndpoint endpoint, SocketMode socketMode, Action<ISocket> onClientConnected = null, Action<ISocket> onClientDisconnected = null);
+        void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration, SocketMode socketMode, Action<ISocket, ISocketConfiguration> onClientConnected = null, Action<ISocket> onClientDisconnected = null);
         void Unbind(bool waitForExit = true);
     }
 }

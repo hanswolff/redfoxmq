@@ -24,19 +24,12 @@ namespace RedFoxMQ.Transports
     {
         public ISocketAccepter CreateForTransport(RedFoxTransport transport)
         {
-            return CreateForTransport(transport, SocketConfiguration.Default);
-        }
-
-        public ISocketAccepter CreateForTransport(RedFoxTransport transport, ISocketConfiguration socketConfiguration)
-        {
-            if (socketConfiguration == null) throw new ArgumentNullException("socketConfiguration");
-
             switch (transport)
             {
                 case RedFoxTransport.Inproc:
-                    return new InProcessSocketAccepter(socketConfiguration);
+                    return new InProcessSocketAccepter();
                 case RedFoxTransport.Tcp:
-                    return new TcpSocketAccepter(socketConfiguration);
+                    return new TcpSocketAccepter();
                 default:
                     throw new NotSupportedException(String.Format("Transport {0} not supported", transport));
             }
@@ -45,13 +38,13 @@ namespace RedFoxMQ.Transports
         public ISocketAccepter CreateAndBind(RedFoxEndpoint endpoint,
             ISocketConfiguration socketConfiguration,
             SocketMode socketMode = SocketMode.ReadWrite, 
-            Action<ISocket> onClientConnected = null, 
+            Action<ISocket, ISocketConfiguration> onClientConnected = null, 
             Action<ISocket> onClientDisconnected = null)
         {
             if (socketConfiguration == null) throw new ArgumentNullException("socketConfiguration");
 
-            var server = CreateForTransport(endpoint.Transport, socketConfiguration);
-            server.Bind(endpoint, socketMode, onClientConnected, onClientDisconnected);
+            var server = CreateForTransport(endpoint.Transport);
+            server.Bind(endpoint, socketConfiguration, socketMode, onClientConnected, onClientDisconnected);
             return server;
         }
     }

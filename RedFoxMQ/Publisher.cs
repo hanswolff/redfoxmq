@@ -31,7 +31,7 @@ namespace RedFoxMQ
         private readonly ConcurrentDictionary<ISocket, MessageQueue> _broadcastSockets;
         private readonly MessageQueueProcessor _messageQueueProcessor = new MessageQueueProcessor();
 
-        public event Action<ISocket> ClientConnected = s => { };
+        public event Action<ISocket, ISocketConfiguration> ClientConnected = (socket, socketConfig) => { };
         public event Action<ISocket> ClientDisconnected = s => { };
 
         public Publisher()
@@ -51,17 +51,17 @@ namespace RedFoxMQ
             _servers[endpoint] = server;
         }
 
-        private void OnClientConnected(ISocket socket)
+        private void OnClientConnected(ISocket socket, ISocketConfiguration socketConfiguration)
         {
             if (socket == null) throw new ArgumentNullException("socket");
 
             var messageFrameSender = new MessageFrameSender(socket);
-            var messageQueue = new MessageQueue();
+            var messageQueue = new MessageQueue(socketConfiguration.SendBufferSize);
 
             if (_broadcastSockets.TryAdd(socket, messageQueue))
             {
                 _messageQueueProcessor.Register(messageQueue, messageFrameSender);
-                ClientConnected(socket);
+                ClientConnected(socket, socketConfiguration);
             }
 
             if (socket.IsDisconnected)

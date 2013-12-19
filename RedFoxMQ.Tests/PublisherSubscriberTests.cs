@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using System;
@@ -127,7 +128,7 @@ namespace RedFoxMQ.Tests
                 var eventFired = new ManualResetEventSlim();
 
                 publisher.Bind(endpoint);
-                publisher.ClientConnected += s => eventFired.Set();
+                publisher.ClientConnected += (s, c) => eventFired.Set();
 
                 subscriber.Connect(endpoint);
 

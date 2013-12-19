@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -25,10 +26,17 @@ namespace RedFoxMQ
 {
     class MessageQueue
     {
+        private readonly int _sendBufferSize;
+
         private readonly BlockingCollection<MessageFrame> _singleMessageFrames = new BlockingCollection<MessageFrame>();
         private readonly BlockingCollection<List<MessageFrame>> _batchMessageFrames = new BlockingCollection<List<MessageFrame>>();
 
         public event Action<IReadOnlyCollection<MessageFrame>> MessageFramesAdded = m => { };
+
+        public MessageQueue(int sendBufferSize)
+        {
+            _sendBufferSize = sendBufferSize;
+        }
 
         public void Add(MessageFrame messageFrame)
         {
@@ -50,7 +58,6 @@ namespace RedFoxMQ
             }
         }
 
-        private const int TryMakeBatchSizeLargerThan = 65536;
         internal bool SendFromQueue(MessageFrameSender sender)
         {
             List<MessageFrame> batch;
@@ -66,7 +73,7 @@ namespace RedFoxMQ
                 batch.Add(messageFrame);
                 batchSize += messageFrame.RawMessage.LongLength;
 
-                while (batchSize < TryMakeBatchSizeLargerThan && _singleMessageFrames.TryTake(out messageFrame))
+                while (batchSize < _sendBufferSize && _singleMessageFrames.TryTake(out messageFrame))
                 {
                     batch.Add(messageFrame);
                     batchSize += messageFrame.RawMessage.LongLength;
@@ -92,7 +99,7 @@ namespace RedFoxMQ
                 batch.Add(messageFrame);
                 batchSize += messageFrame.RawMessage.LongLength;
 
-                while (batchSize < TryMakeBatchSizeLargerThan && _singleMessageFrames.TryTake(out messageFrame))
+                while (batchSize < _sendBufferSize && _singleMessageFrames.TryTake(out messageFrame))
                 {
                     batch.Add(messageFrame);
                     batchSize += messageFrame.RawMessage.LongLength;

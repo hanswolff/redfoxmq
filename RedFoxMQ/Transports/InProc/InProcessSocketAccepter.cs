@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
@@ -22,22 +23,16 @@ namespace RedFoxMQ.Transports.InProc
 {
     class InProcessSocketAccepter : ISocketAccepter
     {
-        private readonly ISocketConfiguration _socketConfiguration;
         private BlockingCollection<InProcSocketPair> _listener;
         private CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ManualResetEventSlim _started = new ManualResetEventSlim(false);
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
 
-        public event Action<ISocket> ClientConnected = client => { };
+        public event Action<ISocket, ISocketConfiguration> ClientConnected = (socket, socketConfig) => { };
         public event Action<ISocket> ClientDisconnected = client => { };
 
-        public InProcessSocketAccepter(ISocketConfiguration socketConfiguration = null)
-        {
-            _socketConfiguration = socketConfiguration ?? SocketConfiguration.Default;
-        }
-
         private RedFoxEndpoint _endpoint;
-        public void Bind(RedFoxEndpoint endpoint, SocketMode socketMode, Action<ISocket> onClientConnected = null, Action<ISocket> onClientDisconnected = null)
+        public void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration, SocketMode socketMode, Action<ISocket, ISocketConfiguration> onClientConnected = null, Action<ISocket> onClientDisconnected = null)
         {
             if (_listener != null || !_stopped.IsSet)
                 throw new InvalidOperationException("Server already bound, please use Unbind first");
@@ -51,11 +46,11 @@ namespace RedFoxMQ.Transports.InProc
 
             _started.Reset();
             _cts = new CancellationTokenSource();
-            Task.Factory.StartNew(() => StartAcceptLoop(_cts.Token), TaskCreationOptions.LongRunning);
+            Task.Factory.StartNew(() => StartAcceptLoop(_cts.Token, socketConfiguration), TaskCreationOptions.LongRunning);
             _started.Wait();
         }
 
-        private void StartAcceptLoop(CancellationToken cancellationToken)
+        private void StartAcceptLoop(CancellationToken cancellationToken, ISocketConfiguration socketConfiguration)
         {
             _stopped.Reset();
             _started.Set();
@@ -65,7 +60,7 @@ namespace RedFoxMQ.Transports.InProc
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     var socketPair = _listener.Take(cancellationToken);
-                    TryFireClientConnectedEvent(socketPair.ServerSocket);
+                    TryFireClientConnectedEvent(socketPair.ServerSocket, socketConfiguration);
                 }
             }
             catch (OperationCanceledException)
@@ -77,12 +72,12 @@ namespace RedFoxMQ.Transports.InProc
             }
         }
 
-        private bool TryFireClientConnectedEvent(InProcSocket socket)
+        private bool TryFireClientConnectedEvent(InProcSocket socket, ISocketConfiguration socketConfiguration)
         {
             try
             {
                 socket.Disconnected += () => ClientDisconnected(socket);
-                ClientConnected(socket);
+                ClientConnected(socket, socketConfiguration);
                 return true;
             }
             catch
