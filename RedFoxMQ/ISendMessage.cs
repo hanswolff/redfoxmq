@@ -13,16 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-using System;
 
-namespace RedFoxMQ.Transports
+namespace RedFoxMQ
 {
-    [Flags]
-    public enum SocketMode
+    public interface ISendMessage
     {
-        None = 0,
-        ReadOnly = 1,
-        WriteOnly = 2,
-        ReadWrite = ReadOnly | WriteOnly
+        void SendMessage(IMessage message);
     }
 }

@@ -2,7 +2,7 @@
 
 RedFoxMQ is a .NET in-memory message queue that uses a simple TCP transport. It is fairly lightweight
 and provides full control over message serialization / de-serialization. The performance is very
-good (broadcasting messages over TCP reaches 300k IOPS on my machine).
+good (batch broadcasting over TCP reaches 3 million (!) messages per second on my machine).
 
 #### Supported Features
 

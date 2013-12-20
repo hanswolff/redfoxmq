@@ -158,6 +158,36 @@ namespace RedFoxMQ.Tests
 
         [TestCase(RedFoxTransport.Inproc)]
         [TestCase(RedFoxTransport.Tcp)]
+        public void Subscriber_sends_message_Publisher_receives_message(RedFoxTransport transport)
+        {
+            using (var publisher = new Publisher())
+            using (var subscriber = new TestSubscriber())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+                var eventFired = new ManualResetEventSlim();
+
+                IMessage messageReceived = null;
+                publisher.MessageReceived += m =>
+                {
+                    messageReceived = m;
+                    eventFired.Set();
+                };
+
+                publisher.Bind(endpoint);
+                
+                subscriber.Connect(endpoint);
+
+                IMessage messageSent = new TestMessage("test");
+                subscriber.SendMessage(messageSent);
+
+                Assert.IsTrue(eventFired.Wait(Timeout));
+                Assert.AreEqual(messageSent, messageReceived);
+            }
+        }
+
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
         public void Subscriber_Disconnected_event_fires(RedFoxTransport transport)
         {
             using (var publisher = new Publisher())

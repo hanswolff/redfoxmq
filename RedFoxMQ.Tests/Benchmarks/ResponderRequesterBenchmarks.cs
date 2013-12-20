@@ -52,7 +52,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 }
                 sw.Stop();
 
-                Assert.Inconclusive("{0} elapsed sending/receiving {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfRequests, NumberOfRequests / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed sending/receiving {1} messages ({2:N0} per second)", sw.Elapsed, NumberOfRequests, NumberOfRequests / sw.Elapsed.TotalSeconds);
             }
         }
 
@@ -101,7 +101,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                     requester.Disconnect();
                 }
 
-                Assert.Inconclusive("{0} elapsed sending/receiving {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfRequests, NumberOfRequests / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed sending/receiving {1} messages ({2:N0} per second)", sw.Elapsed, NumberOfRequests, NumberOfRequests / sw.Elapsed.TotalSeconds);
             }
         }
 
@@ -151,7 +151,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                     requester.Disconnect();
                 }
 
-                Assert.Inconclusive("{0} elapsed sending/receiving {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfRequests, NumberOfRequests / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed sending/receiving {1} messages ({2:N0} per second)", sw.Elapsed, NumberOfRequests, NumberOfRequests / sw.Elapsed.TotalSeconds);
             }
         }
 

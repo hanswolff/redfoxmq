@@ -28,16 +28,17 @@ namespace RedFoxMQ
         private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
 
         private readonly ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter> _servers;
-        private readonly ConcurrentDictionary<ISocket, MessageQueue> _broadcastSockets;
+        private readonly ConcurrentDictionary<ISocket, MessageQueueReceiveLoop> _broadcastSockets;
         private readonly MessageQueueProcessor _messageQueueProcessor = new MessageQueueProcessor();
 
         public event Action<ISocket, ISocketConfiguration> ClientConnected = (socket, socketConfig) => { };
-        public event Action<ISocket> ClientDisconnected = s => { };
+        public event Action<ISocket> ClientDisconnected = socket => { };
+        public event Action<IMessage> MessageReceived = message => { };
 
         public Publisher()
         {
             _servers = new ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter>();
-            _broadcastSockets = new ConcurrentDictionary<ISocket, MessageQueue>();
+            _broadcastSockets = new ConcurrentDictionary<ISocket, MessageQueueReceiveLoop>();
         }
 
         public void Bind(RedFoxEndpoint endpoint)
@@ -47,7 +48,7 @@ namespace RedFoxMQ
 
         public void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration)
         {
-            var server = SocketAccepterFactory.CreateAndBind(endpoint, socketConfiguration, SocketMode.WriteOnly, OnClientConnected, SocketDisconnected);
+            var server = SocketAccepterFactory.CreateAndBind(endpoint, socketConfiguration, OnClientConnected, SocketDisconnected);
             _servers[endpoint] = server;
         }
 
@@ -57,11 +58,15 @@ namespace RedFoxMQ
 
             var messageFrameSender = new MessageFrameSender(socket);
             var messageQueue = new MessageQueue(socketConfiguration.SendBufferSize);
+            var messageReceiveLoop = new MessageReceiveLoop(socket);
 
-            if (_broadcastSockets.TryAdd(socket, messageQueue))
+            if (_broadcastSockets.TryAdd(socket, new MessageQueueReceiveLoop(messageQueue, messageReceiveLoop)))
             {
                 _messageQueueProcessor.Register(messageQueue, messageFrameSender);
+                messageReceiveLoop.MessageReceived += m => MessageReceived(m);
+                messageReceiveLoop.OnException += MessageReceiveLoopOnException;
                 ClientConnected(socket, socketConfiguration);
+                messageReceiveLoop.Start();
             }
 
             if (socket.IsDisconnected)
@@ -71,12 +76,18 @@ namespace RedFoxMQ
             }
         }
 
+        private void MessageReceiveLoopOnException(ISocket socket, Exception exception)
+        {
+            socket.Disconnect();
+        }
+
         private void SocketDisconnected(ISocket socket)
         {
-            MessageQueue messageQueue;
-            if (_broadcastSockets.TryRemove(socket, out messageQueue))
+            MessageQueueReceiveLoop messageQueueReceiveLoop;
+            if (_broadcastSockets.TryRemove(socket, out messageQueueReceiveLoop))
             {
-                _messageQueueProcessor.Unregister(messageQueue);
+                _messageQueueProcessor.Unregister(messageQueueReceiveLoop.MessageQueue);
+                messageQueueReceiveLoop.MessageReceiveLoop.Dispose();
                 ClientDisconnected(socket);
             }
         }
@@ -96,7 +107,7 @@ namespace RedFoxMQ
 
             foreach (var messageQueue in _broadcastSockets.Values)
             {
-                messageQueue.Add(messageFrame);
+                messageQueue.MessageQueue.Add(messageFrame);
             }
         }
 
@@ -107,7 +118,7 @@ namespace RedFoxMQ
 
             foreach (var messageQueue in _broadcastSockets.Values)
             {
-                messageQueue.AddRange(messageFrames);
+                messageQueue.MessageQueue.AddRange(messageFrames);
             }
         }
 
@@ -153,5 +164,17 @@ namespace RedFoxMQ
             Dispose(false);
         }
         #endregion
+
+        class MessageQueueReceiveLoop
+        {
+            public readonly MessageQueue MessageQueue;
+            public readonly MessageReceiveLoop MessageReceiveLoop;
+
+            public MessageQueueReceiveLoop(MessageQueue messageQueue, MessageReceiveLoop messageReceiveLoop)
+            {
+                MessageQueue = messageQueue;
+                MessageReceiveLoop = messageReceiveLoop;
+            }
+        }
     }
 }

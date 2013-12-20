@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using System;
@@ -55,7 +56,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 Assert.IsTrue(counterSignal.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:N0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
             }
         }
 
@@ -85,7 +86,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 Assert.IsTrue(counterSignal.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:N0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
             }
         }
 
@@ -117,7 +118,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 Assert.IsTrue(counterSignal.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:N0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
             }
         }
 
@@ -150,7 +151,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 Assert.IsTrue(counterSignal.Wait(TimeOut), "Timeout waiting for message");
                 sw.Stop();
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:N0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
             }
         }
 
@@ -185,7 +186,7 @@ namespace RedFoxMQ.Tests.Benchmarks
 
                 subscribers.ForEach(sub => sub.Dispose());
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:N0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
             }
         }
 
@@ -221,7 +222,7 @@ namespace RedFoxMQ.Tests.Benchmarks
 
                 subscribers.ForEach(sub => sub.Dispose());
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:N0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
             }
         }
 
@@ -256,7 +257,7 @@ namespace RedFoxMQ.Tests.Benchmarks
 
                 subscribers.ForEach(sub => sub.Dispose());
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:N0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
             }
         }
 
@@ -292,7 +293,7 @@ namespace RedFoxMQ.Tests.Benchmarks
 
                 subscribers.ForEach(sub => sub.Dispose());
 
-                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:F0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
+                Assert.Inconclusive("{0} elapsed reading {1} messages ({2:N0} per second)", sw.Elapsed, NumberOfMessagesToReceive, NumberOfMessagesToReceive / sw.Elapsed.TotalSeconds);
             }
         }
 

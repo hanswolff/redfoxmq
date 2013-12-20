@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using RedFoxMQ.Transports;
 using System;
 using System.Diagnostics;
@@ -77,7 +78,8 @@ namespace RedFoxMQ
                     IMessage message = null;
                     try
                     {
-                        message = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId,
+                        message = MessageSerialization.Instance.Deserialize(
+                            messageFrame.MessageTypeId,
                             messageFrame.RawMessage);
                     }
                     catch (RedFoxBaseException ex)
@@ -110,13 +112,8 @@ namespace RedFoxMQ
         {
             if (message == null) return;
 
-            try
-            {
-                MessageReceived(message);
-            }
-            catch
-            {
-            }
+            try { MessageReceived(message); }
+            catch { }
         }
 
         #region Dispose

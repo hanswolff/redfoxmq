@@ -48,6 +48,8 @@
     <Compile Include="IPublisher.cs" />
     <Compile Include="IRequester.cs" />
     <Compile Include="IResponder.cs" />
+    <Compile Include="IReceiveMessage.cs" />
+    <Compile Include="ISendMessage.cs" />
     <Compile Include="ResponderWorker.cs" />
     <Compile Include="IResponderWorkerWithState.cs" />
     <Compile Include="ResponderWorkerFactory.cs" />
@@ -90,7 +92,6 @@
     <Compile Include="MissingMessageDeserializerException.cs" />
     <Compile Include="MissingMessageSerializerException.cs" />
     <Compile Include="Subscriber.cs" />
-    <Compile Include="Transports\SocketMode.cs" />
     <Compile Include="Transports\Tcp\TcpSocket.cs" />
     <Compile Include="Transports\Tcp\IpAddressFromHostTranslator.cs" />
     <Compile Include="IConnectToEndpoint.cs" />

@@ -16,14 +16,10 @@
 
 using System;
 
-namespace RedFoxMQ.Transports
+namespace RedFoxMQ
 {
-    interface ISocketAccepter
+    public interface IReceiveMessage
     {
-        event Action<ISocket, ISocketConfiguration> ClientConnected;
-        event Action<ISocket> ClientDisconnected;
-
-        void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration, Action<ISocket, ISocketConfiguration> onClientConnected = null, Action<ISocket> onClientDisconnected = null);
-        void Unbind(bool waitForExit = true);
+        event Action<IMessage> MessageReceived;
     }
 }

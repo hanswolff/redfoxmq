@@ -23,8 +23,8 @@ namespace RedFoxMQ
 {
     public class Requester : IRequester
     {
-        private static readonly SocketFactory SocketFactory = new SocketFactory();
         private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
+        private static readonly SocketFactory SocketFactory = new SocketFactory();
 
         private MessageFrameSender _messageFrameSender;
         private MessageFrameReceiver _messageFrameReceiver;
@@ -77,13 +77,13 @@ namespace RedFoxMQ
             Disconnected();
         }
 
-
         public IMessage Request(IMessage requestMessage)
         {
+            var sendMessageFrame = MessageFrameCreator.CreateFromMessage(requestMessage);
+
             _semaphoreRequest.Wait(_cts.Token);
             try
             {
-                var sendMessageFrame = MessageFrameCreator.CreateFromMessage(requestMessage);
                 _messageFrameSender.Send(sendMessageFrame);
 
                 var messageFrame = _messageFrameReceiver.Receive();

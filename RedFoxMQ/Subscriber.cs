@@ -22,17 +22,25 @@ namespace RedFoxMQ
 {
     public class Subscriber : ISubscriber
     {
+        private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
         private static readonly SocketFactory SocketFactory = new SocketFactory();
+
         private CancellationTokenSource _cts = new CancellationTokenSource();
 
         private ISocket _socket;
+        public ISocket Socket
+        {
+            get { return _socket; }
+        }
+
+        private MessageFrameSender _messageFrameSender;
         private MessageReceiveLoop _messageReceiveLoop;
 
         public bool IsDisconnected { get { return _socket.IsDisconnected; } }
 
         public event Action Disconnected = () => { };
 
-        public event Action<IMessage> MessageReceived = m => { };
+        public event Action<IMessage> MessageReceived = message => { };
         public event Action<ISocket, Exception> ResponseException = (socket, exception) => { };
 
         public void Connect(RedFoxEndpoint endpoint)
@@ -59,6 +67,8 @@ namespace RedFoxMQ
 
             if (!_cts.IsCancellationRequested)
             {
+                _messageFrameSender = new MessageFrameSender(_socket);
+
                 _messageReceiveLoop = new MessageReceiveLoop(_socket);
                 _messageReceiveLoop.MessageReceived += m => MessageReceived(m);
                 _messageReceiveLoop.OnException += MessageReceiveLoopOnException;
@@ -72,6 +82,17 @@ namespace RedFoxMQ
             catch { }
 
             socket.Disconnect();
+        }
+
+        private readonly object _sendLock = new object();
+        public void SendMessage(IMessage message)
+        {
+            var sendMessageFrame = MessageFrameCreator.CreateFromMessage(message);
+
+            lock (_sendLock)
+            {
+                _messageFrameSender.Send(sendMessageFrame);
+            }
         }
 
         private void SocketDisconnected()

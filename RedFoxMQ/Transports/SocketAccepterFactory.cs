@@ -37,14 +37,13 @@ namespace RedFoxMQ.Transports
 
         public ISocketAccepter CreateAndBind(RedFoxEndpoint endpoint,
             ISocketConfiguration socketConfiguration,
-            SocketMode socketMode = SocketMode.ReadWrite, 
             Action<ISocket, ISocketConfiguration> onClientConnected = null, 
             Action<ISocket> onClientDisconnected = null)
         {
             if (socketConfiguration == null) throw new ArgumentNullException("socketConfiguration");
 
             var server = CreateForTransport(endpoint.Transport);
-            server.Bind(endpoint, socketConfiguration, socketMode, onClientConnected, onClientDisconnected);
+            server.Bind(endpoint, socketConfiguration, onClientConnected, onClientDisconnected);
             return server;
         }
     }

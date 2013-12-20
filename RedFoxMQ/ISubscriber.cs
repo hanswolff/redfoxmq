@@ -13,12 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using System;
 
 namespace RedFoxMQ
 {
-    interface ISubscriber : IConnectToEndpoint, IDisconnect, IDisposable
+    interface ISubscriber : IConnectToEndpoint, IReceiveMessage, ISendMessage, IDisconnect, IDisposable
     {
-        event Action<IMessage> MessageReceived;
     }
 }

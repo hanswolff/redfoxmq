@@ -35,7 +35,7 @@ namespace RedFoxMQ.Transports.Tcp
         public event Action<ISocket, ISocketConfiguration> ClientConnected = (socket, socketConfig) => { };
         public event Action<ISocket> ClientDisconnected = client => { };
 
-        public void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration, SocketMode socketMode, Action<ISocket, ISocketConfiguration> onClientConnected = null, Action<ISocket> onClientDisconnected = null)
+        public void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration, Action<ISocket, ISocketConfiguration> onClientConnected = null, Action<ISocket> onClientDisconnected = null)
         {
             if (_listener != null || !_stopped.IsSet)
                 throw new InvalidOperationException("Server already bound, please use Unbind first");
@@ -57,15 +57,15 @@ namespace RedFoxMQ.Transports.Tcp
 
             _cts = new CancellationTokenSource();
 
-            StartAcceptLoop(socketMode, socketConfiguration, _cts.Token);
+            StartAcceptLoop(socketConfiguration, _cts.Token);
         }
 
-        private void StartAcceptLoop(SocketMode socketMode, ISocketConfiguration socketConfiguration, CancellationToken cancellationToken)
+        private void StartAcceptLoop(ISocketConfiguration socketConfiguration, CancellationToken cancellationToken)
         {
-            var task = AcceptLoopAsync(socketMode, socketConfiguration, cancellationToken);
+            var task = AcceptLoopAsync(socketConfiguration, cancellationToken);
         }
 
-        private async Task AcceptLoopAsync(SocketMode socketMode, ISocketConfiguration socketConfiguration, CancellationToken cancellationToken)
+        private async Task AcceptLoopAsync(ISocketConfiguration socketConfiguration, CancellationToken cancellationToken)
         {
             _started.Set();
 
@@ -80,11 +80,6 @@ namespace RedFoxMQ.Transports.Tcp
                     socket.Disconnected += () => ClientDisconnected(socket);
 
                     TryFireClientConnectedEvent(socket, socketConfiguration);
-
-                    if (socketMode == SocketMode.WriteOnly)
-                    {
-                        var task = ReadLoopAsyncToDetectDisconnection(socket, tcpClient, cancellationToken);
-                    }
                 }
             }
             catch (ThreadAbortException)
@@ -95,44 +90,6 @@ namespace RedFoxMQ.Transports.Tcp
             }
             catch (ObjectDisposedException)
             {
-            }
-            finally
-            {
-                _stopped.Set();
-            }
-        }
-
-        private async Task ReadLoopAsyncToDetectDisconnection(ISocket socket, TcpClient client, CancellationToken cancellationToken)
-        {
-            if (socket == null) throw new ArgumentNullException("socket");
-            if (client == null) throw new ArgumentNullException("client");
-
-            _stopped.Reset();
-
-            try
-            {
-                var stream = client.GetStream();
-                var nullSink = new byte[8192];
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    var read = await stream.ReadAsync(nullSink, 0, nullSink.Length, cancellationToken);
-                    if (read == 0)
-                    {
-                        client.Close();
-                        ClientDisconnected(socket);
-                    }
-                }
-            }
-            catch (ThreadAbortException)
-            {
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            catch (ObjectDisposedException)
-            {
-                client.Close();
-                ClientDisconnected(socket);
             }
             finally
             {
