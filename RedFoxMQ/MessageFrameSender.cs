@@ -64,7 +64,7 @@ namespace RedFoxMQ
 
         public bool IsDisconnected { get { return _socket.IsDisconnected; } }
 
-        public event Action Disconnected = () => { };
+        public event DisconnectedDelegate Disconnected = () => { };
 
         private void SocketDisconnected()
         {

@@ -13,7 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-using System;
 
 namespace RedFoxMQ
 {
@@ -21,7 +20,7 @@ namespace RedFoxMQ
     {
         bool IsDisconnected { get; }
 
-        event Action Disconnected;
+        event DisconnectedDelegate Disconnected;
 
         void Disconnect();
     }

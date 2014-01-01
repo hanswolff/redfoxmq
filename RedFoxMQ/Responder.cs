@@ -47,8 +47,8 @@ namespace RedFoxMQ
             _scheduler.WorkerCompleted += SchedulerWorkerCompleted;
         }
 
-        public event Action<ISocket, ISocketConfiguration> ClientConnected = (socket, socketConfig) => { };
-        public event Action<ISocket> ClientDisconnected = s => { };
+        public event ClientConnectedDelegate ClientConnected = (socket, socketConfig) => { };
+        public event ClientDisconnectedDelegate ClientDisconnected = s => { };
 
         public void Bind(RedFoxEndpoint endpoint)
         {

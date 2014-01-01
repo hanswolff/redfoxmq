@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using RedFoxMQ.Transports;
 using System;
 using System.IO;
@@ -34,7 +35,7 @@ namespace RedFoxMQ.Tests
         public bool IsDisconnected { get { return _isDisconnected.Value; }}
 
         private readonly InterlockedBoolean _isDisconnected = new InterlockedBoolean();
-        public event Action Disconnected = () => { };
+        public event DisconnectedDelegate Disconnected = () => { };
 
         public void Disconnect()
         {

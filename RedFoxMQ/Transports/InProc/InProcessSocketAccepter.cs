@@ -28,11 +28,11 @@ namespace RedFoxMQ.Transports.InProc
         private readonly ManualResetEventSlim _started = new ManualResetEventSlim(false);
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
 
-        public event Action<ISocket, ISocketConfiguration> ClientConnected = (socket, socketConfig) => { };
-        public event Action<ISocket> ClientDisconnected = client => { };
+        public event ClientConnectedDelegate ClientConnected = (socket, socketConfig) => { };
+        public event ClientDisconnectedDelegate ClientDisconnected = client => { };
 
         private RedFoxEndpoint _endpoint;
-        public void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration, Action<ISocket, ISocketConfiguration> onClientConnected = null, Action<ISocket> onClientDisconnected = null)
+        public void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration, ClientConnectedDelegate onClientConnected = null, ClientDisconnectedDelegate onClientDisconnected = null)
         {
             if (_listener != null || !_stopped.IsSet)
                 throw new InvalidOperationException("Server already bound, please use Unbind first");

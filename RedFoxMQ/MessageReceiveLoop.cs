@@ -31,8 +31,8 @@ namespace RedFoxMQ
         private TaskCompletionSource<bool> _started = new TaskCompletionSource<bool>();
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
 
-        public event Action<IMessage> MessageReceived = m => { };
-        public event Action<ISocket, Exception> OnException = (s, e) => { };
+        public event MessageReceivedDelegate MessageReceived = m => { };
+        public event SocketExceptionDelegate OnException = (s, e) => { };
 
         private readonly ISocket _socket;
 

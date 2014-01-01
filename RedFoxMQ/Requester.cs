@@ -42,7 +42,7 @@ namespace RedFoxMQ
             }
         }
 
-        public event Action Disconnected = () => { };
+        public event DisconnectedDelegate Disconnected = () => { };
 
         public void Connect(RedFoxEndpoint endpoint)
         {

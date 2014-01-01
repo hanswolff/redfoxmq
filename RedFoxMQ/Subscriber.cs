@@ -38,10 +38,10 @@ namespace RedFoxMQ
 
         public bool IsDisconnected { get { return _socket.IsDisconnected; } }
 
-        public event Action Disconnected = () => { };
+        public event DisconnectedDelegate Disconnected = () => { };
 
-        public event Action<IMessage> MessageReceived = message => { };
-        public event Action<ISocket, Exception> ResponseException = (socket, exception) => { };
+        public event MessageReceivedDelegate MessageReceived = message => { };
+        public event SocketExceptionDelegate ResponseException = (socket, exception) => { };
 
         public void Connect(RedFoxEndpoint endpoint)
         {

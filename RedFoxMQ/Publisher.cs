@@ -31,9 +31,9 @@ namespace RedFoxMQ
         private readonly ConcurrentDictionary<ISocket, MessageQueueReceiveLoop> _broadcastSockets;
         private readonly MessageQueueProcessor _messageQueueProcessor = new MessageQueueProcessor();
 
-        public event Action<ISocket, ISocketConfiguration> ClientConnected = (socket, socketConfig) => { };
-        public event Action<ISocket> ClientDisconnected = socket => { };
-        public event Action<IMessage> MessageReceived = message => { };
+        public event ClientConnectedDelegate ClientConnected = (socket, socketConfig) => { };
+        public event ClientDisconnectedDelegate ClientDisconnected = socket => { };
+        public event MessageReceivedDelegate MessageReceived = message => { };
 
         public Publisher()
         {

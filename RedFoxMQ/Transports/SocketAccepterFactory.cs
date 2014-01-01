@@ -37,8 +37,8 @@ namespace RedFoxMQ.Transports
 
         public ISocketAccepter CreateAndBind(RedFoxEndpoint endpoint,
             ISocketConfiguration socketConfiguration,
-            Action<ISocket, ISocketConfiguration> onClientConnected = null, 
-            Action<ISocket> onClientDisconnected = null)
+            ClientConnectedDelegate onClientConnected = null,
+            ClientDisconnectedDelegate onClientDisconnected = null)
         {
             if (socketConfiguration == null) throw new ArgumentNullException("socketConfiguration");
 

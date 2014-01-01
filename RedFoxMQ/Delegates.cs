@@ -15,17 +15,16 @@
 // 
 
 using RedFoxMQ.Transports;
+using System;
 
 namespace RedFoxMQ
 {
-    interface IBindSockets
-    {
-        event ClientConnectedDelegate ClientConnected;
-        event ClientDisconnectedDelegate ClientDisconnected;
+    public delegate void ClientConnectedDelegate(ISocket socket, ISocketConfiguration socketConfiguration);
+    public delegate void ClientDisconnectedDelegate(ISocket socket);
 
-        void Bind(RedFoxEndpoint endpoint);
-        void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration);
+    public delegate void DisconnectedDelegate();
 
-        bool Unbind(RedFoxEndpoint endpoint);
-    }
+    public delegate void MessageReceivedDelegate(IMessage message);
+
+    public delegate void SocketExceptionDelegate(ISocket socket, Exception exception);
 }

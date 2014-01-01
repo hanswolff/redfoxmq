@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using RedFoxMQ.Transports;
 using System;
 using System.Threading;
@@ -49,7 +50,7 @@ namespace RedFoxMQ
 
         public bool IsDisconnected { get { return _socket.IsDisconnected; } }
 
-        public event Action Disconnected = () => { };
+        public event DisconnectedDelegate Disconnected = () => { };
 
         public void Disconnect()
         {

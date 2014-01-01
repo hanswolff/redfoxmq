@@ -14,12 +14,10 @@
 // limitations under the License.
 // 
 
-using System;
-
 namespace RedFoxMQ
 {
     public interface IReceiveMessage
     {
-        event Action<IMessage> MessageReceived;
+        event MessageReceivedDelegate MessageReceived;
     }
 }

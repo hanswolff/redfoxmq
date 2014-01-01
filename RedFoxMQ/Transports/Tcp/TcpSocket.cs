@@ -46,7 +46,7 @@ namespace RedFoxMQ.Transports.Tcp
             get { return _isDisconnected.Value; }
         }
 
-        public event Action Disconnected = () => { };
+        public event DisconnectedDelegate Disconnected = () => { };
 
         public int Read(byte[] buf, int offset, int count)
         {
