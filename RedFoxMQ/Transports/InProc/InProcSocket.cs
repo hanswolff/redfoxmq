@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 
 namespace RedFoxMQ.Transports.InProc
 {
-    class InProcSocket : ISocket
+    class InProcSocket : IStreamSocket
     {
         public RedFoxEndpoint Endpoint { get; private set; }
         

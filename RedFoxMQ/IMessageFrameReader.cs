@@ -12,12 +12,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
+// 
 
-namespace RedFoxMQ.Transports
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace RedFoxMQ
 {
-    public interface ISocket : IDisconnect
+    interface IMessageFrameReader
     {
-        RedFoxEndpoint Endpoint { get; }
+        MessageFrame ReadMessageFrame();
+
+        Task<MessageFrame> ReadMessageFrameAsync(CancellationToken cancellationToken);
     }
 }

@@ -14,10 +14,17 @@
 // limitations under the License.
 //
 
+using System.Threading;
+using System.Threading.Tasks;
+
 namespace RedFoxMQ.Transports
 {
-    public interface ISocket : IDisconnect
+    public interface IStreamSocket : ISocket
     {
-        RedFoxEndpoint Endpoint { get; }
+        int Read(byte[] buf, int offset, int count);
+        Task<int> ReadAsync(byte[] buf, int offset, int count, CancellationToken cancellationToken);
+
+        void Write(byte[] buf, int offset, int count);
+        Task WriteAsync(byte[] buf, int offset, int count, CancellationToken cancellationToken);
     }
 }

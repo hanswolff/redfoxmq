@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using NUnit.Framework;
 using System.IO;
 using System.Threading;
@@ -31,8 +32,8 @@ namespace RedFoxMQ.Tests
             using (var mem = new MemoryStream(serializedMessageFrame))
             using (var socket = new TestSocket(mem))
             {
-                var reader = new MessageFrameStreamReader();
-                var messageFrame = reader.ReadMessageFrameAsync(socket, CancellationToken.None).Result;
+                var reader = new MessageFrameStreamReader(socket);
+                var messageFrame = reader.ReadMessageFrameAsync(CancellationToken.None).Result;
 
                 Assert.AreEqual(54321, messageFrame.MessageTypeId);
                 Assert.AreEqual(rawMessage, messageFrame.RawMessage);

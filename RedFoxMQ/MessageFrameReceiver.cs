@@ -23,12 +23,15 @@ namespace RedFoxMQ
 {
     class MessageFrameReceiver : IReceiveMessageFrame, IDisconnect
     {
-        private static readonly MessageFrameStreamReader MessageFrameStreamReader = new MessageFrameStreamReader();
+        private static readonly MessageFrameReaderFactory MessageFrameReaderFactory = new MessageFrameReaderFactory();
+        private readonly IMessageFrameReader _messageFrameReader;
 
         private readonly ISocket _socket;
         public MessageFrameReceiver(ISocket socket)
         {
             if (socket == null) throw new ArgumentNullException("socket");
+            _messageFrameReader = MessageFrameReaderFactory.CreateReaderFromSocket(socket);
+
             _socket = socket;
             _socket.Disconnected += SocketDisconnected;
         }
@@ -40,12 +43,12 @@ namespace RedFoxMQ
 
         public async Task<MessageFrame> ReceiveAsync(CancellationToken cancellationToken)
         {
-            return await MessageFrameStreamReader.ReadMessageFrameAsync(_socket, cancellationToken);
+            return await _messageFrameReader.ReadMessageFrameAsync(cancellationToken);
         }
 
         public MessageFrame Receive()
         {
-            return MessageFrameStreamReader.ReadMessageFrame(_socket);
+            return _messageFrameReader.ReadMessageFrame();
         }
 
         public bool IsDisconnected { get { return _socket.IsDisconnected; } }

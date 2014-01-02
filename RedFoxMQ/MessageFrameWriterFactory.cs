@@ -12,12 +12,24 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
+// 
 
-namespace RedFoxMQ.Transports
+using RedFoxMQ.Transports;
+using System;
+
+namespace RedFoxMQ
 {
-    public interface ISocket : IDisconnect
+    class MessageFrameWriterFactory
     {
-        RedFoxEndpoint Endpoint { get; }
+        public IMessageFrameWriter CreateWriterFromSocket(ISocket socket)
+        {
+            if (socket == null) throw new ArgumentNullException("socket");
+
+            var streamSocket = socket as IStreamSocket;
+            if (streamSocket != null)
+                return new MessageFrameStreamWriter(streamSocket);
+
+            throw new NotImplementedException();
+        }
     }
 }

@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using RedFoxMQ.Transports;
 using System;
 using System.IO;
@@ -21,18 +22,25 @@ using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
-    class MessageFrameStreamReader
+    class MessageFrameStreamReader : IMessageFrameReader
     {
-        public async Task<MessageFrame> ReadMessageFrameAsync(ISocket socket, CancellationToken cancellationToken)
-        {
-            if (socket == null) throw new ArgumentNullException("socket");
+        private readonly IStreamSocket _streamSocket;
 
-            var header = await ReadHeaderAsync(socket, cancellationToken);
+        public MessageFrameStreamReader(IStreamSocket streamSocket)
+        {
+            if (streamSocket == null) throw new ArgumentNullException("streamSocket");
+            _streamSocket = streamSocket;
+        }
+
+        public async Task<MessageFrame> ReadMessageFrameAsync(CancellationToken cancellationToken)
+        {
+
+            var header = await ReadHeaderAsync(_streamSocket, cancellationToken);
 
             var messageTypeId = BitConverter.ToUInt16(header, 0);
             var length = BitConverter.ToInt32(header, 2);
 
-            var rawMessage = await ReadBodyAsync(socket, length, cancellationToken);
+            var rawMessage = await ReadBodyAsync(_streamSocket, length, cancellationToken);
 
             return new MessageFrame
             {
@@ -41,7 +49,7 @@ namespace RedFoxMQ
             };
         }
 
-        private static async Task<byte[]> ReadHeaderAsync(ISocket socket, CancellationToken cancellationToken)
+        private static async Task<byte[]> ReadHeaderAsync(IStreamSocket socket, CancellationToken cancellationToken)
         {
             var header = new byte[6];
             var offset = 0;
@@ -54,7 +62,7 @@ namespace RedFoxMQ
             return header;
         }
 
-        private static async Task<byte[]> ReadBodyAsync(ISocket socket, int length, CancellationToken cancellationToken)
+        private static async Task<byte[]> ReadBodyAsync(IStreamSocket socket, int length, CancellationToken cancellationToken)
         {
             var rawMessage = new byte[length];
 
@@ -68,16 +76,14 @@ namespace RedFoxMQ
             return rawMessage;
         }
 
-        public MessageFrame ReadMessageFrame(ISocket stream)
+        public MessageFrame ReadMessageFrame()
         {
-            if (stream == null) throw new ArgumentNullException("stream");
-
-            var header = ReadHeader(stream);
+            var header = ReadHeader(_streamSocket);
 
             var messageTypeId = BitConverter.ToUInt16(header, 0);
             var length = BitConverter.ToInt32(header, 2);
 
-            var rawMessage = ReadBody(stream, length);
+            var rawMessage = ReadBody(_streamSocket, length);
 
             return new MessageFrame
             {
@@ -86,7 +92,7 @@ namespace RedFoxMQ
             };
         }
 
-        private static byte[] ReadHeader(ISocket stream)
+        private static byte[] ReadHeader(IStreamSocket stream)
         {
             var header = new byte[6];
             var offset = 0;
@@ -99,7 +105,7 @@ namespace RedFoxMQ
             return header;
         }
 
-        private static byte[] ReadBody(ISocket stream, int length)
+        private static byte[] ReadBody(IStreamSocket stream, int length)
         {
             var rawMessage = new byte[length];
 

@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -37,8 +38,8 @@ namespace RedFoxMQ.Tests
             using (var mem = new MemoryStream())
             using (var socket = new TestSocket(mem))
             {
-                var writer = new MessageFrameStreamWriter();
-                writer.WriteMessageFrameAsync(socket, messageFrame, CancellationToken.None).Wait();
+                var writer = new MessageFrameStreamWriter(socket);
+                writer.WriteMessageFrameAsync(messageFrame, CancellationToken.None).Wait();
 
                 var writtenToStream = mem.ToArray();
                 
@@ -52,14 +53,14 @@ namespace RedFoxMQ.Tests
         [Test]
         public void MessageFrameStreamWriter_writes_MessageFrameStreamReader_reads()
         {
-            var writer = new MessageFrameStreamWriter();
-            var reader = new MessageFrameStreamReader();
-
             var random = TestHelpers.CreateSemiRandomGenerator();
             var messageFrames = new Queue<MessageFrame>();
             using (var mem = new MemoryStream())
             using (var socket = new TestSocket(mem))
             {
+                var writer = new MessageFrameStreamWriter(socket);
+                var reader = new MessageFrameStreamReader(socket);
+
                 for (var i = 0; i < 1000; i++)
                 {
                     var messageFrame = new MessageFrame
@@ -68,14 +69,14 @@ namespace RedFoxMQ.Tests
                         RawMessage = TestHelpers.GetRandomBytes(random, random.Next(100 * i))
                     };
                     messageFrames.Enqueue(messageFrame);
-                    writer.WriteMessageFrame(socket, messageFrame);
+                    writer.WriteMessageFrame(messageFrame);
                 }
 
                 mem.Position = 0;
                 while (messageFrames.Count > 0)
                 {
                     var messageFrameWritten = messageFrames.Dequeue();
-                    var messageFrameRead = reader.ReadMessageFrame(socket);
+                    var messageFrameRead = reader.ReadMessageFrame();
 
                     Assert.AreEqual(messageFrameWritten, messageFrameRead);
                 }

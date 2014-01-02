@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using RedFoxMQ.Transports;
 using System;
 using System.Collections.Concurrent;
@@ -24,45 +25,48 @@ using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
-    class MessageFrameStreamWriter
+    class MessageFrameStreamWriter : IMessageFrameWriter
     {
         private static readonly ConcurrentQueue<WeakReference<MemoryStream>> RecycledMemoryStreams = new ConcurrentQueue<WeakReference<MemoryStream>>();
 
-        public void WriteMessageFrame(ISocket socket, MessageFrame messageFrame)
+        private readonly IStreamSocket _streamSocket;
+        public MessageFrameStreamWriter(IStreamSocket streamSocket)
         {
-            if (socket == null) throw new ArgumentNullException("socket");
+            if (streamSocket == null) throw new ArgumentNullException("streamSocket");
+            _streamSocket = streamSocket;
+        }
+
+        public void WriteMessageFrame(MessageFrame messageFrame)
+        {
             if (messageFrame == null) throw new ArgumentNullException("messageFrame");
             if (messageFrame.RawMessage == null) throw new ArgumentException("messageFrame.RawMessage cannot be null");
 
-            CreateBufferWriteSingle(socket, messageFrame);
+            CreateBufferWriteSingle(messageFrame);
         }
 
-        public async Task WriteMessageFrameAsync(ISocket socket, MessageFrame messageFrame, CancellationToken cancellationToken)
+        public async Task WriteMessageFrameAsync(MessageFrame messageFrame, CancellationToken cancellationToken)
         {
-            if (socket == null) throw new ArgumentNullException("socket");
             if (messageFrame == null) throw new ArgumentNullException("messageFrame");
             if (messageFrame.RawMessage == null) throw new ArgumentException("messageFrame.RawMessage cannot be null");
 
-            await CreateBufferWriteSingleAsync(socket, messageFrame, cancellationToken);
+            await CreateBufferWriteSingleAsync(messageFrame, cancellationToken);
         }
 
-        public void WriteMessageFrames(ISocket socket, ICollection<MessageFrame> messageFrames)
+        public void WriteMessageFrames(ICollection<MessageFrame> messageFrames)
         {
-            if (socket == null) throw new ArgumentNullException("socket");
             if (messageFrames == null) return;
 
-            CreateBufferWriteMany(socket, messageFrames);
+            CreateBufferWriteMany(messageFrames);
         }
 
-        public async Task WriteMessageFramesAsync(ISocket socket, ICollection<MessageFrame> messageFrames, CancellationToken cancellationToken)
+        public async Task WriteMessageFramesAsync(ICollection<MessageFrame> messageFrames, CancellationToken cancellationToken)
         {
-            if (socket == null) throw new ArgumentNullException("socket");
             if (messageFrames == null) return;
 
-            await CreateBufferWriteManyAsync(socket, messageFrames, cancellationToken);
+            await CreateBufferWriteManyAsync(messageFrames, cancellationToken);
         }
 
-        private static void CreateBufferWriteSingle(ISocket socket, MessageFrame messageFrame)
+        private void CreateBufferWriteSingle(MessageFrame messageFrame)
         {
             var sendBufferSize = MessageFrame.HeaderSize + messageFrame.RawMessage.Length;
 
@@ -76,7 +80,7 @@ namespace RedFoxMQ
                 WriteBody(mem, messageFrame.RawMessage);
 
                 var toSend = mem.GetBuffer();
-                socket.Write(toSend, 0, sendBufferSize);
+                _streamSocket.Write(toSend, 0, sendBufferSize);
             }
             finally
             {
@@ -85,7 +89,7 @@ namespace RedFoxMQ
             }
         }
 
-        private static async Task CreateBufferWriteSingleAsync(ISocket socket, MessageFrame messageFrame,
+        private async Task CreateBufferWriteSingleAsync(MessageFrame messageFrame,
             CancellationToken cancellationToken)
         {
             var sendBufferSize = MessageFrame.HeaderSize + messageFrame.RawMessage.Length;
@@ -100,7 +104,7 @@ namespace RedFoxMQ
                 WriteBody(mem, messageFrame.RawMessage);
 
                 var toSend = mem.GetBuffer();
-                await socket.WriteAsync(toSend, 0, sendBufferSize, cancellationToken);
+                await _streamSocket.WriteAsync(toSend, 0, sendBufferSize, cancellationToken);
             }
             finally
             {
@@ -145,7 +149,7 @@ namespace RedFoxMQ
             stream.Write(rawMessage, 0, rawMessage.Length);
         }
 
-        private static void CreateBufferWriteMany(ISocket socket, ICollection<MessageFrame> messageFrames)
+        private void CreateBufferWriteMany(ICollection<MessageFrame> messageFrames)
         {
             if (messageFrames == null) return;
             var sendBufferSize = messageFrames.Count * MessageFrame.HeaderSize + messageFrames.Sum(m => m.RawMessage.Length);
@@ -163,7 +167,7 @@ namespace RedFoxMQ
                 }
 
                 var toSend = mem.GetBuffer();
-                socket.Write(toSend, 0, sendBufferSize);
+                _streamSocket.Write(toSend, 0, sendBufferSize);
             }
             finally
             {
@@ -172,7 +176,7 @@ namespace RedFoxMQ
             }
         }
 
-        private static async Task CreateBufferWriteManyAsync(ISocket socket, ICollection<MessageFrame> messageFrames,
+        private async Task CreateBufferWriteManyAsync(ICollection<MessageFrame> messageFrames,
             CancellationToken cancellationToken)
         {
             if (messageFrames == null) return;
@@ -191,7 +195,7 @@ namespace RedFoxMQ
                 }
 
                 var toSend = mem.GetBuffer();
-                await socket.WriteAsync(toSend, 0, sendBufferSize, cancellationToken);
+                await _streamSocket.WriteAsync(toSend, 0, sendBufferSize, cancellationToken);
             }
             finally
             {

@@ -23,7 +23,7 @@ using System.Threading.Tasks;
 // ReSharper disable once CheckNamespace
 namespace RedFoxMQ.Tests
 {
-    sealed class TestSocket : ISocket, IDisposable
+    sealed class TestSocket : IStreamSocket, IDisposable
     {
         private readonly Stream _stream;
 

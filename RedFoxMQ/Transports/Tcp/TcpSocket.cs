@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 
 namespace RedFoxMQ.Transports.Tcp
 {
-    public class TcpSocket : ISocket
+    public class TcpSocket : IStreamSocket
     {
         private readonly TcpClient _tcpClient;
 

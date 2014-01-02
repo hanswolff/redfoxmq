@@ -24,12 +24,16 @@ namespace RedFoxMQ
 {
     class MessageFrameSender : ISendMessageFrame, IDisconnect
     {
-        private static readonly MessageFrameStreamWriter MessageFrameStreamWriter = new MessageFrameStreamWriter();
+        private static readonly MessageFrameWriterFactory MessageFrameWriterFactory = new MessageFrameWriterFactory();
+        private readonly IMessageFrameWriter _messageFrameWriter;
 
         private readonly ISocket _socket;
         public MessageFrameSender(ISocket socket)
         {
             if (socket == null) throw new ArgumentNullException("socket");
+
+            _messageFrameWriter = MessageFrameWriterFactory.CreateWriterFromSocket(socket);
+
             _socket = socket;
             _socket.Disconnected += SocketDisconnected;
         }
@@ -38,28 +42,28 @@ namespace RedFoxMQ
         {
             if (messageFrame == null) throw new ArgumentNullException("messageFrame");
 
-            MessageFrameStreamWriter.WriteMessageFrame(_socket, messageFrame);
+            _messageFrameWriter.WriteMessageFrame(messageFrame);
         }
 
         public async Task SendAsync(MessageFrame messageFrame, CancellationToken cancellationToken)
         {
             if (messageFrame == null) throw new ArgumentNullException("messageFrame");
 
-            await MessageFrameStreamWriter.WriteMessageFrameAsync(_socket, messageFrame, cancellationToken);
+            await _messageFrameWriter.WriteMessageFrameAsync(messageFrame, cancellationToken);
         }
 
         public void Send(ICollection<MessageFrame> messageFrames)
         {
             if (messageFrames == null) return;
 
-            MessageFrameStreamWriter.WriteMessageFrames(_socket, messageFrames);
+            _messageFrameWriter.WriteMessageFrames(messageFrames);
         }
 
         public async Task SendAsync(ICollection<MessageFrame> messageFrames, CancellationToken cancellationToken)
         {
             if (messageFrames == null) return;
 
-            await MessageFrameStreamWriter.WriteMessageFramesAsync(_socket, messageFrames, cancellationToken);
+            await _messageFrameWriter.WriteMessageFramesAsync(messageFrames, cancellationToken);
         }
 
         public bool IsDisconnected { get { return _socket.IsDisconnected; } }
