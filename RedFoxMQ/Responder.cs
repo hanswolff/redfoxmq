@@ -61,13 +61,14 @@ namespace RedFoxMQ
             _servers[endpoint] = server;
         }
 
+        private static readonly MessageFrameWriterFactory MessageFrameWriterFactory = new MessageFrameWriterFactory();
         private void OnClientConnected(ISocket socket, ISocketConfiguration socketConfiguration)
         {
             if (socket == null) throw new ArgumentNullException("socket");
 
-            var messageFrameSender = new MessageFrameSender(socket);
+            var messageFrameWriter = MessageFrameWriterFactory.CreateWriterFromSocket(socket);
             var messageFrameReceiver = new MessageFrameReceiver(socket);
-            var senderReceiver = new SenderReceiver(messageFrameSender, messageFrameReceiver);
+            var senderReceiver = new SenderReceiver(messageFrameWriter, messageFrameReceiver);
 
             socket.Disconnected += () => SocketDisconnected(socket);
 
@@ -96,7 +97,7 @@ namespace RedFoxMQ
         private async Task ReceiveRequestMessage(SenderReceiver senderReceiver)
         {
             if (senderReceiver.Receiver == null) throw new ArgumentException("senderReceiver.Receiver must not be null");
-            if (senderReceiver.Sender == null) throw new ArgumentException("senderReceiver.Sender must not be null");
+            if (senderReceiver.Sender == null) throw new ArgumentException("senderReceiver.Writer must not be null");
 
             var messageFrame = await senderReceiver.Receiver.ReceiveAsync(_disposeCancellationToken).ConfigureAwait(false);
             var requestMessage = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId,
@@ -110,7 +111,7 @@ namespace RedFoxMQ
         {
             var senderReceiver = (SenderReceiver)state;
             var responseFrame = MessageFrameCreator.CreateFromMessage(responseMessage);
-            senderReceiver.Sender.Send(responseFrame);
+            senderReceiver.Sender.WriteMessageFrame(responseFrame);
 
             var task = ReceiveRequestMessage(senderReceiver).ConfigureAwait(false);
         }
@@ -175,9 +176,9 @@ namespace RedFoxMQ
     struct SenderReceiver
     {
         public MessageFrameReceiver Receiver;
-        public MessageFrameSender Sender;
+        public IMessageFrameWriter Sender;
 
-        public SenderReceiver(MessageFrameSender sender, MessageFrameReceiver receiver)
+        public SenderReceiver(IMessageFrameWriter sender, MessageFrameReceiver receiver)
         {
             Sender = sender;
             Receiver = receiver;

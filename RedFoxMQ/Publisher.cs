@@ -52,17 +52,18 @@ namespace RedFoxMQ
             _servers[endpoint] = server;
         }
 
+        private static readonly MessageFrameWriterFactory MessageFrameWriterFactory = new MessageFrameWriterFactory();
         private void OnClientConnected(ISocket socket, ISocketConfiguration socketConfiguration)
         {
             if (socket == null) throw new ArgumentNullException("socket");
 
-            var messageFrameSender = new MessageFrameSender(socket);
+            var messageFrameWriter = MessageFrameWriterFactory.CreateWriterFromSocket(socket);
             var messageQueue = new MessageQueue(socketConfiguration.SendBufferSize);
             var messageReceiveLoop = new MessageReceiveLoop(socket);
 
             if (_broadcastSockets.TryAdd(socket, new MessageQueueReceiveLoop(messageQueue, messageReceiveLoop)))
             {
-                _messageQueueProcessor.Register(messageQueue, messageFrameSender);
+                _messageQueueProcessor.Register(messageQueue, messageFrameWriter);
                 messageReceiveLoop.MessageReceived += m => MessageReceived(m);
                 messageReceiveLoop.OnException += MessageReceiveLoopOnException;
                 ClientConnected(socket, socketConfiguration);

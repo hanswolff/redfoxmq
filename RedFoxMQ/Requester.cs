@@ -26,7 +26,7 @@ namespace RedFoxMQ
         private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
         private static readonly SocketFactory SocketFactory = new SocketFactory();
 
-        private MessageFrameSender _messageFrameSender;
+        private IMessageFrameWriter _messageFrameWriter;
         private MessageFrameReceiver _messageFrameReceiver;
 
         private ISocket _socket;
@@ -57,6 +57,7 @@ namespace RedFoxMQ
             Connect(endpoint, socketConfiguration);
         }
 
+        private static readonly MessageFrameWriterFactory MessageFrameWriterFactory = new MessageFrameWriterFactory();
         public void Connect(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration)
         {
             if (_socket != null) throw new InvalidOperationException("Subscriber already connected");
@@ -67,7 +68,7 @@ namespace RedFoxMQ
 
             if (!_cts.IsCancellationRequested)
             {
-                _messageFrameSender = new MessageFrameSender(_socket);
+                _messageFrameWriter = MessageFrameWriterFactory.CreateWriterFromSocket(_socket);
                 _messageFrameReceiver = new MessageFrameReceiver(_socket);
             }
         }
@@ -84,7 +85,7 @@ namespace RedFoxMQ
             _semaphoreRequest.Wait(_cts.Token);
             try
             {
-                _messageFrameSender.Send(sendMessageFrame);
+                _messageFrameWriter.WriteMessageFrame(sendMessageFrame);
 
                 var messageFrame = _messageFrameReceiver.Receive();
                 var responseMessage = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId, messageFrame.RawMessage);
@@ -116,7 +117,7 @@ namespace RedFoxMQ
             try
             {
                 var sendMessageFrame = MessageFrameCreator.CreateFromMessage(message);
-                await _messageFrameSender.SendAsync(sendMessageFrame, cancellationToken);
+                await _messageFrameWriter.WriteMessageFrameAsync(sendMessageFrame, cancellationToken);
 
                 var messageFrame = await _messageFrameReceiver.ReceiveAsync(cancellationToken).ConfigureAwait(false);
                 var responseMessage = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId, messageFrame.RawMessage);

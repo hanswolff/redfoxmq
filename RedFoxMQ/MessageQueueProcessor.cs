@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -28,12 +29,12 @@ namespace RedFoxMQ
         private Task _asyncSchedulerTask;
         private CancellationTokenSource _cts = new CancellationTokenSource();
 
-        public void Register(MessageQueue messageQueue, MessageFrameSender sender)
+        public void Register(MessageQueue messageQueue, IMessageFrameWriter messageFrameWriter)
         {
             if (messageQueue == null) throw new ArgumentNullException("messageQueue");
-            if (sender == null) throw new ArgumentNullException("sender");
+            if (messageFrameWriter == null) throw new ArgumentNullException("messageFrameWriter");
 
-            var messageQueuePayload = new MessageQueuePayload(sender);
+            var messageQueuePayload = new MessageQueuePayload(messageFrameWriter);
             messageQueue.MessageFramesAdded += MessageQueueOnMessageFramesAdded;
             _messageQueues[messageQueue] = messageQueuePayload;
             StartAsyncProcessingIfNotStartedYet();
@@ -117,7 +118,7 @@ namespace RedFoxMQ
         {
             try
             {
-                await messageQueue.SendFromQueueAsync(messageQueuePayload.Sender, cancellationToken);
+                await messageQueue.SendFromQueueAsync(messageQueuePayload.Writer, cancellationToken);
             }
             finally
             {
@@ -138,13 +139,13 @@ namespace RedFoxMQ
 
     struct MessageQueuePayload
     {
-        public MessageFrameSender Sender;
+        public IMessageFrameWriter Writer;
         public InterlockedBoolean Busy;
         public InterlockedBoolean Cancelled;
 
-        public MessageQueuePayload(MessageFrameSender sender)
+        public MessageQueuePayload(IMessageFrameWriter writer)
         {
-            Sender = sender;
+            Writer = writer;
             Busy = new InterlockedBoolean();
             Cancelled = new InterlockedBoolean();
         }

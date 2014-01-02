@@ -33,7 +33,7 @@ namespace RedFoxMQ
             get { return _socket; }
         }
 
-        private MessageFrameSender _messageFrameSender;
+        private IMessageFrameWriter _messageFrameWriter;
         private MessageReceiveLoop _messageReceiveLoop;
 
         public bool IsDisconnected { get { return _socket.IsDisconnected; } }
@@ -56,6 +56,7 @@ namespace RedFoxMQ
             Connect(endpoint, socketConfiguration);
         }
 
+        private static readonly MessageFrameWriterFactory MessageFrameWriterFactory = new MessageFrameWriterFactory();
         public void Connect(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration)
         {
             if (socketConfiguration == null) throw new ArgumentNullException("socketConfiguration");
@@ -67,7 +68,7 @@ namespace RedFoxMQ
 
             if (!_cts.IsCancellationRequested)
             {
-                _messageFrameSender = new MessageFrameSender(_socket);
+                _messageFrameWriter = MessageFrameWriterFactory.CreateWriterFromSocket(_socket);
 
                 _messageReceiveLoop = new MessageReceiveLoop(_socket);
                 _messageReceiveLoop.MessageReceived += m => MessageReceived(m);
@@ -91,7 +92,7 @@ namespace RedFoxMQ
 
             lock (_sendLock)
             {
-                _messageFrameSender.Send(sendMessageFrame);
+                _messageFrameWriter.WriteMessageFrame(sendMessageFrame);
             }
         }
 

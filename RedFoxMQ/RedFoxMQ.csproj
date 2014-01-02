@@ -65,7 +65,6 @@
     <Compile Include="IResponderWorker.cs" />
     <Compile Include="ISubscriber.cs" />
     <Compile Include="MessageFrameCreator.cs" />
-    <Compile Include="MessageFrameSender.cs" />
     <Compile Include="MessageFrameReceiver.cs" />
     <Compile Include="MessageQueue.cs" />
     <Compile Include="MessageQueueProcessor.cs" />

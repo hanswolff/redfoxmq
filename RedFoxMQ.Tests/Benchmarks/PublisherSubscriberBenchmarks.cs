@@ -26,7 +26,7 @@ namespace RedFoxMQ.Tests.Benchmarks
 {
     abstract class PublisherSubscriberBenchmarks
     {
-        private const int NumberOfMessagesToReceive = 10000;
+        private const int NumberOfMessagesToReceive = 100000;
         private readonly static TimeSpan TimeOut = TimeSpan.FromSeconds(120);
 
         public abstract RedFoxEndpoint GetEndpoint();
