@@ -111,7 +111,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                         for (var i = 0; i < NumberOfRequests / n; i++)
                         {
                             var messageSent = new TestMessage();
-                            req.Request(messageSent);
+                            req.RequestAsync(messageSent).Wait();
                         }
                     }, TaskCreationOptions.LongRunning);
                     tasks.Add(task);
