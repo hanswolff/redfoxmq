@@ -76,7 +76,6 @@
     <Compile Include="Transports\InProc\BlockingConcurrentQueue.cs" />
     <Compile Include="Transports\InProc\InProcSocket.cs" />
     <Compile Include="Transports\InProc\InProcSocketPair.cs" />
-    <Compile Include="Transports\InProc\QueueStream.cs" />
     <Compile Include="Transports\IQueueSocket.cs" />
     <Compile Include="Transports\IStreamSocket.cs" />
     <Compile Include="Transports\ISocket.cs" />
