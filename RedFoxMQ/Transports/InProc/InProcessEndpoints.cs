@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using System;
 using System.Collections.Concurrent;
 
@@ -63,8 +64,8 @@ namespace RedFoxMQ.Transports.InProc
                 throw new InvalidOperationException("Endpoint not listening to InProcess clients");
             }
 
-            var clientStream = new QueueStream(true);
-            var serverStream = new QueueStream(true);
+            var clientStream = new BlockingConcurrentQueue<MessageFrame>();
+            var serverStream = new BlockingConcurrentQueue<MessageFrame>();
             var clientSocket = new InProcSocket(endpoint, clientStream, serverStream);
             var serverSocket = new InProcSocket(endpoint, serverStream, clientStream);
 

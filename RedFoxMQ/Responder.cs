@@ -73,7 +73,7 @@ namespace RedFoxMQ
 
             if (_clientSockets.TryAdd(socket, senderReceiver))
             {
-                var task = ReceiveRequestMessage(senderReceiver, _disposeCancellationToken);
+                var task = ReceiveRequestMessage(senderReceiver);
                 ClientConnected(socket, socketConfiguration);
             }
 
@@ -93,13 +93,14 @@ namespace RedFoxMQ
             }
         }
 
-        private async Task ReceiveRequestMessage(SenderReceiver senderReceiver, CancellationToken cancellationToken)
+        private async Task ReceiveRequestMessage(SenderReceiver senderReceiver)
         {
             if (senderReceiver.Receiver == null) throw new ArgumentException("senderReceiver.Receiver must not be null");
             if (senderReceiver.Sender == null) throw new ArgumentException("senderReceiver.Sender must not be null");
 
-            var messageFrame = await senderReceiver.Receiver.ReceiveAsync(cancellationToken).ConfigureAwait(false);
-            var requestMessage = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId, messageFrame.RawMessage);
+            var messageFrame = await senderReceiver.Receiver.ReceiveAsync(_disposeCancellationToken).ConfigureAwait(false);
+            var requestMessage = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId,
+                messageFrame.RawMessage);
 
             var worker = _responderWorkerFactory.GetWorkerFor(requestMessage);
             _scheduler.AddWorker(worker, requestMessage, senderReceiver);
@@ -111,7 +112,7 @@ namespace RedFoxMQ
             var responseFrame = MessageFrameCreator.CreateFromMessage(responseMessage);
             senderReceiver.Sender.Send(responseFrame);
 
-            var task = ReceiveRequestMessage(senderReceiver, _disposeCancellationToken).ConfigureAwait(false);
+            var task = ReceiveRequestMessage(senderReceiver).ConfigureAwait(false);
         }
 
         public bool Unbind(RedFoxEndpoint endpoint)
@@ -150,7 +151,7 @@ namespace RedFoxMQ
                 if (!_disposed)
                 {
                     _disposeCancellationTokenSource.Cancel();
-                    
+
                     UnbindAllEndpoints();
 
                     _disposed = true;

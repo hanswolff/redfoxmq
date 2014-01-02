@@ -67,6 +67,7 @@
     <Compile Include="TestHelpers\ExceptionTestMessageSerializer.cs" />
     <Compile Include="TestHelpers\TestMessageSerializer.cs" />
     <Compile Include="TestHelpers\TestSubscriber.cs" />
+    <Compile Include="Transports\InProc\BlockingConcurrentQueueTests.cs" />
     <Compile Include="Transports\SocketAccepterFactoryTests.cs" />
     <Compile Include="MessageFrameStreamReaderTests.cs" />
     <Compile Include="MessageFrameStreamWriterTests.cs" />

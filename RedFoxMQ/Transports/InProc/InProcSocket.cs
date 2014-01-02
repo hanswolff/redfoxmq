@@ -13,23 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace RedFoxMQ.Transports.InProc
 {
-    class InProcSocket : IStreamSocket
+    class InProcSocket : IQueueSocket
     {
         public RedFoxEndpoint Endpoint { get; private set; }
         
-        private readonly QueueStream _writeStream;
-        public QueueStream WriteStream { get { return _writeStream; } }
+        private readonly BlockingConcurrentQueue<MessageFrame> _writeStream;
+        public BlockingConcurrentQueue<MessageFrame> WriteStream { get { return _writeStream; } }
 
-        private readonly QueueStream _readStream;
-        public QueueStream ReadStream { get { return _readStream; } }
+        private readonly BlockingConcurrentQueue<MessageFrame> _readStream;
+        public BlockingConcurrentQueue<MessageFrame> ReadStream { get { return _readStream; } }
 
-        public InProcSocket(RedFoxEndpoint endpoint, QueueStream writeStream, QueueStream readStream)
+        public InProcSocket(RedFoxEndpoint endpoint, BlockingConcurrentQueue<MessageFrame> writeStream, BlockingConcurrentQueue<MessageFrame> readStream)
         {
             if (writeStream == null) throw new ArgumentNullException("writeStream");
             if (readStream == null) throw new ArgumentNullException("readStream");
@@ -38,40 +38,44 @@ namespace RedFoxMQ.Transports.InProc
             _readStream = readStream;
         }
 
+        private readonly CancellationTokenSource _ctsDisconnect = new CancellationTokenSource();
+        private readonly CancellationToken _cancellationToken;
+
         private readonly InterlockedBoolean _isDisconnected = new InterlockedBoolean();
         public bool IsDisconnected
         {
             get { return _isDisconnected.Value; }
         }
 
-        public event DisconnectedDelegate Disconnected = () => { };
+        public event DisconnectedDelegate Disconnected;
 
-        public int Read(byte[] buf, int offset, int count)
+        public InProcSocket()
         {
-            return _readStream.Read(buf, offset, count);
+            _cancellationToken = _ctsDisconnect.Token;
+            Disconnected += () => _ctsDisconnect.Cancel();
         }
 
-        public async Task<int> ReadAsync(byte[] buf, int offset, int count, CancellationToken cancellationToken)
+        public MessageFrame Read()
         {
-            return await _readStream.ReadAsync(buf, offset, count, cancellationToken);
+            return _readStream.Dequeue(_cancellationToken);
         }
 
-        public void Write(byte[] buf, int offset, int count)
+        public MessageFrame Read(CancellationToken cancellationToken)
         {
-            _writeStream.Write(buf, offset, count);
+            using (var cts = CancellationTokenSource.CreateLinkedTokenSource(_cancellationToken, cancellationToken))
+            {
+                return _readStream.Dequeue(cts.Token);
+            }
         }
 
-        public async Task WriteAsync(byte[] buf, int offset, int count, CancellationToken cancellationToken)
+        public void Write(MessageFrame messageFrame)
         {
-            await _writeStream.WriteAsync(buf, offset, count, cancellationToken);
+            _writeStream.Enqueue(messageFrame);
         }
 
         public void Disconnect()
         {
             if (_isDisconnected.Set(true)) return;
-
-            _readStream.Close();
-            _writeStream.Close();
 
             Disconnected();
         }

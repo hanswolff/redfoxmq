@@ -13,13 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using System;
 using System.Linq;
 using System.Text;
 
 namespace RedFoxMQ
 {
-    class MessageFrame : IEquatable<MessageFrame>
+    public class MessageFrame : IEquatable<MessageFrame>
     {
         private const int SizeMessageTypeId = sizeof(ushort);
         private const int SizeLength = sizeof(int);

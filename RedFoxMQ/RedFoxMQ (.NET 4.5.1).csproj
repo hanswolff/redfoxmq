@@ -52,6 +52,8 @@
     <Compile Include="IResponder.cs" />
     <Compile Include="IReceiveMessage.cs" />
     <Compile Include="ISendMessage.cs" />
+    <Compile Include="MessageFrameQueueReader.cs" />
+    <Compile Include="MessageFrameQueueWriter.cs" />
     <Compile Include="MessageFrameWriterFactory.cs" />
     <Compile Include="MessageFrameReaderFactory.cs" />
     <Compile Include="IMessageFrameReader.cs" />
@@ -71,9 +73,11 @@
     <Compile Include="Responder.cs" />
     <Compile Include="Requester.cs" />
     <Compile Include="TimeSpanExtensions.cs" />
+    <Compile Include="Transports\InProc\BlockingConcurrentQueue.cs" />
     <Compile Include="Transports\InProc\InProcSocket.cs" />
     <Compile Include="Transports\InProc\InProcSocketPair.cs" />
     <Compile Include="Transports\InProc\QueueStream.cs" />
+    <Compile Include="Transports\IQueueSocket.cs" />
     <Compile Include="Transports\IStreamSocket.cs" />
     <Compile Include="Transports\ISocket.cs" />
     <Compile Include="Transports\ISocketConfiguration.cs" />

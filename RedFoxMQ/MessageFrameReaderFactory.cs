@@ -28,6 +28,10 @@ namespace RedFoxMQ
             var streamSocket = socket as IStreamSocket;
             if (streamSocket != null)
                 return new MessageFrameStreamReader(streamSocket);
+
+            var queueSocket = socket as IQueueSocket;
+            if (queueSocket != null)
+                return new MessageFrameQueueReader(queueSocket);
             
             throw new NotImplementedException();
         }

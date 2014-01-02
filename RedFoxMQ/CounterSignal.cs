@@ -80,6 +80,16 @@ namespace RedFoxMQ
             return _counterSignal.Wait(timeout);
         }
 
+        public void Wait(CancellationToken cancellationToken)
+        {
+            _counterSignal.Wait(cancellationToken);
+        }
+
+        public bool Wait(TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            return _counterSignal.Wait(timeout, cancellationToken);
+        }
+
         private void SignalIfNeeded(int currentValue)
         {
             if (currentValue >= _signalGreaterOrEqual) _counterSignal.Set();

@@ -16,24 +16,29 @@
 
 using RedFoxMQ.Transports;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
-    class MessageFrameWriterFactory
+    class MessageFrameQueueReader : IMessageFrameReader
     {
-        public IMessageFrameWriter CreateWriterFromSocket(ISocket socket)
+        private readonly IQueueSocket _queueSocket;
+
+        public MessageFrameQueueReader(IQueueSocket queueSocket)
         {
-            if (socket == null) throw new ArgumentNullException("socket");
+            if (queueSocket == null) throw new ArgumentNullException("queueSocket");
+            _queueSocket = queueSocket;
+        }
 
-            var streamSocket = socket as IStreamSocket;
-            if (streamSocket != null)
-                return new MessageFrameStreamWriter(streamSocket);
+        public async Task<MessageFrame> ReadMessageFrameAsync(CancellationToken cancellationToken)
+        {
+            return await Task.Run(() => _queueSocket.Read(cancellationToken), cancellationToken);
+        }
 
-            var queueSocket = socket as IQueueSocket;
-            if (queueSocket != null)
-                return new MessageFrameQueueWriter(queueSocket);
-
-            throw new NotImplementedException();
+        public MessageFrame ReadMessageFrame()
+        {
+            return _queueSocket.Read();
         }
     }
 }
