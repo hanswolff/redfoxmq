@@ -30,6 +30,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Moq">
+      <HintPath>..\packages\Moq.4.2.1312.1622\lib\net40\Moq.dll</HintPath>
+    </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
     </Reference>
@@ -50,6 +53,8 @@
     <Compile Include="Benchmarks\InprocResponderRequesterBenchmarks.cs" />
     <Compile Include="Benchmarks\ResponderRequesterBenchmarks.cs" />
     <Compile Include="Benchmarks\TcpPublisherSubscriberBenchmarks.cs" />
+    <Compile Include="MessageFrameReaderFactoryTests.cs" />
+    <Compile Include="MessageFrameWriterFactoryTests.cs" />
     <Compile Include="TimeSpanExtensionsTests.cs" />
     <Compile Include="CounterSignalTests.cs" />
     <Compile Include="MessageFromCreatorTests.cs" />

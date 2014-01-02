@@ -33,7 +33,7 @@ namespace RedFoxMQ
             if (queueSocket != null)
                 return new MessageFrameQueueWriter(queueSocket);
 
-            throw new NotImplementedException();
+            throw new NotSupportedException(String.Format("{0} does not know ISocket of type {1}", GetType().Name, socket.GetType().Name));
         }
     }
 }
