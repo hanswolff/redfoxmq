@@ -58,65 +58,39 @@ namespace RedFoxMQ.Tests.Benchmarks
         }
 
         [Test]
-        public void One_Responder_Two_Requesters()
+        public void One_Responder_2_Requesters()
         {
-            var echoWorker = new ResponderWorker();
-            var workerFactory = new ResponderWorkerFactory(request => echoWorker);
-            using (var responder = new Responder(workerFactory, 10, 10))
-            {
-                var endpoint = GetEndpoint();
-                responder.Bind(endpoint);
-
-                var requesters = Enumerable.Range(0, 2).Select(x => new Requester()).ToList();
-                foreach (var requester in requesters)
-                {
-                    requester.Connect(endpoint);
-                }
-
-                Thread.Sleep(100);
-
-                var startSignal = new ManualResetEventSlim();
-                var tasks = new List<Task>();
-                foreach (var requester in requesters)
-                {
-                    var req = requester;
-                    var task = Task.Factory.StartNew(() =>
-                    {
-                        startSignal.Wait();
-                        for (var i = 0; i < NumberOfRequests/2; i++)
-                        {
-                            var messageSent = new TestMessage();
-                            req.Request(messageSent);
-                        }
-                    }, TaskCreationOptions.LongRunning);
-                    tasks.Add(task);
-                }
-
-                var sw = Stopwatch.StartNew();
-                startSignal.Set();
-                Assert.IsTrue(Task.WhenAll(tasks).Wait(TimeSpan.FromMinutes(1)));
-                sw.Stop();
-
-                foreach (var requester in requesters)
-                {
-                    requester.Disconnect();
-                }
-
-                Assert.Inconclusive("{0} elapsed sending/receiving {1} messages ({2:N0} per second)", sw.Elapsed, NumberOfRequests, NumberOfRequests / sw.Elapsed.TotalSeconds);
-            }
+            One_Responder_N_Requesters(2);
         }
 
         [Test]
-        public void One_Responder_Ten_Requesters()
+        public void One_Responder_4_Requesters()
+        {
+            One_Responder_N_Requesters(4);
+        }
+
+        [Test]
+        public void One_Responder_6_Requesters()
+        {
+            One_Responder_N_Requesters(6);
+        }
+
+        [Test]
+        public void One_Responder_8_Requesters()
+        {
+            One_Responder_N_Requesters(8);
+        }
+
+        private void One_Responder_N_Requesters(int n)
         {
             var echoWorker = new ResponderWorker();
             var workerFactory = new ResponderWorkerFactory(request => echoWorker);
-            using (var responder = new Responder(workerFactory, 10, 10))
+            using (var responder = new Responder(workerFactory, 2, n))
             {
                 var endpoint = GetEndpoint();
                 responder.Bind(endpoint);
 
-                var requesters = Enumerable.Range(0, 10).Select(x => new Requester()).ToList();
+                var requesters = Enumerable.Range(0, n).Select(x => new Requester()).ToList();
                 foreach (var requester in requesters)
                 {
                     requester.Connect(endpoint);
@@ -124,6 +98,7 @@ namespace RedFoxMQ.Tests.Benchmarks
 
                 Thread.Sleep(100);
 
+                var threadsStartedSignal = new CounterSignal(n, 0);
                 var startSignal = new ManualResetEventSlim();
                 var tasks = new List<Task>();
                 foreach (var requester in requesters)
@@ -131,8 +106,9 @@ namespace RedFoxMQ.Tests.Benchmarks
                     var req = requester;
                     var task = Task.Factory.StartNew(() =>
                     {
+                        threadsStartedSignal.Increment();
                         startSignal.Wait();
-                        for (var i = 0; i < NumberOfRequests / 10; i++)
+                        for (var i = 0; i < NumberOfRequests / n; i++)
                         {
                             var messageSent = new TestMessage();
                             req.Request(messageSent);
@@ -140,6 +116,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                     }, TaskCreationOptions.LongRunning);
                     tasks.Add(task);
                 }
+                Assert.IsTrue(threadsStartedSignal.Wait(TimeSpan.FromSeconds(1)));
 
                 var sw = Stopwatch.StartNew();
                 startSignal.Set();
