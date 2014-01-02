@@ -30,7 +30,7 @@ namespace RedFoxMQ.Tests
             var serializedMessageFrame = new byte[] {49, 212, 5, 0, 0, 0, 1, 2, 3, 4, 5};
 
             using (var mem = new MemoryStream(serializedMessageFrame))
-            using (var socket = new TestSocket(mem))
+            using (var socket = new TestStreamSocket(mem))
             {
                 var reader = new MessageFrameStreamReader(socket);
                 var messageFrame = reader.ReadMessageFrameAsync(CancellationToken.None).Result;

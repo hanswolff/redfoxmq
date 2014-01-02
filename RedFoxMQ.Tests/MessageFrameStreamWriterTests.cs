@@ -36,7 +36,7 @@ namespace RedFoxMQ.Tests
             };
 
             using (var mem = new MemoryStream())
-            using (var socket = new TestSocket(mem))
+            using (var socket = new TestStreamSocket(mem))
             {
                 var writer = new MessageFrameStreamWriter(socket);
                 writer.WriteMessageFrameAsync(messageFrame, CancellationToken.None).Wait();
@@ -56,7 +56,7 @@ namespace RedFoxMQ.Tests
             var random = TestHelpers.CreateSemiRandomGenerator();
             var messageFrames = new Queue<MessageFrame>();
             using (var mem = new MemoryStream())
-            using (var socket = new TestSocket(mem))
+            using (var socket = new TestStreamSocket(mem))
             {
                 var writer = new MessageFrameStreamWriter(socket);
                 var reader = new MessageFrameStreamReader(socket);
