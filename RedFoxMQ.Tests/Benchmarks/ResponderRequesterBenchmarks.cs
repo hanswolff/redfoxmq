@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using System;
@@ -105,13 +106,12 @@ namespace RedFoxMQ.Tests.Benchmarks
             }
         }
 
-
         [Test]
         public void One_Responder_Ten_Requesters()
         {
             var echoWorker = new ResponderWorker();
             var workerFactory = new ResponderWorkerFactory(request => echoWorker);
-            using (var responder = new Responder(workerFactory, 2, 2))
+            using (var responder = new Responder(workerFactory, 10, 10))
             {
                 var endpoint = GetEndpoint();
                 responder.Bind(endpoint);

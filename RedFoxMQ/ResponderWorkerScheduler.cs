@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -99,7 +100,7 @@ namespace RedFoxMQ
 
         private void ExecuteTask(object argument)
         {
-            var taskId = (Guid)argument;
+            var threadId = (Guid)argument;
             var cancellationToken = _disposedTokenSource.Token;
 
             try
@@ -107,7 +108,11 @@ namespace RedFoxMQ
                 do
                 {
                     ResponderWorkerWithState workerWithState;
-                    if (!TryGetWorkerWithState(out workerWithState, cancellationToken)) continue;
+                    if (!TryGetWorkerWithState(out workerWithState, cancellationToken))
+                    {
+                        if (ShutdownTaskIfNotNeeded(threadId)) break;
+                        continue;
+                    }
 
                     Interlocked.Increment(ref _currentBusyThreadCount);
 
@@ -137,9 +142,13 @@ namespace RedFoxMQ
                     {
                         Interlocked.Decrement(ref _currentBusyThreadCount);
                     }
-                } while (!ShutdownTaskIfNotNeeded(taskId));
+
+                } while (true);
             }
             catch (OperationCanceledException)
+            {
+            }
+            catch (ObjectDisposedException)
             {
             }
         }
