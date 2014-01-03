@@ -19,11 +19,18 @@ using System.Threading;
 
 namespace RedFoxMQ.Transports.InProc
 {
+    /// <summary>
+    /// ConcurrentQueue that blocks on Dequeue if empty
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class BlockingConcurrentQueue<T>
     {
         private readonly ConcurrentQueue<T> _queue = new ConcurrentQueue<T>();
         private readonly CounterSignal _counterSignal = new CounterSignal(1, 0);
 
+        /// <summary>
+        /// Gets and removes the object at the beginning of the queue
+        /// </summary>
         public T Dequeue(CancellationToken cancellationToken)
         {
             T item;
@@ -35,6 +42,9 @@ namespace RedFoxMQ.Transports.InProc
             return item;
         }
 
+        /// <summary>
+        /// Adds an object to the end of the queue
+        /// </summary>
         public void Enqueue(T item)
         {
             _queue.Enqueue(item);
