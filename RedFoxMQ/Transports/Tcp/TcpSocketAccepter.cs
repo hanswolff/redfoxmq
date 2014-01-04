@@ -43,6 +43,7 @@ namespace RedFoxMQ.Transports.Tcp
             var ipAddress = IpAddressFromHostTranslator.GetIpAddressForHost(endpoint.Host);
 
             _endpoint = endpoint;
+
             _listener = new TcpListener(ipAddress, endpoint.Port);
 
             if (onClientConnected != null)

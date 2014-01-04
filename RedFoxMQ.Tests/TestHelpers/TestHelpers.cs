@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using RedFoxMQ.Transports;
 using System;
 using System.Collections.Generic;
@@ -29,18 +30,18 @@ namespace RedFoxMQ.Tests
             return new RedFoxEndpoint(transport, "localhost", GetFreePort(), null);
         }
 
-        public static RedFoxEndpoint CreateEndpointForTransport(RedFoxTransport transport, int port)
+        public static RedFoxEndpoint CreateEndpointForTransport(RedFoxTransport transport, ushort port)
         {
             return new RedFoxEndpoint(transport, "localhost", port, null);
         }
 
-        public static int GetFreePort()
+        public static ushort GetFreePort()
         {
             var ipGlobalProperties = IPGlobalProperties.GetIPGlobalProperties();
             var tcpConnInfoArray = ipGlobalProperties.GetActiveTcpConnections();
 
-            var usedPorts = new HashSet<int>(tcpConnInfoArray.Select(x => x.LocalEndPoint.Port));
-            var availablePorts = new HashSet<int>(Enumerable.Range(1024, 65535 - 1024));
+            var usedPorts = new HashSet<ushort>(tcpConnInfoArray.Select(x => (ushort)x.LocalEndPoint.Port));
+            var availablePorts = new HashSet<ushort>(Enumerable.Range(1024, 65535 - 1024).Select(x => (ushort)x));
             availablePorts.ExceptWith(usedPorts);
 
             return availablePorts.Skip(new Random().Next(availablePorts.Count - 1)).First();

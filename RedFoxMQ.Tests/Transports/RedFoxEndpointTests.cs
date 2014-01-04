@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using System;
@@ -67,7 +68,7 @@ namespace RedFoxMQ.Tests.Transports
         }
 
         [Test]
-        public void Equals_all_fields_math_true()
+        public void Equals_all_fields_match_true()
         {
             var endpoint1 = new RedFoxEndpoint(RedFoxTransport.Tcp, "host", 1234, "/path");
             var endpoint2 = new RedFoxEndpoint(RedFoxTransport.Tcp, "host", 1234, "/path");
@@ -104,12 +105,30 @@ namespace RedFoxMQ.Tests.Transports
         }
 
         [Test]
+        public void Equals_case_insensitive_Host_true()
+        {
+            var endpoint1 = new RedFoxEndpoint { Host = "HOST" };
+            var endpoint2 = new RedFoxEndpoint { Host = "host" };
+
+            Assert.IsTrue(endpoint1.Equals(endpoint2));
+        }
+
+        [Test]
         public void Equals_different_Path_false()
         {
             var endpoint = new RedFoxEndpoint { Path = "/path" };
 
             Assert.False(endpoint.Equals(new RedFoxEndpoint()));
             Assert.False(endpoint.Equals((object)new RedFoxEndpoint()));
+        }
+
+        [Test]
+        public void Equals_ignore_Path_when_using_Tcp_true()
+        {
+            var endpoint1 = new RedFoxEndpoint { Transport = RedFoxTransport.Tcp, Path = "ignore" };
+            var endpoint2 = new RedFoxEndpoint { Transport = RedFoxTransport.Tcp };
+
+            Assert.AreEqual(endpoint1, endpoint2);
         }
 
         [Test]
@@ -135,6 +154,24 @@ namespace RedFoxMQ.Tests.Transports
             var endpoint = new RedFoxEndpoint { Host = "host" };
 
             Assert.AreNotEqual(endpoint.GetHashCode(), new RedFoxEndpoint().GetHashCode());
+        }
+
+        [Test]
+        public void GetHashCode_case_insensitive_Host_same()
+        {
+            var endpoint1 = new RedFoxEndpoint { Host = "HOST" };
+            var endpoint2 = new RedFoxEndpoint { Host = "host" };
+
+            Assert.AreEqual(endpoint1.GetHashCode(), endpoint2.GetHashCode());
+        }
+
+        [Test]
+        public void GetHashCode_ignore_Path_when_using_Tcp()
+        {
+            var endpoint1 = new RedFoxEndpoint { Transport = RedFoxTransport.Tcp, Path = "ignore" };
+            var endpoint2 = new RedFoxEndpoint { Transport = RedFoxTransport.Tcp };
+
+            Assert.AreEqual(endpoint1.GetHashCode(), endpoint2.GetHashCode());
         }
 
         [Test]
@@ -197,19 +234,25 @@ namespace RedFoxMQ.Tests.Transports
         }
 
         [Test]
-        public void TryParse_inproc_path_should_be_parsed()
-        {
-            RedFoxEndpoint endpoint;
-            Assert.IsTrue(RedFoxEndpoint.TryParse("inproc://hostname:1234/path?query", out endpoint));
-            Assert.AreEqual("/path?query", endpoint.Path);
-        }
-
-        [Test]
-        public void TryParse_tcp_path_should_not_be_parsed()
+        public void TryParse_path_should_be_parsed()
         {
             RedFoxEndpoint endpoint;
             Assert.IsTrue(RedFoxEndpoint.TryParse("tcp://hostname:1234/path?query", out endpoint));
-            Assert.IsNull(endpoint.Path);
+            Assert.AreEqual("/path?query", endpoint.Path);
+        }
+
+        [TestCase("inproc://HOSTNAME/", "inproc://hostname/")]
+        [TestCase("inproc://hostname:1234", "inproc://hostname:1234/")]
+        [TestCase("inproc://hostname:1234/dontignorepath", "inproc://hostname:1234/dontignorepath")]
+        [TestCase("tcp://HOSTNAME", "tcp://hostname")]
+        [TestCase("tcp://hostname:1234", "tcp://hostname:1234/")]
+        [TestCase("tcp://hostname:1234/ignorepath", "tcp://hostname:1234/")]
+        public void Equals(string endpointUri, string expectingEndpointUri)
+        {
+            var normalizedEndpoint = RedFoxEndpoint.Parse(endpointUri);
+            var expectingEndpoint = RedFoxEndpoint.Parse(expectingEndpointUri);
+
+            Assert.AreEqual(expectingEndpoint, normalizedEndpoint);
         }
     }
 }

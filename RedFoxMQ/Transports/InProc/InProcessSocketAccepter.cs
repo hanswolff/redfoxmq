@@ -39,6 +39,7 @@ namespace RedFoxMQ.Transports.InProc
 
             _listener = InProcessEndpoints.Instance.RegisterAccepter(endpoint);
             _endpoint = endpoint;
+
             if (onClientConnected != null)
                 ClientConnected += onClientConnected;
             if (onClientDisconnected != null)

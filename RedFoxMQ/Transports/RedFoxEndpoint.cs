@@ -25,7 +25,7 @@ namespace RedFoxMQ.Transports
 
         public RedFoxTransport Transport;
         public string Host;
-        public int Port;
+        public ushort Port;
         public string Path;
 
         public RedFoxEndpoint(string path)
@@ -33,17 +33,17 @@ namespace RedFoxMQ.Transports
         {
         }
 
-        public RedFoxEndpoint(string host, int port)
+        public RedFoxEndpoint(string host, ushort port)
             : this(host, port, null)
         {
         }
 
-        public RedFoxEndpoint(string host, int port, string path)
+        public RedFoxEndpoint(string host, ushort port, string path)
             : this(RedFoxTransport.Tcp, host, port, path)
         {
         }
 
-        public RedFoxEndpoint(RedFoxTransport transport, string host, int port, string path)
+        public RedFoxEndpoint(RedFoxTransport transport, string host, ushort port, string path)
         {
             Transport = transport;
             Host = host;
@@ -64,11 +64,20 @@ namespace RedFoxMQ.Transports
 
         public bool Equals(RedFoxEndpoint x, RedFoxEndpoint y)
         {
-            return
-                x.Port == y.Port &&
-                x.Host == y.Host &&
-                x.Path == y.Path &&
-                x.Transport == y.Transport;
+            if (x.Transport != y.Transport) return false;
+
+            switch (x.Transport)
+            {
+                case RedFoxTransport.Tcp:
+                    return
+                        x.Port == y.Port &&
+                        String.Equals(x.Host, y.Host, StringComparison.InvariantCultureIgnoreCase);
+                default:
+                    return
+                        x.Port == y.Port &&
+                        String.Equals(x.Host, y.Host, StringComparison.InvariantCultureIgnoreCase) &&
+                        x.Path == y.Path;
+            }
         }
 
         public override int GetHashCode()
@@ -81,9 +90,12 @@ namespace RedFoxMQ.Transports
             unchecked
             {
                 var hashCode = (int)Transport;
-                hashCode = (hashCode * 397) ^ (Host != null ? Host.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (Host != null ? Host.ToLowerInvariant().GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ Port;
-                hashCode = (hashCode * 397) ^ (Path != null ? Path.GetHashCode() : 0);
+                if (x.Transport != RedFoxTransport.Tcp)
+                {
+                    hashCode = (hashCode*397) ^ (Path != null ? Path.GetHashCode() : 0);
+                }
                 return hashCode;
             }
         }
@@ -128,10 +140,8 @@ namespace RedFoxMQ.Transports
             }
 
             endpoint.Host = uri.DnsSafeHost;
-            endpoint.Port = uri.Port;
-
-            if (endpoint.Transport != RedFoxTransport.Tcp)
-                endpoint.Path = uri.PathAndQuery;
+            endpoint.Port = (ushort)uri.Port;
+            endpoint.Path = uri.PathAndQuery;
 
             return true;
         }
