@@ -13,9 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using System;
+using System.Threading;
 
 namespace RedFoxMQ.Tests
 {
@@ -68,6 +70,31 @@ namespace RedFoxMQ.Tests
                 var endpoint = new RedFoxEndpoint("/path");
                 publisher1.Bind(endpoint);
                 Assert.Throws<InvalidOperationException>(() => publisher2.Bind(endpoint));
+            }
+        }
+
+        [Test]
+        public void unbind_disconnects_client()
+        {
+            using (var publisher = new Publisher())
+            using (var subscriber = new Subscriber())
+            {
+                var endpoint = new RedFoxEndpoint("/path");
+
+                var connected = new ManualResetEventSlim();
+                var disconnected = new ManualResetEventSlim();
+
+                publisher.ClientConnected += (s, c) => connected.Set();
+                publisher.ClientDisconnected += s => disconnected.Set();
+                
+                publisher.Bind(endpoint);
+                subscriber.Connect(endpoint);
+                
+                Assert.IsTrue(connected.Wait(TimeSpan.FromSeconds(1)));
+
+                publisher.Unbind(endpoint);
+
+                Assert.IsTrue(disconnected.Wait(TimeSpan.FromSeconds(1)));
             }
         }
     }

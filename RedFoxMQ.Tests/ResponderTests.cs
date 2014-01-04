@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
+using System.Threading;
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using System;
@@ -68,6 +70,31 @@ namespace RedFoxMQ.Tests
                 var endpoint = new RedFoxEndpoint("/path");
                 responder1.Bind(endpoint);
                 Assert.Throws<InvalidOperationException>(() => responder2.Bind(endpoint));
+            }
+        }
+
+        [Test]
+        public void unbind_disconnects_client()
+        {
+            using (var responder = TestHelpers.CreateTestResponder())
+            using (var requester = new Requester())
+            {
+                var endpoint = new RedFoxEndpoint("/path");
+
+                var connected = new ManualResetEventSlim();
+                var disconnected = new ManualResetEventSlim();
+
+                responder.ClientConnected += (s, c) => connected.Set();
+                responder.ClientDisconnected += s => disconnected.Set();
+
+                responder.Bind(endpoint);
+                requester.Connect(endpoint);
+
+                Assert.IsTrue(connected.Wait(TimeSpan.FromSeconds(1)));
+
+                responder.Unbind(endpoint);
+
+                Assert.IsTrue(disconnected.Wait(TimeSpan.FromSeconds(1)));
             }
         }
     }

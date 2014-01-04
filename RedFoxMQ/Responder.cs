@@ -120,9 +120,22 @@ namespace RedFoxMQ
         {
             ISocketAccepter removedServer;
             var serverRemoved = _servers.TryRemove(endpoint, out removedServer);
-            if (serverRemoved) removedServer.Unbind();
+            if (serverRemoved)
+            {
+                removedServer.Unbind();
+                DisconnectSocketsForEndpoint(endpoint);
+            }
 
             return serverRemoved;
+        }
+
+        private void DisconnectSocketsForEndpoint(RedFoxEndpoint endpoint)
+        {
+            var socketsMatchingEndpoint = _clientSockets.Keys.Where(socket => socket.Endpoint.Equals(endpoint));
+            foreach (var socket in socketsMatchingEndpoint)
+            {
+                socket.Disconnect();
+            }
         }
 
         private void UnbindAllEndpoints()
@@ -149,15 +162,14 @@ namespace RedFoxMQ
         {
             lock (_disposeLock)
             {
-                if (!_disposed)
-                {
-                    _disposeCancellationTokenSource.Cancel();
+                if (_disposed) return;
 
-                    UnbindAllEndpoints();
+                _disposeCancellationTokenSource.Cancel();
 
-                    _disposed = true;
-                    if (disposing) GC.SuppressFinalize(this);
-                }
+                UnbindAllEndpoints();
+
+                _disposed = true;
+                if (disposing) GC.SuppressFinalize(this);
             }
         }
 

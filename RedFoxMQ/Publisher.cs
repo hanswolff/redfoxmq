@@ -97,9 +97,22 @@ namespace RedFoxMQ
         {
             ISocketAccepter removedServer;
             var serverRemoved = _servers.TryRemove(endpoint, out removedServer);
-            if (serverRemoved) removedServer.Unbind();
+            if (serverRemoved)
+            {
+                removedServer.Unbind();
+                DisconnectSocketsForEndpoint(endpoint);
+            }
 
             return serverRemoved;
+        }
+
+        private void DisconnectSocketsForEndpoint(RedFoxEndpoint endpoint)
+        {
+            var socketsMatchingEndpoint = _broadcastSockets.Keys.Where(socket => socket.Endpoint.Equals(endpoint));
+            foreach (var socket in socketsMatchingEndpoint)
+            {
+                socket.Disconnect();
+            }
         }
 
         public void Broadcast(IMessage message)
@@ -145,13 +158,12 @@ namespace RedFoxMQ
         {
             lock (_disposeLock)
             {
-                if (!_disposed)
-                {
-                    UnbindAllEndpoints();
+                if (_disposed) return;
 
-                    _disposed = true;
-                    if (disposing) GC.SuppressFinalize(this);
-                }
+                UnbindAllEndpoints();
+
+                _disposed = true;
+                if (disposing) GC.SuppressFinalize(this);
             }
         }
 

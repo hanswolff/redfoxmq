@@ -124,13 +124,12 @@ namespace RedFoxMQ
         {
             lock (_disposeLock)
             {
-                if (!_disposed)
-                {
-                    Disconnect();
+                if (_disposed) return;
 
-                    _disposed = true;
-                    if (disposing) GC.SuppressFinalize(this);
-                }
+                Disconnect();
+
+                _disposed = true;
+                if (disposing) GC.SuppressFinalize(this);
             }
         }
 
@@ -144,6 +143,5 @@ namespace RedFoxMQ
             Dispose(false);
         }
         #endregion
-
     }
 }
