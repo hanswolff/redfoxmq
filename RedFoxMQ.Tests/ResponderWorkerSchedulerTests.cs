@@ -54,6 +54,19 @@ namespace RedFoxMQ.Tests
         }
 
         [Test]
+        public void ResponderWorkerScheduler_Dispose_kills_all_threads()
+        {
+            using (var scheduler = new ResponderWorkerScheduler(2, 2))
+            {
+                scheduler.Dispose();
+                
+                Thread.Sleep(30);
+
+                Assert.AreEqual(0, scheduler.CurrentWorkerThreadCount);
+            }
+        }
+
+        [Test]
         public void ResponderWorkerScheduler_many_MinThreads_created_but_should_be_idle()
         {
             var minThreads = Environment.ProcessorCount * 4;

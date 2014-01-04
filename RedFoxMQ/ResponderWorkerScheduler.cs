@@ -79,7 +79,6 @@ namespace RedFoxMQ
             _maxThreads = maxThreads;
             MaxIdleTime = maxIdleTime;
 
-            _disposedTokenSource = new CancellationTokenSource();
             _disposedToken = _disposedTokenSource.Token;
 
             CreateNumberOfThreads(minThreads);
@@ -108,7 +107,7 @@ namespace RedFoxMQ
                 do
                 {
                     ResponderWorkerWithState workerWithState;
-                    if (!_workers.TryTake(out workerWithState, (int)MaxIdleTime.TotalMilliseconds, _disposedToken))
+                    if (!_workers.TryTake(out workerWithState, (int) MaxIdleTime.TotalMilliseconds, _disposedToken))
                     {
                         if (ShutdownTaskIfNotNeeded(threadId)) break;
                         continue;
@@ -121,7 +120,8 @@ namespace RedFoxMQ
                         IMessage response = null;
                         try
                         {
-                            response = workerWithState.Worker.GetResponse(workerWithState.RequestMessage, workerWithState.State);
+                            response = workerWithState.Worker.GetResponse(workerWithState.RequestMessage,
+                                workerWithState.State);
                         }
                         catch (Exception ex)
                         {
@@ -151,15 +151,19 @@ namespace RedFoxMQ
             catch (ObjectDisposedException)
             {
             }
+            finally
+            {
+                ShutdownTaskIfNotNeeded(threadId);
+            }
         }
 
         private bool ShutdownTaskIfNotNeeded(Guid threadId)
         {
-            if (_currentWorkerThreadCount <= _minThreads) return false;
+            if (_currentWorkerThreadCount <= _minThreads && !_disposed) return false;
 
             lock (_threadsChangeLock)
             {
-                if (_currentWorkerThreadCount <= _minThreads) return false;
+                if (_currentWorkerThreadCount <= _minThreads && !_disposed) return false;
                 
                 Thread thread;
                 if (_threads.TryRemove(threadId, out thread))
@@ -203,7 +207,7 @@ namespace RedFoxMQ
 
         #region Dispose
         private bool _disposed;
-        private readonly CancellationTokenSource _disposedTokenSource;
+        private readonly CancellationTokenSource _disposedTokenSource = new CancellationTokenSource();
         private readonly CancellationToken _disposedToken;
         private readonly object _disposeLock = new object();
 
