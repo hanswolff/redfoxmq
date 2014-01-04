@@ -247,12 +247,12 @@ namespace RedFoxMQ.Tests.Transports
         [TestCase("tcp://HOSTNAME", "tcp://hostname")]
         [TestCase("tcp://hostname:1234", "tcp://hostname:1234/")]
         [TestCase("tcp://hostname:1234/ignorepath", "tcp://hostname:1234/")]
-        public void Equals(string endpointUri, string expectingEndpointUri)
+        public void Equals(string endpointUri1, string endpointUri2)
         {
-            var normalizedEndpoint = RedFoxEndpoint.Parse(endpointUri);
-            var expectingEndpoint = RedFoxEndpoint.Parse(expectingEndpointUri);
+            var endpoint1 = RedFoxEndpoint.Parse(endpointUri1);
+            var endpoint2 = RedFoxEndpoint.Parse(endpointUri2);
 
-            Assert.AreEqual(expectingEndpoint, normalizedEndpoint);
+            Assert.AreEqual(endpoint2, endpoint1);
         }
     }
 }
