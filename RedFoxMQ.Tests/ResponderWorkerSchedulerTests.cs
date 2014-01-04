@@ -186,7 +186,7 @@ namespace RedFoxMQ.Tests
         public void ResponderWorkerScheduler_CurrentWorkerThreadCount_decreased_when_back_idle()
         {
             var worker = new TestWorker(30);
-            using (var scheduler = new ResponderWorkerScheduler(0, 1) { MaxIdleTime = TimeSpan.FromMilliseconds(1) })
+            using (var scheduler = new ResponderWorkerScheduler(0, 1, TimeSpan.FromMilliseconds(1)))
             {
                 scheduler.AddWorker(worker, new TestMessage(), null);
 
@@ -203,7 +203,7 @@ namespace RedFoxMQ.Tests
         public void ResponderWorkerScheduler_CurrentWorkerThreadCount_not_decreased_when_back_idle_before_MaxIdleTime()
         {
             var worker = new TestWorker(30);
-            using (var scheduler = new ResponderWorkerScheduler(0, 1) { MaxIdleTime = TimeSpan.FromMilliseconds(30) })
+            using (var scheduler = new ResponderWorkerScheduler(0, 1, TimeSpan.FromMilliseconds(100)))
             {
                 scheduler.AddWorker(worker, new TestMessage(), null);
 
@@ -219,7 +219,7 @@ namespace RedFoxMQ.Tests
         [Test]
         public void ResponderWorkerScheduler_CurrentWorkerThreadCount_increased_then_decreased_then_increased()
         {
-            using (var scheduler = new ResponderWorkerScheduler(0, 1) { MaxIdleTime = TimeSpan.FromMilliseconds(1) })
+            using (var scheduler = new ResponderWorkerScheduler(0, 1, TimeSpan.FromMilliseconds(1)))
             {
                 var worker1 = new TestWorker(30);
                 scheduler.AddWorker(worker1, new TestMessage(), null);
@@ -242,7 +242,7 @@ namespace RedFoxMQ.Tests
         [Test]
         public void ResponderWorkerScheduler_CurrentWorkerThreadCount_increased_twice()
         {
-            using (var scheduler = new ResponderWorkerScheduler(0, 2) { MaxIdleTime = TimeSpan.FromMilliseconds(30) })
+            using (var scheduler = new ResponderWorkerScheduler(0, 2, TimeSpan.FromMilliseconds(1)))
             {
                 Assert.AreEqual(0, scheduler.CurrentWorkerThreadCount);
 

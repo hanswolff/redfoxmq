@@ -27,7 +27,7 @@ namespace RedFoxMQ.Tests.Benchmarks
 {
     public abstract class ResponderRequesterBenchmarks
     {
-        private const int NumberOfRequests = 10000;
+        private const int NumberOfRequests = 100000;
 
         public abstract RedFoxEndpoint GetEndpoint();
 
@@ -46,9 +46,9 @@ namespace RedFoxMQ.Tests.Benchmarks
                 Thread.Sleep(100);
 
                 var sw = Stopwatch.StartNew();
+                var messageSent = new TestMessage();
                 for (var i = 0; i < NumberOfRequests; i++)
                 {
-                    var messageSent = new TestMessage();
                     requester.Request(messageSent);
                 }
                 sw.Stop();
@@ -85,7 +85,7 @@ namespace RedFoxMQ.Tests.Benchmarks
         {
             var echoWorker = new ResponderWorker();
             var workerFactory = new ResponderWorkerFactory(request => echoWorker);
-            using (var responder = new Responder(workerFactory, 2, n))
+            using (var responder = new Responder(workerFactory))
             {
                 var endpoint = GetEndpoint();
                 responder.Bind(endpoint);
@@ -106,9 +106,10 @@ namespace RedFoxMQ.Tests.Benchmarks
                     var req = requester;
                     var task = Task.Factory.StartNew(() =>
                     {
-                        var message = new TestMessage();
                         threadsStartedSignal.Increment();
                         startSignal.Wait();
+
+                        var message = new TestMessage();
                         for (var i = 0; i < NumberOfRequests / n; i++)
                         {
                             req.Request(message);
