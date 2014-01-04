@@ -28,12 +28,12 @@ namespace RedFoxMQ
 
         private readonly BlockingCollection<ResponderWorkerWithState> _workers = new BlockingCollection<ResponderWorkerWithState>();
         private readonly ConcurrentDictionary<Guid, Thread> _threads = new ConcurrentDictionary<Guid, Thread>();
-        private readonly SemaphoreSlim _numberOfThreads;
+        private readonly object _threadsChangeLock = new object();
 
         private int _currentWorkerThreadCount;
         public int CurrentWorkerThreadCount
         {
-            get { return _numberOfThreads.CurrentCount; }
+            get { return _currentWorkerThreadCount; }
         }
 
         private int _currentBusyThreadCount;
@@ -79,7 +79,8 @@ namespace RedFoxMQ
             _maxThreads = maxThreads;
             MaxIdleTime = maxIdleTime;
 
-            _numberOfThreads = new SemaphoreSlim(minThreads, maxThreads);
+            _disposedTokenSource = new CancellationTokenSource();
+            _disposedToken = _disposedTokenSource.Token;
 
             CreateNumberOfThreads(minThreads);
         }
@@ -101,14 +102,13 @@ namespace RedFoxMQ
         private void ExecuteTask(object argument)
         {
             var threadId = (Guid)argument;
-            var cancellationToken = _disposedTokenSource.Token;
 
             try
             {
                 do
                 {
                     ResponderWorkerWithState workerWithState;
-                    if (!TryGetWorkerWithState(out workerWithState, cancellationToken))
+                    if (!_workers.TryTake(out workerWithState, (int)MaxIdleTime.TotalMilliseconds, _disposedToken))
                     {
                         if (ShutdownTaskIfNotNeeded(threadId)) break;
                         continue;
@@ -153,19 +153,19 @@ namespace RedFoxMQ
             }
         }
 
-        private bool TryGetWorkerWithState(out ResponderWorkerWithState workerWithState, CancellationToken cancellationToken)
-        {
-            return _workers.TryTake(out workerWithState, (int)MaxIdleTime.TotalMilliseconds, cancellationToken);
-        }
-
         private bool ShutdownTaskIfNotNeeded(Guid threadId)
         {
             if (_currentWorkerThreadCount <= _minThreads) return false;
 
-            if (_numberOfThreads.Wait(0))
+            lock (_threadsChangeLock)
             {
+                if (_currentWorkerThreadCount <= _minThreads) return false;
+                
                 Thread thread;
-                _threads.TryRemove(threadId, out thread);
+                if (_threads.TryRemove(threadId, out thread))
+                {
+                    Interlocked.Decrement(ref _currentWorkerThreadCount);
+                }
             }
 
             return true;
@@ -183,23 +183,28 @@ namespace RedFoxMQ
 
         private void IncreaseWorkerThreadsIfNeeded()
         {
-            var workerThreadCount = _currentWorkerThreadCount;
-            if (workerThreadCount != 0 &&
-                (_currentBusyThreadCount != workerThreadCount || workerThreadCount >= _maxThreads)) return;
-            try
+            if (!CanIncreaseWorkerThreads()) return;
+
+            lock (_threadsChangeLock)
             {
-                _numberOfThreads.Release(1);
+                if (!CanIncreaseWorkerThreads()) return;
 
                 CreateNumberOfThreads(1);
             }
-            catch (SemaphoreFullException)
-            {
-            }
+        }
+
+        private bool CanIncreaseWorkerThreads()
+        {
+            var workerThreadCount = _currentWorkerThreadCount;
+            if (workerThreadCount != 0 &&
+                (_currentBusyThreadCount != workerThreadCount || workerThreadCount >= _maxThreads)) return false;
+            return true;
         }
 
         #region Dispose
         private bool _disposed;
-        private readonly CancellationTokenSource _disposedTokenSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource _disposedTokenSource;
+        private readonly CancellationToken _disposedToken;
         private readonly object _disposeLock = new object();
 
         protected virtual void Dispose(bool disposing)
@@ -210,7 +215,7 @@ namespace RedFoxMQ
                 {
                     _minThreads = 0;
 
-                    try { _disposedTokenSource.Cancel(); } 
+                    try { _disposedTokenSource.Cancel(); }
                     catch (AggregateException) { }
 
                     _disposed = true;

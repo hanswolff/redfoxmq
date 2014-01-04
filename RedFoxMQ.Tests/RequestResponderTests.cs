@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using System;
@@ -52,6 +53,28 @@ namespace RedFoxMQ.Tests
 
         [TestCase(RedFoxTransport.Inproc)]
         [TestCase(RedFoxTransport.Tcp)]
+        public void RequestAsync_Response_single_message(RedFoxTransport transport)
+        {
+            using (var responder = TestHelpers.CreateTestResponder())
+            using (var requester = new Requester())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+
+                responder.Bind(endpoint);
+
+                requester.Connect(endpoint);
+
+                Thread.Sleep(100);
+
+                var messageSent = new TestMessage { Text = "Hello" };
+                var messageReceived = (TestMessage)requester.RequestAsync(messageSent).Result;
+
+                Assert.AreEqual(messageSent.Text, messageReceived.Text);
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
         public void Request_Response_two_messages(RedFoxTransport transport)
         {
             using (var responder = TestHelpers.CreateTestResponder())
@@ -68,6 +91,58 @@ namespace RedFoxMQ.Tests
                 var messageSent = new TestMessage { Text = "Hello" };
                 messagesReceived.Add((TestMessage)requester.Request(messageSent));
                 messagesReceived.Add((TestMessage)requester.Request(messageSent));
+
+                Assert.AreEqual(messageSent.Text, messagesReceived[0].Text);
+                Assert.AreEqual(messageSent.Text, messagesReceived[1].Text);
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void RequestAsync_Response_two_messages_wait_for_each_message(RedFoxTransport transport)
+        {
+            using (var responder = TestHelpers.CreateTestResponder())
+            using (var requester = new Requester())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+
+                responder.Bind(endpoint);
+                requester.Connect(endpoint);
+
+                var messagesReceived = new List<TestMessage>();
+                Thread.Sleep(100);
+
+                var messageSent = new TestMessage { Text = "Hello" };
+                messagesReceived.Add((TestMessage)requester.RequestAsync(messageSent).Result);
+                messagesReceived.Add((TestMessage)requester.RequestAsync(messageSent).Result);
+
+                Assert.AreEqual(messageSent.Text, messagesReceived[0].Text);
+                Assert.AreEqual(messageSent.Text, messagesReceived[1].Text);
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void RequestAsync_Response_two_messages_simultaneous(RedFoxTransport transport)
+        {
+            using (var responder = TestHelpers.CreateTestResponder())
+            using (var requester = new Requester())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+
+                responder.Bind(endpoint);
+                requester.Connect(endpoint);
+
+                var messagesReceived = new List<TestMessage>();
+                Thread.Sleep(100);
+
+                var messageSent = new TestMessage { Text = "Hello" };
+                var task1 = requester.RequestAsync(messageSent);
+                var task2 = requester.RequestAsync(messageSent);
+                Assert.IsTrue(Task.WhenAll(task1, task2).Wait(TimeSpan.FromSeconds(1)));
+
+                messagesReceived.Add((TestMessage)task1.Result);
+                messagesReceived.Add((TestMessage)task2.Result);
 
                 Assert.AreEqual(messageSent.Text, messagesReceived[0].Text);
                 Assert.AreEqual(messageSent.Text, messagesReceived[1].Text);

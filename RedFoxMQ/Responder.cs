@@ -165,6 +165,7 @@ namespace RedFoxMQ
                 if (_disposed) return;
 
                 _disposeCancellationTokenSource.Cancel();
+                _scheduler.Dispose();
 
                 UnbindAllEndpoints();
 

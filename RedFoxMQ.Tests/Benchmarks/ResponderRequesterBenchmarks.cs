@@ -32,7 +32,7 @@ namespace RedFoxMQ.Tests.Benchmarks
         public abstract RedFoxEndpoint GetEndpoint();
 
         [Test]
-        public void One_Responder_One_Requester()
+        public void One_Responder_1_Requester()
         {
             var echoWorker = new ResponderWorker();
             var workerFactory = new ResponderWorkerFactory(request => echoWorker);
@@ -106,12 +106,12 @@ namespace RedFoxMQ.Tests.Benchmarks
                     var req = requester;
                     var task = Task.Factory.StartNew(() =>
                     {
+                        var message = new TestMessage();
                         threadsStartedSignal.Increment();
                         startSignal.Wait();
                         for (var i = 0; i < NumberOfRequests / n; i++)
                         {
-                            var messageSent = new TestMessage();
-                            req.RequestAsync(messageSent).Wait();
+                            req.Request(message);
                         }
                     }, TaskCreationOptions.LongRunning);
                     tasks.Add(task);

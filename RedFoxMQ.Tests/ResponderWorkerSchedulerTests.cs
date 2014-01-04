@@ -14,9 +14,9 @@
 // limitations under the License.
 // 
 
-using System.Diagnostics;
 using NUnit.Framework;
 using System;
+using System.Diagnostics;
 using System.Threading;
 
 namespace RedFoxMQ.Tests
@@ -151,6 +151,97 @@ namespace RedFoxMQ.Tests
                 scheduler.AddWorker(worker2, new TestMessage(), null);
                 worker2.WaitStarted(Timeout);
                 Assert.AreEqual(2, scheduler.CurrentBusyThreadCount);
+            }
+        }
+
+        [Test]
+        public void ResponderWorkerScheduler_CurrentWorkerThreadCount_increased_when_busy()
+        {
+            var worker = new TestWorker(30);
+            using (var scheduler = new ResponderWorkerScheduler(0, 1))
+            {
+                Assert.AreEqual(0, scheduler.CurrentWorkerThreadCount);
+
+                scheduler.AddWorker(worker, new TestMessage(), null);
+
+                worker.WaitStarted(Timeout);
+                Assert.AreEqual(1, scheduler.CurrentWorkerThreadCount);
+            }
+        }
+
+        [Test]
+        public void ResponderWorkerScheduler_CurrentWorkerThreadCount_decreased_when_back_idle()
+        {
+            var worker = new TestWorker(30);
+            using (var scheduler = new ResponderWorkerScheduler(0, 1) { MaxIdleTime = TimeSpan.FromMilliseconds(1) })
+            {
+                scheduler.AddWorker(worker, new TestMessage(), null);
+
+                worker.WaitStarted(Timeout);
+                Assert.AreEqual(1, scheduler.CurrentWorkerThreadCount);
+
+                worker.WaitCompleted(Timeout);
+                Thread.Sleep(15);
+                Assert.AreEqual(0, scheduler.CurrentWorkerThreadCount);
+            }
+        }
+
+        [Test]
+        public void ResponderWorkerScheduler_CurrentWorkerThreadCount_not_decreased_when_back_idle_before_MaxIdleTime()
+        {
+            var worker = new TestWorker(30);
+            using (var scheduler = new ResponderWorkerScheduler(0, 1) { MaxIdleTime = TimeSpan.FromMilliseconds(30) })
+            {
+                scheduler.AddWorker(worker, new TestMessage(), null);
+
+                worker.WaitStarted(Timeout);
+                Assert.AreEqual(1, scheduler.CurrentWorkerThreadCount);
+
+                worker.WaitCompleted(Timeout);
+                Thread.Sleep(15);
+                Assert.AreEqual(1, scheduler.CurrentWorkerThreadCount);
+            }
+        }
+
+        [Test]
+        public void ResponderWorkerScheduler_CurrentWorkerThreadCount_increased_then_decreased_then_increased()
+        {
+            using (var scheduler = new ResponderWorkerScheduler(0, 1) { MaxIdleTime = TimeSpan.FromMilliseconds(1) })
+            {
+                var worker1 = new TestWorker(30);
+                scheduler.AddWorker(worker1, new TestMessage(), null);
+
+                worker1.WaitStarted(Timeout);
+                Assert.AreEqual(1, scheduler.CurrentWorkerThreadCount);
+
+                worker1.WaitCompleted(Timeout);
+                Thread.Sleep(10);
+                Assert.AreEqual(0, scheduler.CurrentWorkerThreadCount);
+
+                var worker2 = new TestWorker(30);
+                scheduler.AddWorker(worker2, new TestMessage(), null);
+
+                worker2.WaitStarted(Timeout);
+                Assert.AreEqual(1, scheduler.CurrentWorkerThreadCount);
+            }
+        }
+
+        [Test]
+        public void ResponderWorkerScheduler_CurrentWorkerThreadCount_increased_twice()
+        {
+            using (var scheduler = new ResponderWorkerScheduler(0, 2) { MaxIdleTime = TimeSpan.FromMilliseconds(30) })
+            {
+                Assert.AreEqual(0, scheduler.CurrentWorkerThreadCount);
+
+                var worker1 = new TestWorker(10);
+                scheduler.AddWorker(worker1, new TestMessage(), null);
+                worker1.WaitStarted(Timeout);
+                Assert.AreEqual(1, scheduler.CurrentWorkerThreadCount);
+
+                var worker2 = new TestWorker(10);
+                scheduler.AddWorker(worker2, new TestMessage(), null);
+                worker2.WaitStarted(Timeout);
+                Assert.AreEqual(2, scheduler.CurrentWorkerThreadCount);
             }
         }
     }
