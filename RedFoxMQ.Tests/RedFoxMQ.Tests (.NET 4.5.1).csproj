@@ -55,6 +55,8 @@
     <Compile Include="Benchmarks\TcpPublisherSubscriberBenchmarks.cs" />
     <Compile Include="MessageFrameReaderFactoryTests.cs" />
     <Compile Include="MessageFrameWriterFactoryTests.cs" />
+    <Compile Include="RequesterTests.cs" />
+    <Compile Include="SubscriberTests.cs" />
     <Compile Include="TimeSpanExtensionsTests.cs" />
     <Compile Include="CounterSignalTests.cs" />
     <Compile Include="MessageFromCreatorTests.cs" />

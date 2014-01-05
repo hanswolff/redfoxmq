@@ -241,6 +241,37 @@ namespace RedFoxMQ.Tests
             }
         }
 
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Requester_IsDisconnected_should_be_false_when_connected(RedFoxTransport transport)
+        {
+            using (var responder = TestHelpers.CreateTestResponder())
+            using (var requester = new Requester())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+                responder.Bind(endpoint);
+                requester.Connect(endpoint);
+
+                Assert.IsFalse(requester.IsDisconnected);
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Requester_IsDisconnected_should_be_true_when_disconnected(RedFoxTransport transport)
+        {
+            using (var responder = TestHelpers.CreateTestResponder())
+            using (var requester = new Requester())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+                responder.Bind(endpoint);
+                requester.Connect(endpoint);
+                requester.Disconnect();
+
+                Assert.IsTrue(requester.IsDisconnected);
+            }
+        }
+
         [SetUp]
         public void Setup()
         {

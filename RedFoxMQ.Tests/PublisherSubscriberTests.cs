@@ -223,6 +223,37 @@ namespace RedFoxMQ.Tests
 
         [TestCase(RedFoxTransport.Inproc)]
         [TestCase(RedFoxTransport.Tcp)]
+        public void Subscriber_IsDisconnected_should_be_false_when_connected(RedFoxTransport transport)
+        {
+            using (var publisher = new Publisher())
+            using (var subscriber = new TestSubscriber())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+                publisher.Bind(endpoint);
+                subscriber.Connect(endpoint);
+
+                Assert.IsFalse(subscriber.IsDisconnected);
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Subscriber_IsDisconnected_should_be_true_when_disconnected(RedFoxTransport transport)
+        {
+            using (var publisher = new Publisher())
+            using (var subscriber = new TestSubscriber())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+                publisher.Bind(endpoint);
+                subscriber.Connect(endpoint);
+                subscriber.Disconnect();
+
+                Assert.IsTrue(subscriber.IsDisconnected);
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
         public void one_subscriber_connects_to_one_publisher_receives_message_then_second_subscriber_connects_both_receive_message(RedFoxTransport transport)
         {
             using (var publisher = new Publisher())

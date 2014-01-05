@@ -36,7 +36,14 @@ namespace RedFoxMQ
         private IMessageFrameWriter _messageFrameWriter;
         private MessageReceiveLoop _messageReceiveLoop;
 
-        public bool IsDisconnected { get { return _socket.IsDisconnected; } }
+        public bool IsDisconnected
+        {
+            get
+            {
+                var socket = _socket;
+                return socket == null || socket.IsDisconnected;
+            }
+        }
 
         public event DisconnectedDelegate Disconnected = () => { };
 
