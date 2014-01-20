@@ -18,21 +18,12 @@ using System;
 
 namespace RedFoxMQ
 {
-    public class MissingMessageSerializerException : MessageSerializationException
+    static class PlatformHelpers
     {
-        public MissingMessageSerializerException()
-            : base(String.Format("No message serializer defined for message"))
+        public static bool IsLinux()
         {
-        }
-
-        public MissingMessageSerializerException(int messageTypeId)
-            : base(String.Format("No message serializer defined for message type ID {0}", messageTypeId))
-        {
-        }
-
-        public MissingMessageSerializerException(int messageTypeId, Type messageType)
-            : base(String.Format("No message serializer defined for message type ID {0} (message type: {1})", messageTypeId, messageType))
-        {
+            var p = (int)Environment.OSVersion.Platform;
+            return (p == 4) || (p == 6) || (p == 128);
         }
     }
 }

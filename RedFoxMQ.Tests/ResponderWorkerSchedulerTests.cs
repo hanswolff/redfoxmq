@@ -69,6 +69,11 @@ namespace RedFoxMQ.Tests
         [Test]
         public void ResponderWorkerScheduler_many_MinThreads_created_but_should_be_idle()
         {
+            if (PlatformHelpers.IsLinux())
+            {
+                Assert.Inconclusive("This test is not designed to run on Linux");
+            }
+
             var minThreads = Environment.ProcessorCount * 4;
             using (var scheduler = new ResponderWorkerScheduler(minThreads, minThreads))
             {

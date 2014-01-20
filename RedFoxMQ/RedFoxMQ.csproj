@@ -57,6 +57,7 @@
     <Compile Include="MessageFrameWriterFactory.cs" />
     <Compile Include="MessageFrameReaderFactory.cs" />
     <Compile Include="IMessageFrameReader.cs" />
+    <Compile Include="PlatformHelpers.cs" />
     <Compile Include="ResponderWorker.cs" />
     <Compile Include="IResponderWorkerWithState.cs" />
     <Compile Include="ResponderWorkerFactory.cs" />

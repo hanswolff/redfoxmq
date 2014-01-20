@@ -123,7 +123,8 @@ namespace RedFoxMQ
             }
             else
             {
-                if (!reference.TryGetTarget(out mem))
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                if (!reference.TryGetTarget(out mem) || mem == null) // Mono issue workaround: check for mem == null
                 {
                     mem = new MemoryStream(sendBufferSize);
                     reference.SetTarget(mem);
@@ -184,7 +185,7 @@ namespace RedFoxMQ
 
             WeakReference<MemoryStream> reference;
             var mem = GetOrCreateMemoryStream(sendBufferSize, out reference);
-            
+
             try
             {
                 foreach (var messageFrame in messageFrames)
