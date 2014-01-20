@@ -127,7 +127,7 @@ namespace RedFoxMQ
                 if (!reference.TryGetTarget(out mem) || mem == null) // Mono issue workaround: check for mem == null
                 {
                     mem = new MemoryStream(sendBufferSize);
-                    reference.SetTarget(mem);
+                    reference = new WeakReference<MemoryStream>(mem);
                 }
             }
             return mem;
