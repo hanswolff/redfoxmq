@@ -52,11 +52,14 @@
     <Compile Include="IResponder.cs" />
     <Compile Include="IReceiveMessage.cs" />
     <Compile Include="ISendMessage.cs" />
+    <Compile Include="RedFoxProtocolException.cs" />
     <Compile Include="MessageFrameQueueReader.cs" />
     <Compile Include="MessageFrameQueueWriter.cs" />
     <Compile Include="MessageFrameWriterFactory.cs" />
     <Compile Include="MessageFrameReaderFactory.cs" />
     <Compile Include="IMessageFrameReader.cs" />
+    <Compile Include="NodeGreetingMessage.cs" />
+    <Compile Include="NodeType.cs" />
     <Compile Include="PlatformHelpers.cs" />
     <Compile Include="ResponderWorker.cs" />
     <Compile Include="IResponderWorkerWithState.cs" />
