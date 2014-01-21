@@ -29,16 +29,16 @@ namespace RedFoxMQ
             NodeType = nodeType;
         }
 
-        public static NodeGreetingMessage Deserialize(byte[] buffer)
+        public static NodeGreetingMessage DeserializeWithoutLength(byte[] buffer, int offset = 0)
         {
             if (buffer == null) throw new ArgumentNullException("buffer");
             if (buffer.Length < 2) 
                 throw new RedFoxProtocolException(String.Format("Protocol header (excluding size) must have at least 2 bytes payload but had only {0} bytes", buffer.Length));
 
-            if (buffer[0] != ProtocolVersion)
+            if (buffer[offset] != ProtocolVersion)
                 throw new RedFoxProtocolException(String.Format("Protocol version {0} is not supported (expected {1})", buffer[0], ProtocolVersion));
 
-            var message = new NodeGreetingMessage((NodeType)buffer[1]);
+            var message = new NodeGreetingMessage((NodeType)buffer[offset + 1]);
             return message;
         }
 
