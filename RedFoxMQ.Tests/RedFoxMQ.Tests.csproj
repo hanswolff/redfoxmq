@@ -55,6 +55,7 @@
     <Compile Include="Benchmarks\TcpPublisherSubscriberBenchmarks.cs" />
     <Compile Include="MessageFrameReaderFactoryTests.cs" />
     <Compile Include="MessageFrameWriterFactoryTests.cs" />
+    <Compile Include="NodeGreetingMessageNegotiatorTests.cs" />
     <Compile Include="NodeGreetingMessageTests.cs" />
     <Compile Include="RequesterTests.cs" />
     <Compile Include="SubscriberTests.cs" />
