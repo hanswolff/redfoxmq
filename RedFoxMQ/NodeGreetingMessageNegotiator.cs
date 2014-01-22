@@ -32,13 +32,46 @@ namespace RedFoxMQ
             _streamSocket = streamSocket;
         }
 
+        public void WriteGreeting(NodeGreetingMessage greetingMessage)
+        {
+            var serialized = greetingMessage.Serialize();
+            _streamSocket.Write(serialized, 0, serialized.Length);
+        }
+
         public async Task WriteGreetingAsync(NodeGreetingMessage greetingMessage, CancellationToken cancellationToken)
         {
             var serialized = greetingMessage.Serialize();
             await _streamSocket.WriteAsync(serialized, 0, serialized.Length, cancellationToken);
         }
 
-        public async Task VerifyRemoteGreeting(NodeType expectedNodeType, CancellationToken cancellationToken)
+        public void VerifyRemoteGreeting(NodeType expectedNodeType)
+        {
+            var remoteGreeting = ReadGreeting();
+            if (remoteGreeting.NodeType != expectedNodeType)
+                throw new RedFoxProtocolException(
+                    String.Format("Remote greeting node type was {0} but expected node type is {1}", remoteGreeting.NodeType, expectedNodeType));
+        }
+
+        private NodeGreetingMessage ReadGreeting()
+        {
+            var read = _streamSocket.Read(_singleByteBuffer, 0, 1);
+            if (read == 0) throw new RedFoxProtocolException("Error receiving greeting message from remote machine");
+
+            var headerLength = _singleByteBuffer[0];
+            var header = new byte[headerLength];
+
+            var offset = 0;
+            while (headerLength - offset > 0)
+            {
+                read = _streamSocket.Read(header, offset, headerLength - offset);
+                if (read == 0) throw new RedFoxProtocolException("Error receiving greeting message from remote machine");
+                offset += read;
+            }
+
+            return NodeGreetingMessage.DeserializeWithoutLength(header);
+        }
+
+        public async Task VerifyRemoteGreetingAsync(NodeType expectedNodeType, CancellationToken cancellationToken)
         {
             var remoteGreeting = await ReadGreetingAsync(cancellationToken);
             if (remoteGreeting.NodeType != expectedNodeType)

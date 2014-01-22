@@ -25,6 +25,21 @@ namespace RedFoxMQ.Tests
     public class NodeGreetingMessageNegotiatorTests
     {
         [Test]
+        public void WriteGreeting_writes_full_NodeGreetingMessage()
+        {
+            using (var mem = new MemoryStream())
+            using (var socket = new TestStreamSocket(mem))
+            {
+                var negotiator = new NodeGreetingMessageNegotiator(socket);
+
+                var message = new NodeGreetingMessage(NodeType.Responder);
+                negotiator.WriteGreeting(message);
+
+                Assert.AreEqual(message.Serialize(), mem.ToArray());
+            }
+        }
+
+        [Test]
         public void WriteGreetingAsync_writes_full_NodeGreetingMessage()
         {
             using (var mem = new MemoryStream())
@@ -51,12 +66,44 @@ namespace RedFoxMQ.Tests
                 mem.Write(message.Serialize(), 0, message.Serialize().Length);
                 mem.Position = 0;
 
-                negotiator.VerifyRemoteGreeting(NodeType.Responder, CancellationToken.None).Wait();
+                negotiator.VerifyRemoteGreeting(NodeType.Responder);
             }
         }
 
         [Test]
-        public async Task VerifyRemoteGreeting_not_matching_expected_NodeType()
+        public void VerifyRemoteGreeting_not_matching_expected_NodeType()
+        {
+            using (var mem = new MemoryStream())
+            using (var socket = new TestStreamSocket(mem))
+            {
+                var negotiator = new NodeGreetingMessageNegotiator(socket);
+
+                var message = new NodeGreetingMessage(NodeType.Responder);
+                mem.Write(message.Serialize(), 0, message.Serialize().Length);
+                mem.Position = 0;
+
+                Assert.Throws<RedFoxProtocolException>(() => negotiator.VerifyRemoteGreeting(NodeType.Requester));
+            }
+        }
+
+        [Test]
+        public void VerifyRemoteGreetingAsync_matching_expected_NodeType()
+        {
+            using (var mem = new MemoryStream())
+            using (var socket = new TestStreamSocket(mem))
+            {
+                var negotiator = new NodeGreetingMessageNegotiator(socket);
+
+                var message = new NodeGreetingMessage(NodeType.Responder);
+                mem.Write(message.Serialize(), 0, message.Serialize().Length);
+                mem.Position = 0;
+
+                negotiator.VerifyRemoteGreetingAsync(NodeType.Responder, CancellationToken.None).Wait();
+            }
+        }
+
+        [Test]
+        public async Task VerifyRemoteGreetingAsync_not_matching_expected_NodeType()
         {
             using (var mem = new MemoryStream())
             using (var socket = new TestStreamSocket(mem))
@@ -69,7 +116,7 @@ namespace RedFoxMQ.Tests
 
                 try
                 {
-                    await negotiator.VerifyRemoteGreeting(NodeType.Requester, CancellationToken.None);
+                    await negotiator.VerifyRemoteGreetingAsync(NodeType.Requester, CancellationToken.None);
                     Assert.Fail();
                 }
                 catch (RedFoxProtocolException)
