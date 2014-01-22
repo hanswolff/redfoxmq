@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
 // limitations under the License.
 // 
 
-using System.Threading;
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using System;
+using System.Threading;
 
 namespace RedFoxMQ.Tests
 {
