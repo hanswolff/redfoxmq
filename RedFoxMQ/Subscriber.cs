@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ namespace RedFoxMQ
     public class Subscriber : ISubscriber
     {
         private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
+        private static readonly NodeGreetingMessageVerifier NodeGreetingMessageVerifier = new NodeGreetingMessageVerifier(NodeType.Subscriber, NodeType.Publisher);
         private static readonly SocketFactory SocketFactory = new SocketFactory();
 
         private CancellationTokenSource _cts = new CancellationTokenSource();
@@ -72,6 +73,8 @@ namespace RedFoxMQ
 
             _socket = SocketFactory.CreateAndConnectAsync(endpoint, socketConfiguration);
             _socket.Disconnected += SocketDisconnected;
+
+            NodeGreetingMessageVerifier.SendReceiveAndVerify(_socket, socketConfiguration.ConnectTimeout).Wait();
 
             if (!_cts.IsCancellationRequested)
             {

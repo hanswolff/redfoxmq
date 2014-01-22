@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,8 +24,9 @@ namespace RedFoxMQ
 {
     public class Publisher : IPublisher
     {
-        private static readonly SocketAccepterFactory SocketAccepterFactory = new SocketAccepterFactory();
         private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
+        private static readonly NodeGreetingMessageVerifier NodeGreetingMessageVerifier = new NodeGreetingMessageVerifier(NodeType.Publisher, NodeType.Subscriber);
+        private static readonly SocketAccepterFactory SocketAccepterFactory = new SocketAccepterFactory();
 
         private readonly ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter> _servers;
         private readonly ConcurrentDictionary<ISocket, MessageQueueReceiveLoop> _broadcastSockets;
@@ -56,6 +57,8 @@ namespace RedFoxMQ
         private void OnClientConnected(ISocket socket, ISocketConfiguration socketConfiguration)
         {
             if (socket == null) throw new ArgumentNullException("socket");
+
+            NodeGreetingMessageVerifier.SendReceiveAndVerify(socket, socketConfiguration.ConnectTimeout).Wait();
 
             var messageFrameWriter = MessageFrameWriterFactory.CreateWriterFromSocket(socket);
             var messageQueue = new MessageQueue(socketConfiguration.SendBufferSize);

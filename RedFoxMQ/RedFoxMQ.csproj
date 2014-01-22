@@ -53,6 +53,7 @@
     <Compile Include="IReceiveMessage.cs" />
     <Compile Include="ISendMessage.cs" />
     <Compile Include="INodeGreetingMessageNegotiator.cs" />
+    <Compile Include="NodeGreetingMessageVerifier.cs" />
     <Compile Include="NodeGreetingMessageNegotiatorFactory.cs" />
     <Compile Include="NodeGreetingMessageQueueSocketNegotiator.cs" />
     <Compile Include="NodeGreetingMessageStreamSocketNegotiator.cs" />

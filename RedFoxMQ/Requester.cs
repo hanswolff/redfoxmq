@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,10 +24,8 @@ namespace RedFoxMQ
     public class Requester : IRequester
     {
         private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
-        private static readonly NodeGreetingMessageNegotiatorFactory NodeGreetingMessageNegotiatorFactory = new NodeGreetingMessageNegotiatorFactory();
+        private static readonly NodeGreetingMessageVerifier NodeGreetingMessageVerifier = new NodeGreetingMessageVerifier(NodeType.Requester, NodeType.Responder);
         private static readonly SocketFactory SocketFactory = new SocketFactory();
-
-        private readonly NodeGreetingMessage _greetingMessage = new NodeGreetingMessage(NodeType.Requester);
 
         private IMessageFrameWriter _messageFrameWriter;
         private MessageFrameReceiver _messageFrameReceiver;
@@ -69,9 +67,7 @@ namespace RedFoxMQ
             _socket = SocketFactory.CreateAndConnectAsync(endpoint, socketConfiguration);
             _socket.Disconnected += SocketDisconnected;
 
-            //var greetingMessageNegotiator = NodeGreetingMessageNegotiatorFactory.CreateFromSocket(_socket);
-            //greetingMessageNegotiator.WriteGreeting(_greetingMessage);
-            //greetingMessageNegotiator.VerifyRemoteGreeting(NodeType.Responder);
+            NodeGreetingMessageVerifier.SendReceiveAndVerify(_socket, socketConfiguration.ConnectTimeout).Wait();
 
             if (!_cts.IsCancellationRequested)
             {
