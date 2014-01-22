@@ -24,7 +24,10 @@ namespace RedFoxMQ
     public class Requester : IRequester
     {
         private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
+        private static readonly NodeGreetingMessageNegotiatorFactory NodeGreetingMessageNegotiatorFactory = new NodeGreetingMessageNegotiatorFactory();
         private static readonly SocketFactory SocketFactory = new SocketFactory();
+
+        private readonly NodeGreetingMessage _greetingMessage = new NodeGreetingMessage(NodeType.Requester);
 
         private IMessageFrameWriter _messageFrameWriter;
         private MessageFrameReceiver _messageFrameReceiver;
@@ -65,6 +68,10 @@ namespace RedFoxMQ
 
             _socket = SocketFactory.CreateAndConnectAsync(endpoint, socketConfiguration);
             _socket.Disconnected += SocketDisconnected;
+
+            //var greetingMessageNegotiator = NodeGreetingMessageNegotiatorFactory.CreateFromSocket(_socket);
+            //greetingMessageNegotiator.WriteGreeting(_greetingMessage);
+            //greetingMessageNegotiator.VerifyRemoteGreeting(NodeType.Responder);
 
             if (!_cts.IsCancellationRequested)
             {

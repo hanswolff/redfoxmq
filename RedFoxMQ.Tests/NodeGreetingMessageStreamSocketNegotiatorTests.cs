@@ -22,7 +22,7 @@ using System.Threading.Tasks;
 namespace RedFoxMQ.Tests
 {
     [TestFixture]
-    public class NodeGreetingMessageNegotiatorTests
+    public class NodeGreetingMessageStreamSocketNegotiatorTests
     {
         [Test]
         public void WriteGreeting_writes_full_NodeGreetingMessage()
@@ -30,7 +30,7 @@ namespace RedFoxMQ.Tests
             using (var mem = new MemoryStream())
             using (var socket = new TestStreamSocket(mem))
             {
-                var negotiator = new NodeGreetingMessageNegotiator(socket);
+                var negotiator = new NodeGreetingMessageStreamSocketNegotiator(socket);
 
                 var message = new NodeGreetingMessage(NodeType.Responder);
                 negotiator.WriteGreeting(message);
@@ -45,7 +45,7 @@ namespace RedFoxMQ.Tests
             using (var mem = new MemoryStream())
             using (var socket = new TestStreamSocket(mem))
             {
-                var negotiator = new NodeGreetingMessageNegotiator(socket);
+                var negotiator = new NodeGreetingMessageStreamSocketNegotiator(socket);
 
                 var message = new NodeGreetingMessage(NodeType.Responder);
                 negotiator.WriteGreetingAsync(message, CancellationToken.None).Wait();
@@ -60,7 +60,7 @@ namespace RedFoxMQ.Tests
             using (var mem = new MemoryStream())
             using (var socket = new TestStreamSocket(mem))
             {
-                var negotiator = new NodeGreetingMessageNegotiator(socket);
+                var negotiator = new NodeGreetingMessageStreamSocketNegotiator(socket);
 
                 var message = new NodeGreetingMessage(NodeType.Responder);
                 mem.Write(message.Serialize(), 0, message.Serialize().Length);
@@ -76,7 +76,7 @@ namespace RedFoxMQ.Tests
             using (var mem = new MemoryStream())
             using (var socket = new TestStreamSocket(mem))
             {
-                var negotiator = new NodeGreetingMessageNegotiator(socket);
+                var negotiator = new NodeGreetingMessageStreamSocketNegotiator(socket);
 
                 var message = new NodeGreetingMessage(NodeType.Responder);
                 mem.Write(message.Serialize(), 0, message.Serialize().Length);
@@ -92,7 +92,7 @@ namespace RedFoxMQ.Tests
             using (var mem = new MemoryStream())
             using (var socket = new TestStreamSocket(mem))
             {
-                var negotiator = new NodeGreetingMessageNegotiator(socket);
+                var negotiator = new NodeGreetingMessageStreamSocketNegotiator(socket);
 
                 var message = new NodeGreetingMessage(NodeType.Responder);
                 mem.Write(message.Serialize(), 0, message.Serialize().Length);
@@ -108,7 +108,7 @@ namespace RedFoxMQ.Tests
             using (var mem = new MemoryStream())
             using (var socket = new TestStreamSocket(mem))
             {
-                var negotiator = new NodeGreetingMessageNegotiator(socket);
+                var negotiator = new NodeGreetingMessageStreamSocketNegotiator(socket);
 
                 var message = new NodeGreetingMessage(NodeType.Responder);
                 mem.Write(message.Serialize(), 0, message.Serialize().Length);

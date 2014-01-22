@@ -21,12 +21,12 @@ using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
-    class NodeGreetingMessageNegotiator
+    class NodeGreetingMessageStreamSocketNegotiator : INodeGreetingMessageNegotiator
     {
         private readonly IStreamSocket _streamSocket;
         private readonly byte[] _singleByteBuffer = new byte[1];
 
-        public NodeGreetingMessageNegotiator(IStreamSocket streamSocket)
+        public NodeGreetingMessageStreamSocketNegotiator(IStreamSocket streamSocket)
         {
             if (streamSocket == null) throw new ArgumentNullException("streamSocket");
             _streamSocket = streamSocket;

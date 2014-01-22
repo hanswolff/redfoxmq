@@ -52,7 +52,10 @@
     <Compile Include="IResponder.cs" />
     <Compile Include="IReceiveMessage.cs" />
     <Compile Include="ISendMessage.cs" />
-    <Compile Include="NodeGreetingMessageNegotiator.cs" />
+    <Compile Include="INodeGreetingMessageNegotiator.cs" />
+    <Compile Include="NodeGreetingMessageNegotiatorFactory.cs" />
+    <Compile Include="NodeGreetingMessageQueueSocketNegotiator.cs" />
+    <Compile Include="NodeGreetingMessageStreamSocketNegotiator.cs" />
     <Compile Include="RedFoxProtocolException.cs" />
     <Compile Include="MessageFrameQueueReader.cs" />
     <Compile Include="MessageFrameQueueWriter.cs" />
