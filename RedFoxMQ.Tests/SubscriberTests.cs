@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
 // 
 
 using NUnit.Framework;
+using RedFoxMQ.Transports;
+using System;
+using System.Linq;
 
 namespace RedFoxMQ.Tests
 {
@@ -27,6 +30,29 @@ namespace RedFoxMQ.Tests
             using (var subscriber = new Subscriber())
             {
                 Assert.IsTrue(subscriber.IsDisconnected);
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        [ExpectedException(typeof(RedFoxProtocolException))]
+        public void Subscribe_to_Responder_should_cause_protocol_exception(RedFoxTransport transport)
+        {
+            using (var publisher = TestHelpers.CreateTestResponder())
+            using (var subscriber = new TestSubscriber())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+
+                publisher.Bind(endpoint);
+
+                try
+                {
+                    subscriber.Connect(endpoint);
+                }
+                catch (AggregateException ex)
+                {
+                    throw ex.InnerExceptions.First();
+                }
             }
         }
     }

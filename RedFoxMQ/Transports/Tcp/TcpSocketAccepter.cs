@@ -117,6 +117,7 @@ namespace RedFoxMQ.Transports.Tcp
             }
             catch
             {
+                // TODO: log exception somewhere
                 return false;
             }
         }

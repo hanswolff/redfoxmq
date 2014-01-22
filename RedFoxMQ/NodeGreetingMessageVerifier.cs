@@ -41,6 +41,7 @@ namespace RedFoxMQ
             var taskWriteGreeting = greetingMessageNegotiator.WriteGreetingAsync(_greetingMessage, cancellationTokenSource.Token);
 
             var taskReadGreeting = greetingMessageNegotiator.VerifyRemoteGreetingAsync(_expectedRemoteNodeType, cancellationTokenSource.Token);
+
             await Task.WhenAll(taskWriteGreeting, taskReadGreeting);
         }
     }

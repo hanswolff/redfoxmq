@@ -121,7 +121,8 @@ namespace RedFoxMQ
             var socket = Interlocked.Exchange(ref _socket, null);
             if (socket == null) return;
 
-            _messageReceiveLoop.Dispose();
+            var messageReceiveLoop = _messageReceiveLoop;
+            if (messageReceiveLoop != null) messageReceiveLoop.Dispose();
 
             socket.Disconnect();
         }
