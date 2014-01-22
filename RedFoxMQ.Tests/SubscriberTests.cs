@@ -38,12 +38,12 @@ namespace RedFoxMQ.Tests
         [ExpectedException(typeof(RedFoxProtocolException))]
         public void Subscribe_to_Responder_should_cause_protocol_exception(RedFoxTransport transport)
         {
-            using (var publisher = TestHelpers.CreateTestResponder())
+            using (var responder = TestHelpers.CreateTestResponder())
             using (var subscriber = new TestSubscriber())
             {
                 var endpoint = TestHelpers.CreateEndpointForTransport(transport);
 
-                publisher.Bind(endpoint);
+                responder.Bind(endpoint);
 
                 try
                 {
