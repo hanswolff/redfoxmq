@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,6 +34,16 @@ namespace RedFoxMQ.Tests
             var testMessage = obj as TestMessage;
             if (testMessage == null) return false;
             return Text == testMessage.Text;
+        }
+
+        protected bool Equals(TestMessage other)
+        {
+            return string.Equals(Text, other.Text);
+        }
+
+        public override int GetHashCode()
+        {
+            return (Text != null ? Text.GetHashCode() : 0);
         }
     }
 }
