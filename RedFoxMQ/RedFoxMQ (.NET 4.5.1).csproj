@@ -50,6 +50,7 @@
     <Compile Include="IMessageFrameWriter.cs" />
     <Compile Include="IMessageSerialization.cs" />
     <Compile Include="InterlockedBoolean.cs" />
+    <Compile Include="IServiceQueueWriter.cs" />
     <Compile Include="IServiceQueue.cs" />
     <Compile Include="IPublisher.cs" />
     <Compile Include="IRequester.cs" />

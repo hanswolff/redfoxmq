@@ -14,12 +14,12 @@
 // limitations under the License.
 // 
 
-using System.Threading.Tasks;
 using RedFoxMQ.Transports;
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
@@ -38,6 +38,8 @@ namespace RedFoxMQ
         public event ClientConnectedDelegate ClientConnected = (socket, socketConfig) => { };
         public event ClientDisconnectedDelegate ClientDisconnected = socket => { };
         public event MessageFrameReceivedDelegate MessageFrameReceived = m => { };
+
+        public int MessageFramesCount { get { return _queueMessageFrames.Count; } }
 
         public ServiceQueue()
         {
@@ -98,7 +100,7 @@ namespace RedFoxMQ
         {
             var messageFrameReceiver = new MessageFrameReceiver(socket);
             messageFrameReceiver.Disconnected += () => WriterSocketDisconnected(socket);
-            ReceiveAsync(messageFrameReceiver);
+            var task = ReceiveAsync(messageFrameReceiver, _disposedToken);
 
             if (_writerClientSockets.TryAdd(socket, messageFrameReceiver))
             {
@@ -106,13 +108,14 @@ namespace RedFoxMQ
             }
         }
 
-        private async Task<MessageFrame> ReceiveAsync(MessageFrameReceiver messageFrameReceiver)
+        private async Task ReceiveAsync(MessageFrameReceiver messageFrameReceiver, CancellationToken cancellationToken)
         {
-            var task = messageFrameReceiver.ReceiveAsync(_disposedToken);
+            var task = messageFrameReceiver.ReceiveAsync(cancellationToken);
             var messageFrame = await task;
+            _queueMessageFrames.Enqueue(messageFrame);
             MessageFrameReceived(messageFrame);
-            ReceiveAsync(messageFrameReceiver);
-            return messageFrame;
+
+            var newTask = ReceiveAsync(messageFrameReceiver, cancellationToken);
         }
 
         private void MessageReceiveLoopOnException(ISocket socket, Exception exception)

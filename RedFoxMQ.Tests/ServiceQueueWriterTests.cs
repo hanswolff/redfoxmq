@@ -26,7 +26,29 @@ namespace RedFoxMQ.Tests
     public class ServiceQueueWriterTests
     {
         [Test]
-        public void ServiceQueue_single_message_received()
+        public void ServiceQueue_single_message_sent_MessageFramesCount_is_one()
+        {
+            using (var serviceQueue = new ServiceQueue())
+            using (var writer = new ServiceQueueWriter())
+            {
+                var endpoint = new RedFoxEndpoint("/path");
+
+                var received = new ManualResetEventSlim();
+                serviceQueue.MessageFrameReceived += m => received.Set();
+
+                serviceQueue.Bind(endpoint);
+                writer.Connect(endpoint);
+
+                Assert.AreEqual(0, serviceQueue.MessageFramesCount);
+                writer.SendMessage(new TestMessage());
+
+                Assert.IsTrue(received.Wait(TimeSpan.FromSeconds(1)));
+                Assert.AreEqual(1, serviceQueue.MessageFramesCount);
+            }
+        }
+
+        [Test]
+        public void ServiceQueue_single_message_received_fires_MessageFrameReceived_event()
         {
             using (var serviceQueue = new ServiceQueue())
             using (var writer = new ServiceQueueWriter())

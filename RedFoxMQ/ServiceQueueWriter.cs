@@ -20,7 +20,7 @@ using System.Threading;
 
 namespace RedFoxMQ
 {
-    class ServiceQueueWriter : ISubscriber
+    class ServiceQueueWriter : IServiceQueueWriter
     {
         private static readonly NodeGreetingMessageVerifier NodeGreetingMessageVerifier = new NodeGreetingMessageVerifier(NodeType.ServiceQueueWriter, NodeType.ServiceQueue);
         private static readonly SocketFactory SocketFactory = new SocketFactory();
@@ -37,7 +37,6 @@ namespace RedFoxMQ
         }
 
         private IMessageFrameWriter _messageFrameWriter;
-        private MessageReceiveLoop _messageReceiveLoop;
 
         public bool IsDisconnected
         {
@@ -49,9 +48,6 @@ namespace RedFoxMQ
         }
 
         public event DisconnectedDelegate Disconnected = () => { };
-
-        public event MessageReceivedDelegate MessageReceived = message => { };
-        public event SocketExceptionDelegate ResponseException = (socket, exception) => { };
 
         public ServiceQueueWriter()
             : this(DefaultMessageSerialization.Instance)
@@ -95,20 +91,7 @@ namespace RedFoxMQ
             if (!_cts.IsCancellationRequested)
             {
                 _messageFrameWriter = MessageFrameWriterFactory.CreateWriterFromSocket(_socket);
-
-                _messageReceiveLoop = new MessageReceiveLoop(_messageSerialization, _socket);
-                _messageReceiveLoop.MessageReceived += m => MessageReceived(m);
-                _messageReceiveLoop.OnException += MessageReceiveLoopOnException;
-                _messageReceiveLoop.Start();
             }
-        }
-
-        private void MessageReceiveLoopOnException(ISocket socket, Exception exception)
-        {
-            try { ResponseException(socket, exception); }
-            catch { }
-
-            socket.Disconnect();
         }
 
         private readonly object _sendLock = new object();
@@ -136,9 +119,6 @@ namespace RedFoxMQ
         {
             var socket = Interlocked.Exchange(ref _socket, null);
             if (socket == null) return;
-
-            var messageReceiveLoop = _messageReceiveLoop;
-            if (messageReceiveLoop != null) messageReceiveLoop.Dispose();
 
             socket.Disconnect();
         }
