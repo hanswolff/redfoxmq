@@ -18,6 +18,9 @@ using System;
 
 namespace RedFoxMQ
 {
+    /// <summary>
+    /// Exception that is thrown when a message could not be serialized
+    /// </summary>
     public class MessageSerializationException : RedFoxBaseException
     {
         private const string DefaultMessage = "Error serializing message";

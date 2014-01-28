@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,10 @@ using System;
 
 namespace RedFoxMQ
 {
+    /// <summary>
+    /// Exception that is thrown when the protocol or expected node type
+    /// of a connecting node does not match
+    /// </summary>
     public class RedFoxProtocolException : RedFoxBaseException
     {
         private const string DefaultMessage = "RedFoxMQ Message Protocol Error";

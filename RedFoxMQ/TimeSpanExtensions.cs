@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,11 @@ namespace RedFoxMQ
     {
         private static readonly TimeSpan Infinite = TimeSpan.FromMilliseconds(-1);
 
+        /// <summary>
+        /// Converts a TimeSpan to milliseconds (also returns 0 if time span is -1 millis)
+        /// </summary>
+        /// <param name="timeSpan"></param>
+        /// <returns>returns the number of millis in TimeSpan (or returns 0 if time span is -1 millis)</returns>
         public static int ToMillisOrZero(this TimeSpan timeSpan)
         {
             if (timeSpan == Infinite) return 0;

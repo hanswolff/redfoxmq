@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,10 @@ namespace RedFoxMQ
 {
     static class PlatformHelpers
     {
+        /// <summary>
+        /// Returns "true", if current platform is Linux
+        /// </summary>
+        /// <returns>"true", if current platform is Linux</returns>
         public static bool IsLinux()
         {
             var p = (int)Environment.OSVersion.Platform;

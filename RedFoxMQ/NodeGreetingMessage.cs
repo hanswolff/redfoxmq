@@ -18,6 +18,10 @@ using System;
 
 namespace RedFoxMQ
 {
+    /// <summary>
+    /// Message that is being send from each connecting node to 
+    /// identify it's node type (to avoid incompatible connections)
+    /// </summary>
     class NodeGreetingMessage
     {
         private const byte ProtocolVersion = 1;

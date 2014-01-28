@@ -16,6 +16,10 @@
 
 namespace RedFoxMQ
 {
+    /// <summary>
+    /// MessageSerialization which is used when no IMessageSerialization 
+    /// object is provided
+    /// </summary>
     public static class DefaultMessageSerialization
     {
         public static readonly MessageSerialization Instance = new MessageSerialization();
