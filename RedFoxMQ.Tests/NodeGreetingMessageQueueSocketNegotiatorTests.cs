@@ -77,7 +77,7 @@ namespace RedFoxMQ.Tests
             var message = new NodeGreetingMessage(NodeType.Responder);
             blockingQueue.Enqueue(new MessageFrame { RawMessage = message.Serialize() });
 
-            Assert.Throws<RedFoxProtocolException>(() => new HashSet<NodeType> { NodeType.Requester });
+            Assert.Throws<RedFoxProtocolException>(() => negotiator.VerifyRemoteGreeting(new HashSet<NodeType> { NodeType.Requester }));
         }
 
         [Test]
