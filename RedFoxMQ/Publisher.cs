@@ -30,7 +30,7 @@ namespace RedFoxMQ
         private readonly ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter> _servers;
         private readonly ConcurrentDictionary<ISocket, MessageQueueReceiveLoop> _broadcastSockets;
         private readonly MessageFrameCreator _messageFrameCreator;
-        private readonly MessageQueueProcessor _messageQueueProcessor = new MessageQueueProcessor();
+        private readonly MessageQueueBroadcaster _messageQueueBroadcaster = new MessageQueueBroadcaster();
         private readonly IMessageSerialization _messageSerialization;
 
         public event ClientConnectedDelegate ClientConnected = (socket, socketConfig) => { };
@@ -76,7 +76,7 @@ namespace RedFoxMQ
 
             if (_broadcastSockets.TryAdd(socket, new MessageQueueReceiveLoop(messageQueue, messageReceiveLoop)))
             {
-                _messageQueueProcessor.Register(messageQueue, messageFrameWriter);
+                _messageQueueBroadcaster.Register(messageQueue, messageFrameWriter);
                 messageReceiveLoop.MessageReceived += m => MessageReceived(m);
                 messageReceiveLoop.OnException += MessageReceiveLoopOnException;
                 ClientConnected(socket, socketConfiguration);
@@ -100,7 +100,7 @@ namespace RedFoxMQ
             MessageQueueReceiveLoop messageQueueReceiveLoop;
             if (_broadcastSockets.TryRemove(socket, out messageQueueReceiveLoop))
             {
-                _messageQueueProcessor.Unregister(messageQueueReceiveLoop.MessageQueue);
+                _messageQueueBroadcaster.Unregister(messageQueueReceiveLoop.MessageQueue);
                 messageQueueReceiveLoop.MessageReceiveLoop.Dispose();
                 ClientDisconnected(socket);
             }

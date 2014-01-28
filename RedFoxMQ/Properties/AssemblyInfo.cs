@@ -33,3 +33,4 @@ using System.Runtime.InteropServices;
 [assembly: Guid("3e6e1ac4-62fd-427d-85b4-12dea12cd706")]
 
 [assembly: InternalsVisibleTo("RedFoxMQ.Tests")]
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]

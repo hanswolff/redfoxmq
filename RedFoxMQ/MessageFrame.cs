@@ -22,13 +22,15 @@ namespace RedFoxMQ
 {
     public class MessageFrame : IEquatable<MessageFrame>
     {
+        private static readonly byte[] EmptyBytes = new byte[0];
+
         private const int SizeMessageTypeId = sizeof(ushort);
         private const int SizeLength = sizeof(int);
 
         public const int HeaderSize = SizeMessageTypeId + SizeLength;
 
         public ushort MessageTypeId;
-        public byte[] RawMessage;
+        public byte[] RawMessage = EmptyBytes;
 
         public bool Equals(MessageFrame other)
         {

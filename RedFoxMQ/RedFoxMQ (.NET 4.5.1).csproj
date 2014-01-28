@@ -82,7 +82,7 @@
     <Compile Include="MessageFrameCreator.cs" />
     <Compile Include="MessageFrameReceiver.cs" />
     <Compile Include="MessageQueue.cs" />
-    <Compile Include="MessageQueueProcessor.cs" />
+    <Compile Include="MessageQueueBroadcaster.cs" />
     <Compile Include="MessageReceiveLoop.cs" />
     <Compile Include="Responder.cs" />
     <Compile Include="Requester.cs" />
