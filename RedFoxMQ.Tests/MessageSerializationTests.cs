@@ -25,108 +25,96 @@ namespace RedFoxMQ.Tests
         [Test]
         public void no_serializer_defined_Serialize_throws_MissingMessageSerializerException()
         {
-            MessageSerialization.Instance.RemoveAllSerializers();
-            Assert.Throws<MissingMessageSerializerException>(() => MessageSerialization.Instance.Serialize(new TestMessage()));
+            var messageSerialization = new MessageSerialization();
+            Assert.Throws<MissingMessageSerializerException>(() => messageSerialization.Serialize(new TestMessage()));
         }
 
         [Test]
         public void serializer_defined_but_not_for_test_message_Serialize_throws_MissingMessageSerializerException()
         {
-            MessageSerialization.Instance.RemoveAllSerializers();
-            MessageSerialization.Instance.RegisterSerializer(0, new TestMessageSerializer());
+            var messageSerialization = new MessageSerialization();
+            messageSerialization.RegisterSerializer(0, new TestMessageSerializer());
 
-            Assert.Throws<MissingMessageSerializerException>(() => MessageSerialization.Instance.Serialize(new TestMessage()));
+            Assert.Throws<MissingMessageSerializerException>(() => messageSerialization.Serialize(new TestMessage()));
         }
 
         [Test]
         public void default_serializer_defined_but_no_specific_message_serializer_for_test_message_use_default_serializer()
         {
-            MessageSerialization.Instance.RemoveAllSerializers();
-            MessageSerialization.Instance.DefaultSerializer = new TestMessageSerializer();
+            var messageSerialization = new MessageSerialization
+            {
+                DefaultSerializer = new TestMessageSerializer()
+            };
 
-            Assert.AreEqual(Encoding.UTF8.GetBytes("abc"), MessageSerialization.Instance.Serialize(new TestMessage { Text = "abc" }));
+            Assert.AreEqual(Encoding.UTF8.GetBytes("abc"), messageSerialization.Serialize(new TestMessage { Text = "abc" }));
         }
 
         [Test]
         public void serializer_defined_for_test_message_Serialize_returns_serialized_object()
         {
-            MessageSerialization.Instance.RemoveAllSerializers();
-            MessageSerialization.Instance.RegisterSerializer(TestMessage.TypeId, new TestMessageSerializer());
+            var messageSerialization = new MessageSerialization();
+            messageSerialization.RegisterSerializer(TestMessage.TypeId, new TestMessageSerializer());
 
-            Assert.AreEqual(Encoding.UTF8.GetBytes("abc"), MessageSerialization.Instance.Serialize(new TestMessage { Text = "abc"}));
-        }
-
-        [Test]
-        public void RemoveAllSerializers_removes_serializers()
-        {
-            MessageSerialization.Instance.RegisterSerializer(TestMessage.TypeId, new TestMessageSerializer());
-            MessageSerialization.Instance.RemoveAllSerializers();
-
-            Assert.Throws<MissingMessageSerializerException>(() => MessageSerialization.Instance.Serialize(new TestMessage()));
+            Assert.AreEqual(Encoding.UTF8.GetBytes("abc"), messageSerialization.Serialize(new TestMessage { Text = "abc" }));
         }
 
         [Test]
         public void no_deserializer_defined_Deserialize_throws_MissingMessageDeserializerException()
         {
-            MessageSerialization.Instance.RemoveAllDeserializers();
-            Assert.Throws<MissingMessageDeserializerException>(() => MessageSerialization.Instance.Deserialize(TestMessage.TypeId, new byte[1]));
+            var messageSerialization = new MessageSerialization();
+            Assert.Throws<MissingMessageDeserializerException>(() => messageSerialization.Deserialize(TestMessage.TypeId, new byte[1]));
         }
 
         [Test]
         public void deserializer_defined_but_not_for_test_message_Deserialize_throws_MissingMessageDeserializerException()
         {
-            MessageSerialization.Instance.RemoveAllDeserializers();
-            MessageSerialization.Instance.RegisterDeserializer(TestMessage.TypeId, new TestMessageDeserializer());
+            var messageSerialization = new MessageSerialization();
+            messageSerialization.RegisterDeserializer(TestMessage.TypeId, new TestMessageDeserializer());
 
-            Assert.Throws<MissingMessageDeserializerException>(() => MessageSerialization.Instance.Deserialize(0, new byte[1]));
+            Assert.Throws<MissingMessageDeserializerException>(() => messageSerialization.Deserialize(0, new byte[1]));
         }
 
         [Test]
         public void default_deserializer_defined_but_no_specific_message_deserializer_for_test_message_use_default_deserializer()
         {
-            MessageSerialization.Instance.RemoveAllDeserializers();
-            MessageSerialization.Instance.DefaultDeserializer = new TestMessageDeserializer();
+            var messageSerialization = new MessageSerialization
+            {
+                DefaultDeserializer = new TestMessageDeserializer()
+            };
 
-            Assert.IsInstanceOf<TestMessage>(MessageSerialization.Instance.Deserialize(0, new byte[1]));
+            Assert.IsInstanceOf<TestMessage>(messageSerialization.Deserialize(0, new byte[1]));
         }
 
         [Test]
         public void deserializer_defined_for_test_message_Deserialize_creates_object()
         {
-            MessageSerialization.Instance.RemoveAllDeserializers();
-            MessageSerialization.Instance.RegisterDeserializer(TestMessage.TypeId, new TestMessageDeserializer());
+            var messageSerialization = new MessageSerialization();
+            messageSerialization.RegisterDeserializer(TestMessage.TypeId, new TestMessageDeserializer());
 
-            Assert.IsInstanceOf<TestMessage>(MessageSerialization.Instance.Deserialize(1, new byte[1]));
-        }
-
-        [Test]
-        public void RemoveAllDeserializers_removes_serializers()
-        {
-            MessageSerialization.Instance.RegisterDeserializer(TestMessage.TypeId, new TestMessageDeserializer());
-            MessageSerialization.Instance.RemoveAllDeserializers();
-
-            Assert.Throws<MissingMessageDeserializerException>(() => MessageSerialization.Instance.Deserialize(TestMessage.TypeId, new byte[1]));
+            Assert.IsInstanceOf<TestMessage>(messageSerialization.Deserialize(1, new byte[1]));
         }
 
         [Test]
         public void MessageSerializationException_should_be_thrown_on_exception_while_serializing_message()
         {
-            MessageSerialization.Instance.RegisterSerializer(ExceptionTestMessage.TypeId, new ExceptionTestMessageSerializer());
+            var messageSerialization = new MessageSerialization();
+            messageSerialization.RegisterSerializer(ExceptionTestMessage.TypeId, new ExceptionTestMessageSerializer());
 
             var messageThatCausesExceptionOnSerialization = new ExceptionTestMessage(true, false);
-            var exception = Assert.Throws<MessageSerializationException>(() => MessageSerialization.Instance.Serialize(messageThatCausesExceptionOnSerialization));
+            var exception = Assert.Throws<MessageSerializationException>(() => messageSerialization.Serialize(messageThatCausesExceptionOnSerialization));
             Assert.IsInstanceOf<TestException>(exception.InnerException);
         }
 
         [Test]
         public void MessageDeserializationException_should_be_thrown_on_exception_while_deserializing_message()
         {
-            MessageSerialization.Instance.RegisterSerializer(ExceptionTestMessage.TypeId, new ExceptionTestMessageSerializer());
-            MessageSerialization.Instance.RegisterDeserializer(ExceptionTestMessage.TypeId, new ExceptionTestMessageDeserializer());
+            var messageSerialization = new MessageSerialization();
+            messageSerialization.RegisterSerializer(ExceptionTestMessage.TypeId, new ExceptionTestMessageSerializer());
+            messageSerialization.RegisterDeserializer(ExceptionTestMessage.TypeId, new ExceptionTestMessageDeserializer());
 
             var messageThatCausesExceptionOnDeserialization = new ExceptionTestMessage(false, true);
-            var message = MessageSerialization.Instance.Serialize(messageThatCausesExceptionOnDeserialization);
-            var exception = Assert.Throws<MessageDeserializationException>(() => MessageSerialization.Instance.Deserialize(ExceptionTestMessage.TypeId, message));
+            var message = messageSerialization.Serialize(messageThatCausesExceptionOnDeserialization);
+            var exception = Assert.Throws<MessageDeserializationException>(() => messageSerialization.Deserialize(ExceptionTestMessage.TypeId, message));
             Assert.IsInstanceOf<TestException>(exception.InnerException);
         }
     }

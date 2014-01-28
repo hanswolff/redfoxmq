@@ -25,19 +25,28 @@ namespace RedFoxMQ
 {
     public class Responder : IResponder
     {
-        private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
         private static readonly NodeGreetingMessageVerifier NodeGreetingMessageVerifier = new NodeGreetingMessageVerifier(NodeType.Responder, NodeType.Requester);
         private static readonly SocketAccepterFactory SocketAccepterFactory = new SocketAccepterFactory();
 
         private readonly ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter> _servers;
         private readonly ConcurrentDictionary<ISocket, SenderReceiver> _clientSockets;
+        private readonly MessageFrameCreator _messageFrameCreator;
         private readonly IResponderWorkerFactory _responderWorkerFactory;
+        private readonly IMessageSerialization _messageSerialization;
         private readonly ResponderWorkerScheduler _scheduler;
 
         public Responder(IResponderWorkerFactory responderWorkerFactory, int minThreads = 1, int maxThreads = 1)
+            : this(responderWorkerFactory, DefaultMessageSerialization.Instance, minThreads, maxThreads)
+        {
+        }
+
+        public Responder(IResponderWorkerFactory responderWorkerFactory, IMessageSerialization messageSerialization, int minThreads = 1, int maxThreads = 1)
         {
             if (responderWorkerFactory == null) throw new ArgumentNullException("responderWorkerFactory");
+            if (messageSerialization == null) throw new ArgumentNullException("messageSerialization");
+
             _responderWorkerFactory = responderWorkerFactory;
+            _messageSerialization = messageSerialization;
 
             _disposeCancellationTokenSource = new CancellationTokenSource();
             _disposeCancellationToken = _disposeCancellationTokenSource.Token;
@@ -46,6 +55,8 @@ namespace RedFoxMQ
             _clientSockets = new ConcurrentDictionary<ISocket, SenderReceiver>();
             _scheduler = new ResponderWorkerScheduler(minThreads, maxThreads);
             _scheduler.WorkerCompleted += SchedulerWorkerCompleted;
+
+            _messageFrameCreator = new MessageFrameCreator(messageSerialization);
         }
 
         public event ClientConnectedDelegate ClientConnected = (socket, socketConfig) => { };
@@ -103,7 +114,7 @@ namespace RedFoxMQ
             if (senderReceiver.Sender == null) throw new ArgumentException("senderReceiver.Writer must not be null");
 
             var messageFrame = await senderReceiver.Receiver.ReceiveAsync(_disposeCancellationToken).ConfigureAwait(false);
-            var requestMessage = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId,
+            var requestMessage = _messageSerialization.Deserialize(messageFrame.MessageTypeId,
                 messageFrame.RawMessage);
 
             var worker = _responderWorkerFactory.GetWorkerFor(requestMessage);
@@ -113,7 +124,7 @@ namespace RedFoxMQ
         private void SchedulerWorkerCompleted(IResponderWorker worker, object state, IMessage responseMessage)
         {
             var senderReceiver = (SenderReceiver)state;
-            var responseFrame = MessageFrameCreator.CreateFromMessage(responseMessage);
+            var responseFrame = _messageFrameCreator.CreateFromMessage(responseMessage);
             senderReceiver.Sender.WriteMessageFrame(responseFrame);
 
             var task = ReceiveRequestMessage(senderReceiver).ConfigureAwait(false);

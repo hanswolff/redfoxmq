@@ -22,9 +22,11 @@ namespace RedFoxMQ
 {
     public class Subscriber : ISubscriber
     {
-        private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
         private static readonly NodeGreetingMessageVerifier NodeGreetingMessageVerifier = new NodeGreetingMessageVerifier(NodeType.Subscriber, NodeType.Publisher);
         private static readonly SocketFactory SocketFactory = new SocketFactory();
+
+        private readonly MessageFrameCreator _messageFrameCreator;
+        private readonly IMessageSerialization _messageSerialization;
 
         private CancellationTokenSource _cts = new CancellationTokenSource();
 
@@ -50,6 +52,20 @@ namespace RedFoxMQ
 
         public event MessageReceivedDelegate MessageReceived = message => { };
         public event SocketExceptionDelegate ResponseException = (socket, exception) => { };
+
+        public Subscriber()
+            : this(DefaultMessageSerialization.Instance)
+        {
+
+        }
+
+        public Subscriber(IMessageSerialization messageSerialization)
+        {
+            if (messageSerialization == null) throw new ArgumentNullException("messageSerialization");
+
+            _messageFrameCreator = new MessageFrameCreator(messageSerialization);
+            _messageSerialization = messageSerialization;
+        }
 
         public void Connect(RedFoxEndpoint endpoint)
         {
@@ -80,7 +96,7 @@ namespace RedFoxMQ
             {
                 _messageFrameWriter = MessageFrameWriterFactory.CreateWriterFromSocket(_socket);
 
-                _messageReceiveLoop = new MessageReceiveLoop(_socket);
+                _messageReceiveLoop = new MessageReceiveLoop(_messageSerialization, _socket);
                 _messageReceiveLoop.MessageReceived += m => MessageReceived(m);
                 _messageReceiveLoop.OnException += MessageReceiveLoopOnException;
                 _messageReceiveLoop.Start();
@@ -98,7 +114,7 @@ namespace RedFoxMQ
         private readonly object _sendLock = new object();
         public void SendMessage(IMessage message)
         {
-            var sendMessageFrame = MessageFrameCreator.CreateFromMessage(message);
+            var sendMessageFrame = _messageFrameCreator.CreateFromMessage(message);
 
             lock (_sendLock)
             {

@@ -24,22 +24,32 @@ namespace RedFoxMQ
 {
     public class Publisher : IPublisher
     {
-        private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
         private static readonly NodeGreetingMessageVerifier NodeGreetingMessageVerifier = new NodeGreetingMessageVerifier(NodeType.Publisher, NodeType.Subscriber);
         private static readonly SocketAccepterFactory SocketAccepterFactory = new SocketAccepterFactory();
 
         private readonly ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter> _servers;
         private readonly ConcurrentDictionary<ISocket, MessageQueueReceiveLoop> _broadcastSockets;
+        private readonly MessageFrameCreator _messageFrameCreator;
         private readonly MessageQueueProcessor _messageQueueProcessor = new MessageQueueProcessor();
+        private readonly IMessageSerialization _messageSerialization;
 
         public event ClientConnectedDelegate ClientConnected = (socket, socketConfig) => { };
         public event ClientDisconnectedDelegate ClientDisconnected = socket => { };
         public event MessageReceivedDelegate MessageReceived = message => { };
 
         public Publisher()
+            : this(DefaultMessageSerialization.Instance)
         {
+        }
+
+        public Publisher(IMessageSerialization messageSerialization)
+        {
+            if (messageSerialization == null) throw new ArgumentNullException("messageSerialization");
+
             _servers = new ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter>();
             _broadcastSockets = new ConcurrentDictionary<ISocket, MessageQueueReceiveLoop>();
+            _messageSerialization = messageSerialization;
+            _messageFrameCreator = new MessageFrameCreator(messageSerialization);
         }
 
         public void Bind(RedFoxEndpoint endpoint)
@@ -62,7 +72,7 @@ namespace RedFoxMQ
 
             var messageFrameWriter = MessageFrameWriterFactory.CreateWriterFromSocket(socket);
             var messageQueue = new MessageQueue(socketConfiguration.SendBufferSize);
-            var messageReceiveLoop = new MessageReceiveLoop(socket);
+            var messageReceiveLoop = new MessageReceiveLoop(_messageSerialization, socket);
 
             if (_broadcastSockets.TryAdd(socket, new MessageQueueReceiveLoop(messageQueue, messageReceiveLoop)))
             {
@@ -120,7 +130,7 @@ namespace RedFoxMQ
 
         public void Broadcast(IMessage message)
         {
-            var messageFrame = MessageFrameCreator.CreateFromMessage(message);
+            var messageFrame = _messageFrameCreator.CreateFromMessage(message);
 
             foreach (var messageQueue in _broadcastSockets.Values)
             {
@@ -131,7 +141,7 @@ namespace RedFoxMQ
         public void Broadcast(IReadOnlyList<IMessage> messages)
         {
             if (messages == null) return;
-            var messageFrames = messages.Select(message => MessageFrameCreator.CreateFromMessage(message)).ToList();
+            var messageFrames = messages.Select(message => _messageFrameCreator.CreateFromMessage(message)).ToList();
 
             foreach (var messageQueue in _broadcastSockets.Values)
             {

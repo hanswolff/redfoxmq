@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,50 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using System;
 
 namespace RedFoxMQ
 {
-    public class MessageSerialization
+    public sealed class MessageSerialization : IMessageSerialization
     {
         private readonly IMessageSerializer[] _serializers = new IMessageSerializer[ushort.MaxValue];
         private readonly IMessageDeserializer[] _deserializers = new IMessageDeserializer[ushort.MaxValue];
 
-        private static volatile MessageSerialization _instance;
-
-        public static MessageSerialization Instance
-        {
-            get
-            {
-                if (_instance != null) return _instance;
-                return _instance = new MessageSerialization();
-            }
-        }
-
         public IMessageSerializer DefaultSerializer { get; set; }
         public IMessageDeserializer DefaultDeserializer { get; set; }
-
-        private MessageSerialization()
-        {
-        }
-
-        public void RemoveAllSerializers()
-        {
-            DefaultSerializer = null;
-            for (var i = 0; i < _serializers.Length; i++)
-            {
-                _serializers[i] = null;
-            }
-        }
-
-        public void RemoveAllDeserializers()
-        {
-            DefaultDeserializer = null;
-            for (var i = 0; i < _deserializers.Length; i++)
-            {
-                _deserializers[i] = null;
-            }
-        }
 
         public void RegisterSerializer(ushort messageTypeId, IMessageSerializer serializer)
         {

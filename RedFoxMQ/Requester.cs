@@ -23,9 +23,11 @@ namespace RedFoxMQ
 {
     public class Requester : IRequester
     {
-        private static readonly MessageFrameCreator MessageFrameCreator = new MessageFrameCreator();
         private static readonly NodeGreetingMessageVerifier NodeGreetingMessageVerifier = new NodeGreetingMessageVerifier(NodeType.Requester, NodeType.Responder);
         private static readonly SocketFactory SocketFactory = new SocketFactory();
+
+        private readonly MessageFrameCreator _messageFrameCreator;
+        private readonly IMessageSerialization _messageSerialization;
 
         private IMessageFrameWriter _messageFrameWriter;
         private MessageFrameReceiver _messageFrameReceiver;
@@ -44,6 +46,19 @@ namespace RedFoxMQ
         }
 
         public event DisconnectedDelegate Disconnected = () => { };
+
+        public Requester()
+            : this(DefaultMessageSerialization.Instance)
+        {
+        }
+
+        public Requester(IMessageSerialization messageSerialization)
+        {
+            if (messageSerialization == null) throw new ArgumentNullException("messageSerialization");
+
+            _messageSerialization = messageSerialization;
+            _messageFrameCreator = new MessageFrameCreator(messageSerialization);
+        }
 
         public void Connect(RedFoxEndpoint endpoint)
         {
@@ -83,7 +98,7 @@ namespace RedFoxMQ
 
         public IMessage Request(IMessage requestMessage)
         {
-            var sendMessageFrame = MessageFrameCreator.CreateFromMessage(requestMessage);
+            var sendMessageFrame = _messageFrameCreator.CreateFromMessage(requestMessage);
 
             _semaphoreRequest.Wait(_cts.Token);
             try
@@ -91,7 +106,7 @@ namespace RedFoxMQ
                 _messageFrameWriter.WriteMessageFrame(sendMessageFrame);
 
                 var messageFrame = _messageFrameReceiver.Receive();
-                var responseMessage = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId, messageFrame.RawMessage);
+                var responseMessage = _messageSerialization.Deserialize(messageFrame.MessageTypeId, messageFrame.RawMessage);
                 return responseMessage;
             }
             finally
@@ -119,11 +134,11 @@ namespace RedFoxMQ
             await _semaphoreRequest.WaitAsync(cancellationToken);
             try
             {
-                var sendMessageFrame = MessageFrameCreator.CreateFromMessage(message);
+                var sendMessageFrame = _messageFrameCreator.CreateFromMessage(message);
                 await _messageFrameWriter.WriteMessageFrameAsync(sendMessageFrame, cancellationToken);
 
                 var messageFrame = await _messageFrameReceiver.ReceiveAsync(cancellationToken).ConfigureAwait(false);
-                var responseMessage = MessageSerialization.Instance.Deserialize(messageFrame.MessageTypeId, messageFrame.RawMessage);
+                var responseMessage = _messageSerialization.Deserialize(messageFrame.MessageTypeId, messageFrame.RawMessage);
                 return responseMessage;
             }
             finally

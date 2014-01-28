@@ -42,10 +42,12 @@
     <Compile Include="..\GlobalAssemblyInfo.cs">
       <Link>Properties\GlobalAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="DefaultMessageSerialization.cs" />
     <Compile Include="Delegates.cs" />
     <Compile Include="CounterSignal.cs" />
     <Compile Include="IDisconnect.cs" />
     <Compile Include="IMessageFrameWriter.cs" />
+    <Compile Include="IMessageSerialization.cs" />
     <Compile Include="InterlockedBoolean.cs" />
     <Compile Include="IPublisher.cs" />
     <Compile Include="IRequester.cs" />

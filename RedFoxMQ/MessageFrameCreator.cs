@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,12 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using System;
 
 namespace RedFoxMQ
 {
     class MessageFrameCreator
     {
+        private readonly IMessageSerialization _messageSerialization;
+
+        public MessageFrameCreator(IMessageSerialization messageSerialization)
+        {
+            _messageSerialization = messageSerialization;
+            if (messageSerialization == null) throw new ArgumentNullException("messageSerialization");
+        }
+
         public MessageFrame CreateFromMessage(IMessage message)
         {
             if (message == null) throw new ArgumentNullException("message");
@@ -26,7 +35,7 @@ namespace RedFoxMQ
             var messageFrame = new MessageFrame
             {
                 MessageTypeId = message.MessageTypeId,
-                RawMessage = MessageSerialization.Instance.Serialize(message)
+                RawMessage = _messageSerialization.Serialize(message)
             };
             return messageFrame;
         }

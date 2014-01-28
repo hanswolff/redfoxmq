@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,9 +27,11 @@ namespace RedFoxMQ
         private readonly IMessageFrameReader _messageFrameReader;
 
         private readonly ISocket _socket;
+
         public MessageFrameReceiver(ISocket socket)
         {
             if (socket == null) throw new ArgumentNullException("socket");
+
             _messageFrameReader = MessageFrameReaderFactory.CreateReaderFromSocket(socket);
 
             _socket = socket;

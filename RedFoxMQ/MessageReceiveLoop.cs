@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,13 +34,17 @@ namespace RedFoxMQ
         public event MessageReceivedDelegate MessageReceived = m => { };
         public event SocketExceptionDelegate OnException = (s, e) => { };
 
+        private readonly IMessageSerialization _messageSerialization;
         private readonly ISocket _socket;
 
-        public MessageReceiveLoop(ISocket socket)
+        public MessageReceiveLoop(IMessageSerialization messageSerialization, ISocket socket)
         {
+            if (messageSerialization == null) throw new ArgumentNullException("messageSerialization");
             if (socket == null) throw new ArgumentNullException("socket");
+
             _socket = socket;
             _messageFrameReceiver = new MessageFrameReceiver(socket);
+            _messageSerialization = messageSerialization;
         }
 
         public void Start()
@@ -78,7 +82,7 @@ namespace RedFoxMQ
                     IMessage message = null;
                     try
                     {
-                        message = MessageSerialization.Instance.Deserialize(
+                        message = _messageSerialization.Deserialize(
                             messageFrame.MessageTypeId,
                             messageFrame.RawMessage);
                     }
