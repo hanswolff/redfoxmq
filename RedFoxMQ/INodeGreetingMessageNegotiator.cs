@@ -25,7 +25,7 @@ namespace RedFoxMQ
         void WriteGreeting(NodeGreetingMessage greetingMessage);
         Task WriteGreetingAsync(NodeGreetingMessage greetingMessage, CancellationToken cancellationToken);
 
-        void VerifyRemoteGreeting(HashSet<NodeType> expectedNodeTypes);
-        Task VerifyRemoteGreetingAsync(HashSet<NodeType> expectedNodeTypes, CancellationToken cancellationToken);
+        NodeGreetingMessage VerifyRemoteGreeting(HashSet<NodeType> expectedNodeTypes);
+        Task<NodeGreetingMessage> VerifyRemoteGreetingAsync(HashSet<NodeType> expectedNodeTypes, CancellationToken cancellationToken);
     }
 }

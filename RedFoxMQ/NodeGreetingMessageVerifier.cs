@@ -36,7 +36,7 @@ namespace RedFoxMQ
             _greetingMessage = new NodeGreetingMessage(localNodeType);
         }
 
-        public async Task SendReceiveAndVerify(ISocket socket, TimeSpan timeout)
+        public async Task<NodeType> SendReceiveAndVerify(ISocket socket, TimeSpan timeout)
         {
             var greetingMessageNegotiator = NodeGreetingMessageNegotiatorFactory.CreateFromSocket(socket);
 
@@ -46,6 +46,8 @@ namespace RedFoxMQ
             var taskReadGreeting = greetingMessageNegotiator.VerifyRemoteGreetingAsync(_expectedRemoteNodeTypes, cancellationTokenSource.Token);
 
             await Task.WhenAll(taskWriteGreeting, taskReadGreeting);
+
+            return taskReadGreeting.Result.NodeType;
         }
     }
 }

@@ -43,12 +43,13 @@ namespace RedFoxMQ
             WriteGreeting(greetingMessage);
         }
 
-        public void VerifyRemoteGreeting(HashSet<NodeType> expectedNodeTypes)
+        public NodeGreetingMessage VerifyRemoteGreeting(HashSet<NodeType> expectedNodeTypes)
         {
             var remoteGreeting = ReadGreeting();
             if (!expectedNodeTypes.Contains(remoteGreeting.NodeType))
                 throw new RedFoxProtocolException(
                     String.Format("Remote greeting node type was {0} but expected node type are: {1}", remoteGreeting.NodeType, FormatHelpers.FormatHashSet(expectedNodeTypes)));
+            return remoteGreeting;
         }
 
         private NodeGreetingMessage ReadGreeting()
@@ -57,12 +58,13 @@ namespace RedFoxMQ
             return NodeGreetingMessage.DeserializeWithoutLength(messageFrame.RawMessage, 1);
         }
 
-        public async Task VerifyRemoteGreetingAsync(HashSet<NodeType> expectedNodeTypes, CancellationToken cancellationToken)
+        public async Task<NodeGreetingMessage> VerifyRemoteGreetingAsync(HashSet<NodeType> expectedNodeTypes, CancellationToken cancellationToken)
         {
             var remoteGreeting = await ReadGreetingAsync(cancellationToken);
             if (!expectedNodeTypes.Contains(remoteGreeting.NodeType))
                 throw new RedFoxProtocolException(
                     String.Format("Remote greeting node type was {0} but expected node type are: {1}", remoteGreeting.NodeType, FormatHelpers.FormatHashSet(expectedNodeTypes)));
+            return remoteGreeting;
         }
 
         private async Task<NodeGreetingMessage> ReadGreetingAsync(CancellationToken cancellationToken)
