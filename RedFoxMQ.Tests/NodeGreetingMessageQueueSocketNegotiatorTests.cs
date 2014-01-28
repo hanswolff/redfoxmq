@@ -14,10 +14,10 @@
 // limitations under the License.
 // 
 
-using System.Collections.Generic;
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using RedFoxMQ.Transports.InProc;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
