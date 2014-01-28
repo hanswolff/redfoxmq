@@ -85,6 +85,7 @@
     <Compile Include="Responder.cs" />
     <Compile Include="Requester.cs" />
     <Compile Include="ServiceQueue.cs" />
+    <Compile Include="ServiceQueueWriter.cs" />
     <Compile Include="TimeSpanExtensions.cs" />
     <Compile Include="Transports\InProc\BlockingConcurrentQueue.cs" />
     <Compile Include="Transports\InProc\InProcSocket.cs" />

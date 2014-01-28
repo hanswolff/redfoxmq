@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ namespace RedFoxMQ
     public delegate void DisconnectedDelegate();
 
     public delegate void MessageReceivedDelegate(IMessage message);
+    public delegate void MessageFrameReceivedDelegate(MessageFrame message);
 
     public delegate void SocketExceptionDelegate(ISocket socket, Exception exception);
 }

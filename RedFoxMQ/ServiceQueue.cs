@@ -14,11 +14,12 @@
 // limitations under the License.
 // 
 
+using System.Threading.Tasks;
 using RedFoxMQ.Transports;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace RedFoxMQ
 {
@@ -28,28 +29,23 @@ namespace RedFoxMQ
         private static readonly SocketAccepterFactory SocketAccepterFactory = new SocketAccepterFactory();
 
         private readonly ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter> _servers;
-        private readonly ConcurrentDictionary<ISocket, MessageQueueReceiveLoop> _broadcastSockets;
-        private readonly MessageFrameCreator _messageFrameCreator;
-        private readonly MessageQueueProcessor _messageQueueProcessor = new MessageQueueProcessor();
-        private readonly IMessageSerialization _messageSerialization;
+        private readonly ConcurrentDictionary<ISocket, IMessageFrameWriter> _readerClientSockets;
+        private readonly ConcurrentDictionary<ISocket, MessageFrameReceiver> _writerClientSockets;
+        private readonly ConcurrentQueue<MessageFrame> _queueMessageFrames = new ConcurrentQueue<MessageFrame>();
+        private readonly CancellationTokenSource _disposedCancellationTokenSource = new CancellationTokenSource();
+        private readonly CancellationToken _disposedToken;
 
         public event ClientConnectedDelegate ClientConnected = (socket, socketConfig) => { };
         public event ClientDisconnectedDelegate ClientDisconnected = socket => { };
-        public event MessageReceivedDelegate MessageReceived = message => { };
+        public event MessageFrameReceivedDelegate MessageFrameReceived = m => { };
 
         public ServiceQueue()
-            : this(DefaultMessageSerialization.Instance)
         {
-        }
-
-        public ServiceQueue(IMessageSerialization messageSerialization)
-        {
-            if (messageSerialization == null) throw new ArgumentNullException("messageSerialization");
-
             _servers = new ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter>();
-            _broadcastSockets = new ConcurrentDictionary<ISocket, MessageQueueReceiveLoop>();
-            _messageSerialization = messageSerialization;
-            _messageFrameCreator = new MessageFrameCreator(messageSerialization);
+            _readerClientSockets = new ConcurrentDictionary<ISocket, IMessageFrameWriter>();
+            _writerClientSockets = new ConcurrentDictionary<ISocket, MessageFrameReceiver>();
+
+            _disposedToken = _disposedCancellationTokenSource.Token;
         }
 
         public void Bind(RedFoxEndpoint endpoint)
@@ -68,19 +64,17 @@ namespace RedFoxMQ
         {
             if (socket == null) throw new ArgumentNullException("socket");
 
-            NodeGreetingMessageVerifier.SendReceiveAndVerify(socket, socketConfiguration.ConnectTimeout).Wait();
-
-            var messageFrameWriter = MessageFrameWriterFactory.CreateWriterFromSocket(socket);
-            var messageQueue = new MessageQueue(socketConfiguration.SendBufferSize);
-            var messageReceiveLoop = new MessageReceiveLoop(_messageSerialization, socket);
-
-            if (_broadcastSockets.TryAdd(socket, new MessageQueueReceiveLoop(messageQueue, messageReceiveLoop)))
+            var remoteNodeType = NodeGreetingMessageVerifier.SendReceiveAndVerify(socket, socketConfiguration.ConnectTimeout).Result;
+            switch (remoteNodeType)
             {
-                _messageQueueProcessor.Register(messageQueue, messageFrameWriter);
-                messageReceiveLoop.MessageReceived += m => MessageReceived(m);
-                messageReceiveLoop.OnException += MessageReceiveLoopOnException;
-                ClientConnected(socket, socketConfiguration);
-                messageReceiveLoop.Start();
+                case NodeType.ServiceQueueReader:
+                    ReaderClientConnected(socket, socketConfiguration);
+                    break;
+                case NodeType.ServiceQueueWriter:
+                    WriterClientConnected(socket, socketConfiguration);
+                    break;
+                default:
+                    throw new RedFoxProtocolException(String.Format("Unsupported node type connected to ServiceQueue: {0}", remoteNodeType));
             }
 
             if (socket.IsDisconnected)
@@ -90,6 +84,37 @@ namespace RedFoxMQ
             }
         }
 
+        private void ReaderClientConnected(ISocket socket, ISocketConfiguration socketConfiguration)
+        {
+            var messageFrameWriter = MessageFrameWriterFactory.CreateWriterFromSocket(socket);
+
+            if (_readerClientSockets.TryAdd(socket, messageFrameWriter))
+            {
+                ClientConnected(socket, socketConfiguration);
+            }
+        }
+
+        private void WriterClientConnected(ISocket socket, ISocketConfiguration socketConfiguration)
+        {
+            var messageFrameReceiver = new MessageFrameReceiver(socket);
+            messageFrameReceiver.Disconnected += () => WriterSocketDisconnected(socket);
+            ReceiveAsync(messageFrameReceiver);
+
+            if (_writerClientSockets.TryAdd(socket, messageFrameReceiver))
+            {
+                ClientConnected(socket, socketConfiguration);
+            }
+        }
+
+        private async Task<MessageFrame> ReceiveAsync(MessageFrameReceiver messageFrameReceiver)
+        {
+            var task = messageFrameReceiver.ReceiveAsync(_disposedToken);
+            var messageFrame = await task;
+            MessageFrameReceived(messageFrame);
+            ReceiveAsync(messageFrameReceiver);
+            return messageFrame;
+        }
+
         private void MessageReceiveLoopOnException(ISocket socket, Exception exception)
         {
             socket.Disconnect();
@@ -97,13 +122,29 @@ namespace RedFoxMQ
 
         private void SocketDisconnected(ISocket socket)
         {
-            MessageQueueReceiveLoop messageQueueReceiveLoop;
-            if (_broadcastSockets.TryRemove(socket, out messageQueueReceiveLoop))
+            var disconnected = ReaderSocketDisconnected(socket) && WriterSocketDisconnected(socket);
+        }
+
+        private bool ReaderSocketDisconnected(ISocket socket)
+        {
+            IMessageFrameWriter messageFrameWriter;
+            if (_readerClientSockets.TryRemove(socket, out messageFrameWriter))
             {
-                _messageQueueProcessor.Unregister(messageQueueReceiveLoop.MessageQueue);
-                messageQueueReceiveLoop.MessageReceiveLoop.Dispose();
                 ClientDisconnected(socket);
+                return true;
             }
+            return false;
+        }
+
+        private bool WriterSocketDisconnected(ISocket socket)
+        {
+            MessageFrameReceiver messageFrameReceiver;
+            if (_writerClientSockets.TryRemove(socket, out messageFrameReceiver))
+            {
+                ClientDisconnected(socket);
+                return true;
+            }
+            return false;
         }
 
         public bool Unbind(RedFoxEndpoint endpoint)
@@ -121,31 +162,10 @@ namespace RedFoxMQ
 
         private void DisconnectSocketsForEndpoint(RedFoxEndpoint endpoint)
         {
-            var socketsMatchingEndpoint = _broadcastSockets.Keys.Where(socket => socket.Endpoint.Equals(endpoint));
+            var socketsMatchingEndpoint = _readerClientSockets.Keys.Where(socket => socket.Endpoint.Equals(endpoint));
             foreach (var socket in socketsMatchingEndpoint)
             {
                 socket.Disconnect();
-            }
-        }
-
-        public void Broadcast(IMessage message)
-        {
-            var messageFrame = _messageFrameCreator.CreateFromMessage(message);
-
-            foreach (var messageQueue in _broadcastSockets.Values)
-            {
-                messageQueue.MessageQueue.Add(messageFrame);
-            }
-        }
-
-        public void Broadcast(IReadOnlyList<IMessage> messages)
-        {
-            if (messages == null) return;
-            var messageFrames = messages.Select(message => _messageFrameCreator.CreateFromMessage(message)).ToList();
-
-            foreach (var messageQueue in _broadcastSockets.Values)
-            {
-                messageQueue.MessageQueue.AddRange(messageFrames);
             }
         }
 
@@ -173,6 +193,8 @@ namespace RedFoxMQ
             {
                 if (_disposed) return;
 
+                _disposedCancellationTokenSource.Cancel();
+
                 UnbindAllEndpoints();
 
                 _disposed = true;
@@ -190,17 +212,5 @@ namespace RedFoxMQ
             Dispose(false);
         }
         #endregion
-
-        class MessageQueueReceiveLoop
-        {
-            public readonly MessageQueue MessageQueue;
-            public readonly MessageReceiveLoop MessageReceiveLoop;
-
-            public MessageQueueReceiveLoop(MessageQueue messageQueue, MessageReceiveLoop messageReceiveLoop)
-            {
-                MessageQueue = messageQueue;
-                MessageReceiveLoop = messageReceiveLoop;
-            }
-        }
     }
 }

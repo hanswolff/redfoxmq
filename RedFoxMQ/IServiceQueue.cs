@@ -18,7 +18,7 @@ using System;
 
 namespace RedFoxMQ
 {
-    interface IServiceQueue : IBindSockets, IReceiveMessage, IDisposable
+    interface IServiceQueue : IBindSockets, IDisposable
     {
     }
 }
