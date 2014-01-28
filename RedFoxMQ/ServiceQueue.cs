@@ -22,7 +22,7 @@ using System.Linq;
 
 namespace RedFoxMQ
 {
-    public class ServiceQueue : IServiceQueue
+    class ServiceQueue : IServiceQueue
     {
         private static readonly NodeGreetingMessageVerifier NodeGreetingMessageVerifier = new NodeGreetingMessageVerifier(NodeType.ServiceQueue, NodeType.ServiceQueueReader, NodeType.ServiceQueueWriter);
         private static readonly SocketAccepterFactory SocketAccepterFactory = new SocketAccepterFactory();
