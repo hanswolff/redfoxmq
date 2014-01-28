@@ -45,10 +45,12 @@
     <Compile Include="DefaultMessageSerialization.cs" />
     <Compile Include="Delegates.cs" />
     <Compile Include="CounterSignal.cs" />
+    <Compile Include="FormatHelpers.cs" />
     <Compile Include="IDisconnect.cs" />
     <Compile Include="IMessageFrameWriter.cs" />
     <Compile Include="IMessageSerialization.cs" />
     <Compile Include="InterlockedBoolean.cs" />
+    <Compile Include="IServiceQueue.cs" />
     <Compile Include="IPublisher.cs" />
     <Compile Include="IRequester.cs" />
     <Compile Include="IResponder.cs" />
@@ -82,6 +84,7 @@
     <Compile Include="MessageReceiveLoop.cs" />
     <Compile Include="Responder.cs" />
     <Compile Include="Requester.cs" />
+    <Compile Include="ServiceQueue.cs" />
     <Compile Include="TimeSpanExtensions.cs" />
     <Compile Include="Transports\InProc\BlockingConcurrentQueue.cs" />
     <Compile Include="Transports\InProc\InProcSocket.cs" />

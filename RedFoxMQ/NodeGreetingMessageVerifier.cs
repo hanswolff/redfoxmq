@@ -16,6 +16,7 @@
 
 using RedFoxMQ.Transports;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,11 +26,13 @@ namespace RedFoxMQ
     {
         private static readonly NodeGreetingMessageNegotiatorFactory NodeGreetingMessageNegotiatorFactory = new NodeGreetingMessageNegotiatorFactory();
         private readonly NodeGreetingMessage _greetingMessage;
-        private readonly NodeType _expectedRemoteNodeType;
+        private readonly HashSet<NodeType> _expectedRemoteNodeTypes;
 
-        public NodeGreetingMessageVerifier(NodeType localNodeType, NodeType expectedRemoteNodeType)
+        public NodeGreetingMessageVerifier(NodeType localNodeType, NodeType expectedRemoteNodeType, params NodeType[] allowOtherRemoteNoteTypes)
         {
-            _expectedRemoteNodeType = expectedRemoteNodeType;
+            _expectedRemoteNodeTypes = new HashSet<NodeType> { expectedRemoteNodeType };
+            if (allowOtherRemoteNoteTypes != null) _expectedRemoteNodeTypes.UnionWith(allowOtherRemoteNoteTypes);
+
             _greetingMessage = new NodeGreetingMessage(localNodeType);
         }
 
@@ -40,7 +43,7 @@ namespace RedFoxMQ
             var cancellationTokenSource = new CancellationTokenSource(timeout.ToMillisOrZero());
             var taskWriteGreeting = greetingMessageNegotiator.WriteGreetingAsync(_greetingMessage, cancellationTokenSource.Token);
 
-            var taskReadGreeting = greetingMessageNegotiator.VerifyRemoteGreetingAsync(_expectedRemoteNodeType, cancellationTokenSource.Token);
+            var taskReadGreeting = greetingMessageNegotiator.VerifyRemoteGreetingAsync(_expectedRemoteNodeTypes, cancellationTokenSource.Token);
 
             await Task.WhenAll(taskWriteGreeting, taskReadGreeting);
         }

@@ -16,12 +16,17 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace RedFoxMQ
 {
-    interface IPublisher : IBindSockets, IReceiveMessage, IDisposable
+    static class FormatHelpers
     {
-        void Broadcast(IMessage message);
-        void Broadcast(IReadOnlyList<IMessage> messages);
+        public static string FormatHashSet<T>(HashSet<T> hashSet) where T : struct
+        {
+            if (hashSet == null) return "";
+
+            return String.Join(", ", hashSet.OrderBy(x => x).Select(x => x.ToString()));
+        }
     }
 }

@@ -53,6 +53,7 @@
     <Compile Include="Benchmarks\InprocResponderRequesterBenchmarks.cs" />
     <Compile Include="Benchmarks\ResponderRequesterBenchmarks.cs" />
     <Compile Include="Benchmarks\TcpPublisherSubscriberBenchmarks.cs" />
+    <Compile Include="FormatHelpersTests.cs" />
     <Compile Include="NodeGreetingMessageNegotiatorFactoryTests.cs" />
     <Compile Include="MessageFrameReaderFactoryTests.cs" />
     <Compile Include="MessageFrameWriterFactoryTests.cs" />

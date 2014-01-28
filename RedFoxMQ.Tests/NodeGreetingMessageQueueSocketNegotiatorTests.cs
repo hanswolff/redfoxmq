@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+using System.Collections.Generic;
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using RedFoxMQ.Transports.InProc;
@@ -63,7 +64,7 @@ namespace RedFoxMQ.Tests
             var message = new NodeGreetingMessage(NodeType.Responder);
             blockingQueue.Enqueue(new MessageFrame { RawMessage = message.Serialize() });
 
-            negotiator.VerifyRemoteGreeting(NodeType.Responder);
+            negotiator.VerifyRemoteGreeting(new HashSet<NodeType> { NodeType.Responder });
         }
 
         [Test]
@@ -76,7 +77,7 @@ namespace RedFoxMQ.Tests
             var message = new NodeGreetingMessage(NodeType.Responder);
             blockingQueue.Enqueue(new MessageFrame { RawMessage = message.Serialize() });
 
-            Assert.Throws<RedFoxProtocolException>(() => negotiator.VerifyRemoteGreeting(NodeType.Requester));
+            Assert.Throws<RedFoxProtocolException>(() => new HashSet<NodeType> { NodeType.Requester });
         }
 
         [Test]
@@ -89,7 +90,7 @@ namespace RedFoxMQ.Tests
             var message = new NodeGreetingMessage(NodeType.Responder);
             blockingQueue.Enqueue(new MessageFrame { RawMessage = message.Serialize() });
 
-            negotiator.VerifyRemoteGreetingAsync(NodeType.Responder, CancellationToken.None).Wait();
+            negotiator.VerifyRemoteGreetingAsync(new HashSet<NodeType> { NodeType.Responder }, CancellationToken.None).Wait();
         }
 
         [Test]
@@ -104,7 +105,7 @@ namespace RedFoxMQ.Tests
 
             try
             {
-                await negotiator.VerifyRemoteGreetingAsync(NodeType.Requester, CancellationToken.None);
+                await negotiator.VerifyRemoteGreetingAsync(new HashSet<NodeType> { NodeType.Requester }, CancellationToken.None);
                 Assert.Fail();
             }
             catch (RedFoxProtocolException)

@@ -15,13 +15,10 @@
 // 
 
 using System;
-using System.Collections.Generic;
 
 namespace RedFoxMQ
 {
-    interface IPublisher : IBindSockets, IReceiveMessage, IDisposable
+    interface IServiceQueue : IBindSockets, IReceiveMessage, IDisposable
     {
-        void Broadcast(IMessage message);
-        void Broadcast(IReadOnlyList<IMessage> messages);
     }
 }

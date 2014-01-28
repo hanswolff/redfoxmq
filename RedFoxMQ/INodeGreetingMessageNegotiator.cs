@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,7 +25,7 @@ namespace RedFoxMQ
         void WriteGreeting(NodeGreetingMessage greetingMessage);
         Task WriteGreetingAsync(NodeGreetingMessage greetingMessage, CancellationToken cancellationToken);
 
-        void VerifyRemoteGreeting(NodeType expectedNodeType);
-        Task VerifyRemoteGreetingAsync(NodeType expectedNodeType, CancellationToken cancellationToken);
+        void VerifyRemoteGreeting(HashSet<NodeType> expectedNodeTypes);
+        Task VerifyRemoteGreetingAsync(HashSet<NodeType> expectedNodeTypes, CancellationToken cancellationToken);
     }
 }

@@ -23,5 +23,9 @@ namespace RedFoxMQ
 
         Responder = 3,
         Requester = 4,
+
+        ServiceQueue = 5,
+        ServiceQueueReader = 6,
+        ServiceQueueWriter = 7,
     }
 }

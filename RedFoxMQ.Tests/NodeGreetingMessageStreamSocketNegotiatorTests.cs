@@ -15,6 +15,7 @@
 // 
 
 using NUnit.Framework;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -66,7 +67,7 @@ namespace RedFoxMQ.Tests
                 mem.Write(message.Serialize(), 0, message.Serialize().Length);
                 mem.Position = 0;
 
-                negotiator.VerifyRemoteGreeting(NodeType.Responder);
+                negotiator.VerifyRemoteGreeting(new HashSet<NodeType> { NodeType.Responder });
             }
         }
 
@@ -82,7 +83,7 @@ namespace RedFoxMQ.Tests
                 mem.Write(message.Serialize(), 0, message.Serialize().Length);
                 mem.Position = 0;
 
-                Assert.Throws<RedFoxProtocolException>(() => negotiator.VerifyRemoteGreeting(NodeType.Requester));
+                Assert.Throws<RedFoxProtocolException>(() => negotiator.VerifyRemoteGreeting(new HashSet<NodeType> { NodeType.Requester }));
             }
         }
 
@@ -98,7 +99,7 @@ namespace RedFoxMQ.Tests
                 mem.Write(message.Serialize(), 0, message.Serialize().Length);
                 mem.Position = 0;
 
-                negotiator.VerifyRemoteGreetingAsync(NodeType.Responder, CancellationToken.None).Wait();
+                negotiator.VerifyRemoteGreetingAsync(new HashSet<NodeType> { NodeType.Responder }, CancellationToken.None).Wait();
             }
         }
 
@@ -116,7 +117,7 @@ namespace RedFoxMQ.Tests
 
                 try
                 {
-                    await negotiator.VerifyRemoteGreetingAsync(NodeType.Requester, CancellationToken.None);
+                    await negotiator.VerifyRemoteGreetingAsync(new HashSet<NodeType> { NodeType.Requester }, CancellationToken.None);
                     Assert.Fail();
                 }
                 catch (RedFoxProtocolException)

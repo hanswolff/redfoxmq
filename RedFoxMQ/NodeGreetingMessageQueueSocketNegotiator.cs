@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+using System.Collections.Generic;
 using RedFoxMQ.Transports;
 using System;
 using System.Threading;
@@ -42,12 +43,12 @@ namespace RedFoxMQ
             WriteGreeting(greetingMessage);
         }
 
-        public void VerifyRemoteGreeting(NodeType expectedNodeType)
+        public void VerifyRemoteGreeting(HashSet<NodeType> expectedNodeTypes)
         {
             var remoteGreeting = ReadGreeting();
-            if (remoteGreeting.NodeType != expectedNodeType)
+            if (!expectedNodeTypes.Contains(remoteGreeting.NodeType))
                 throw new RedFoxProtocolException(
-                    String.Format("Remote greeting node type was {0} but expected node type is {1}", remoteGreeting.NodeType, expectedNodeType));
+                    String.Format("Remote greeting node type was {0} but expected node type are: {1}", remoteGreeting.NodeType, FormatHelpers.FormatHashSet(expectedNodeTypes)));
         }
 
         private NodeGreetingMessage ReadGreeting()
@@ -56,12 +57,12 @@ namespace RedFoxMQ
             return NodeGreetingMessage.DeserializeWithoutLength(messageFrame.RawMessage, 1);
         }
 
-        public async Task VerifyRemoteGreetingAsync(NodeType expectedNodeType, CancellationToken cancellationToken)
+        public async Task VerifyRemoteGreetingAsync(HashSet<NodeType> expectedNodeTypes, CancellationToken cancellationToken)
         {
             var remoteGreeting = await ReadGreetingAsync(cancellationToken);
-            if (remoteGreeting.NodeType != expectedNodeType)
+            if (!expectedNodeTypes.Contains(remoteGreeting.NodeType))
                 throw new RedFoxProtocolException(
-                    String.Format("Remote greeting node type was {0} but expected node type is {1}", remoteGreeting.NodeType, expectedNodeType));
+                    String.Format("Remote greeting node type was {0} but expected node type are: {1}", remoteGreeting.NodeType, FormatHelpers.FormatHashSet(expectedNodeTypes)));
         }
 
         private async Task<NodeGreetingMessage> ReadGreetingAsync(CancellationToken cancellationToken)
