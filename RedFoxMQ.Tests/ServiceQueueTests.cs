@@ -24,6 +24,17 @@ namespace RedFoxMQ.Tests
     public class ServiceQueueTests
     {
         [Test]
+        public void AddMessageFrame_single_message_frame_MessageFramesCount_is_one()
+        {
+            using (var serviceQueue = new ServiceQueue())
+            {
+                serviceQueue.AddMessageFrame(new MessageFrame());
+
+                Assert.AreEqual(1, serviceQueue.MessageFramesCount);
+            }
+        }
+
+        [Test]
         public void servicequeues_bind_same_endpoint_twice_fails()
         {
             using (var serviceQueue = new ServiceQueue())

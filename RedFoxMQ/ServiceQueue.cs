@@ -118,6 +118,11 @@ namespace RedFoxMQ
             var newTask = ReceiveAsync(messageFrameReceiver, cancellationToken);
         }
 
+        public void AddMessageFrame(MessageFrame messageFrame)
+        {
+            _queueMessageFrames.Enqueue(messageFrame);
+        }
+
         private void MessageReceiveLoopOnException(ISocket socket, Exception exception)
         {
             socket.Disconnect();

@@ -21,14 +21,13 @@ using System.Threading;
 namespace RedFoxMQ
 {
     /// <summary>
-    /// Connects to a ServiceQueue to write messages
+    /// Connects to a ServiceQueue to read messages
     /// </summary>
-    class ServiceQueueWriter : IServiceQueueWriter
+    class ServiceQueueReader : IServiceQueueReader
     {
-        private static readonly NodeGreetingMessageVerifier NodeGreetingMessageVerifier = new NodeGreetingMessageVerifier(NodeType.ServiceQueueWriter, NodeType.ServiceQueue);
+        private static readonly NodeGreetingMessageVerifier NodeGreetingMessageVerifier = new NodeGreetingMessageVerifier(NodeType.ServiceQueueReader, NodeType.ServiceQueue);
         private static readonly SocketFactory SocketFactory = new SocketFactory();
 
-        private readonly MessageFrameCreator _messageFrameCreator;
         private readonly IMessageSerialization _messageSerialization;
 
         private CancellationTokenSource _cts = new CancellationTokenSource();
@@ -39,7 +38,7 @@ namespace RedFoxMQ
             get { return _socket; }
         }
 
-        private IMessageFrameWriter _messageFrameWriter;
+        private MessageReceiveLoop _messageReceiveLoop;
 
         public bool IsDisconnected
         {
@@ -52,17 +51,18 @@ namespace RedFoxMQ
 
         public event DisconnectedDelegate Disconnected = () => { };
 
-        public ServiceQueueWriter()
+        public event MessageReceivedDelegate MessageReceived = message => { };
+        public event SocketExceptionDelegate ResponseException = (socket, exception) => { };
+
+        public ServiceQueueReader()
             : this(DefaultMessageSerialization.Instance)
         {
 
         }
 
-        public ServiceQueueWriter(IMessageSerialization messageSerialization)
+        public ServiceQueueReader(IMessageSerialization messageSerialization)
         {
             if (messageSerialization == null) throw new ArgumentNullException("messageSerialization");
-
-            _messageFrameCreator = new MessageFrameCreator(messageSerialization);
             _messageSerialization = messageSerialization;
         }
 
@@ -79,7 +79,6 @@ namespace RedFoxMQ
             Connect(endpoint, socketConfiguration);
         }
 
-        private static readonly MessageFrameWriterFactory MessageFrameWriterFactory = new MessageFrameWriterFactory();
         public void Connect(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration)
         {
             if (socketConfiguration == null) throw new ArgumentNullException("socketConfiguration");
@@ -93,19 +92,19 @@ namespace RedFoxMQ
 
             if (!_cts.IsCancellationRequested)
             {
-                _messageFrameWriter = MessageFrameWriterFactory.CreateWriterFromSocket(_socket);
+                _messageReceiveLoop = new MessageReceiveLoop(_messageSerialization, _socket);
+                _messageReceiveLoop.MessageReceived += m => MessageReceived(m);
+                _messageReceiveLoop.OnException += MessageReceiveLoopOnException;
+                _messageReceiveLoop.Start();
             }
         }
 
-        private readonly object _sendLock = new object();
-        public void SendMessage(IMessage message)
+        private void MessageReceiveLoopOnException(ISocket socket, Exception exception)
         {
-            var sendMessageFrame = _messageFrameCreator.CreateFromMessage(message);
+            try { ResponseException(socket, exception); }
+            catch { }
 
-            lock (_sendLock)
-            {
-                _messageFrameWriter.WriteMessageFrame(sendMessageFrame);
-            }
+            socket.Disconnect();
         }
 
         private void SocketDisconnected()
@@ -122,6 +121,9 @@ namespace RedFoxMQ
         {
             var socket = Interlocked.Exchange(ref _socket, null);
             if (socket == null) return;
+
+            var messageReceiveLoop = _messageReceiveLoop;
+            if (messageReceiveLoop != null) messageReceiveLoop.Dispose();
 
             socket.Disconnect();
         }
@@ -148,7 +150,7 @@ namespace RedFoxMQ
             Dispose(true);
         }
 
-        ~ServiceQueueWriter()
+        ~ServiceQueueReader()
         {
             Dispose(false);
         }

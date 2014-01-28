@@ -50,6 +50,7 @@
     <Compile Include="IMessageFrameWriter.cs" />
     <Compile Include="IMessageSerialization.cs" />
     <Compile Include="InterlockedBoolean.cs" />
+    <Compile Include="IServiceQueueReader.cs" />
     <Compile Include="IServiceQueueWriter.cs" />
     <Compile Include="IServiceQueue.cs" />
     <Compile Include="IPublisher.cs" />
@@ -87,6 +88,7 @@
     <Compile Include="Requester.cs" />
     <Compile Include="ServiceQueue.cs" />
     <Compile Include="ServiceQueueWriter.cs" />
+    <Compile Include="ServiceQueueReader.cs" />
     <Compile Include="TimeSpanExtensions.cs" />
     <Compile Include="Transports\InProc\BlockingConcurrentQueue.cs" />
     <Compile Include="Transports\InProc\InProcSocket.cs" />
