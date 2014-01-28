@@ -23,7 +23,7 @@ namespace RedFoxMQ
     /// <summary>
     /// Connects to a ServiceQueue to read messages
     /// </summary>
-    class ServiceQueueReader : IServiceQueueReader
+    public class ServiceQueueReader : IServiceQueueReader
     {
         private static readonly NodeGreetingMessageVerifier NodeGreetingMessageVerifier = new NodeGreetingMessageVerifier(NodeType.ServiceQueueReader, NodeType.ServiceQueue);
         private static readonly SocketFactory SocketFactory = new SocketFactory();

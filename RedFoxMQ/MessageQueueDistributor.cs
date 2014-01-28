@@ -16,48 +16,45 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
-    class MessageQueueBroadcaster
+    class MessageQueueDistributor
     {
-        private readonly ConcurrentDictionary<MessageQueue, MessageQueuePayload> _messageQueues = new ConcurrentDictionary<MessageQueue, MessageQueuePayload>();
-        private readonly AutoResetEvent _messageQueueHasMessage = new AutoResetEvent(false);
+        private readonly MessageQueue _messageQueue;
+        private readonly ConcurrentDictionary<IMessageFrameWriter, MessageFrameWriterPayload> _messageFrameWriters = new ConcurrentDictionary<IMessageFrameWriter, MessageFrameWriterPayload>();
         private Task _asyncSchedulerTask;
         private CancellationTokenSource _cts = new CancellationTokenSource();
 
-        public void Register(MessageQueue messageQueue, IMessageFrameWriter messageFrameWriter)
+        public MessageQueueDistributor(MessageQueue messageQueue)
         {
             if (messageQueue == null) throw new ArgumentNullException("messageQueue");
+            _messageQueue = messageQueue;
+        }
+
+        public void Register(IMessageFrameWriter messageFrameWriter)
+        {
             if (messageFrameWriter == null) throw new ArgumentNullException("messageFrameWriter");
 
-            var messageQueuePayload = new MessageQueuePayload(messageFrameWriter);
-            messageQueue.MessageFramesAdded += MessageQueueOnMessageFramesAdded;
-            _messageQueues[messageQueue] = messageQueuePayload;
+            var messageQueuePayload = new MessageFrameWriterPayload(messageFrameWriter);
+            _messageFrameWriters[messageFrameWriter] = messageQueuePayload;
             StartAsyncProcessingIfNotStartedYet();
         }
 
-        private void MessageQueueOnMessageFramesAdded(IReadOnlyCollection<MessageFrame> messageFrame)
+        public bool Unregister(IMessageFrameWriter messageFrameWriter)
         {
-            _messageQueueHasMessage.Set();
-        }
+            if (messageFrameWriter == null) throw new ArgumentNullException("messageFrameWriter");
 
-        public bool Unregister(MessageQueue messageQueue)
-        {
-            if (messageQueue == null) throw new ArgumentNullException("messageQueue");
-
-            MessageQueuePayload messageQueuePayload;
-            var removed = _messageQueues.TryRemove(messageQueue, out messageQueuePayload);
+            MessageFrameWriterPayload messageFrameWriterPayload;
+            var removed = _messageFrameWriters.TryRemove(messageFrameWriter, out messageFrameWriterPayload);
             if (removed)
             {
-                messageQueuePayload.Cancelled.Set(true);
-                messageQueue.MessageFramesAdded -= MessageQueueOnMessageFramesAdded;
+                messageFrameWriterPayload.Cancelled.Set(true);
             }
 
-            if (_messageQueues.IsEmpty)
+            if (_messageFrameWriters.IsEmpty)
             {
                 StopProcessing();
             }
@@ -88,8 +85,6 @@ namespace RedFoxMQ
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    _messageQueueHasMessage.WaitOne(10);
-
                     LoopUsingAsync(cancellationToken);
                 }
             }
@@ -104,25 +99,25 @@ namespace RedFoxMQ
 
         private void LoopUsingAsync(CancellationToken cancellationToken)
         {
-            foreach (var item in _messageQueues)
+            foreach (var item in _messageFrameWriters)
             {
-                var messageQueue = item.Key;
                 var messageQueuePayload = item.Value;
 
                 if (messageQueuePayload.Busy.Set(true)) continue;
-                var task = LoopMessageQueueAsync(messageQueue, messageQueuePayload, cancellationToken).ConfigureAwait(false);
+                var task = LoopMessageQueueAsync(messageQueuePayload, cancellationToken).ConfigureAwait(false);
+                return;
             }
         }
 
-        private static async Task LoopMessageQueueAsync(MessageQueue messageQueue, MessageQueuePayload messageQueuePayload, CancellationToken cancellationToken)
+        private async Task LoopMessageQueueAsync(MessageFrameWriterPayload messageFrameWriterPayload, CancellationToken cancellationToken)
         {
             try
             {
-                await messageQueue.SendFromQueueAsync(messageQueuePayload.Writer, cancellationToken);
+                await _messageQueue.SendFromQueueAsync(messageFrameWriterPayload.Writer, cancellationToken);
             }
             finally
             {
-                messageQueuePayload.Busy.Set(false);
+                messageFrameWriterPayload.Busy.Set(false);
             }
         }
 
@@ -136,13 +131,13 @@ namespace RedFoxMQ
             _started.Set(false);
         }
 
-        struct MessageQueuePayload
+        struct MessageFrameWriterPayload
         {
             public readonly IMessageFrameWriter Writer;
             public readonly InterlockedBoolean Busy;
             public readonly InterlockedBoolean Cancelled;
 
-            public MessageQueuePayload(IMessageFrameWriter writer)
+            public MessageFrameWriterPayload(IMessageFrameWriter writer)
             {
                 Writer = writer;
                 Busy = new InterlockedBoolean();

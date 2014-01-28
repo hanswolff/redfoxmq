@@ -23,7 +23,7 @@ using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
-    class ServiceQueue : IServiceQueue
+    public class ServiceQueue : IServiceQueue
     {
         private static readonly NodeGreetingMessageVerifier NodeGreetingMessageVerifier = new NodeGreetingMessageVerifier(NodeType.ServiceQueue, NodeType.ServiceQueueReader, NodeType.ServiceQueueWriter);
         private static readonly SocketAccepterFactory SocketAccepterFactory = new SocketAccepterFactory();
@@ -31,7 +31,8 @@ namespace RedFoxMQ
         private readonly ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter> _servers;
         private readonly ConcurrentDictionary<ISocket, IMessageFrameWriter> _readerClientSockets;
         private readonly ConcurrentDictionary<ISocket, MessageFrameReceiver> _writerClientSockets;
-        private readonly ConcurrentQueue<MessageFrame> _queueMessageFrames = new ConcurrentQueue<MessageFrame>();
+        private readonly MessageQueue _messageQueue;
+        private readonly MessageQueueDistributor _messageQueueDistributor;
         private readonly CancellationTokenSource _disposedCancellationTokenSource = new CancellationTokenSource();
         private readonly CancellationToken _disposedToken;
 
@@ -39,10 +40,13 @@ namespace RedFoxMQ
         public event ClientDisconnectedDelegate ClientDisconnected = socket => { };
         public event MessageFrameReceivedDelegate MessageFrameReceived = m => { };
 
-        public int MessageFramesCount { get { return _queueMessageFrames.Count; } }
+        public int MessageFramesCount { get { return _messageQueue.Count; } }
 
         public ServiceQueue()
         {
+            _messageQueue = new MessageQueue(65536);
+            _messageQueueDistributor = new MessageQueueDistributor(_messageQueue);
+
             _servers = new ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter>();
             _readerClientSockets = new ConcurrentDictionary<ISocket, IMessageFrameWriter>();
             _writerClientSockets = new ConcurrentDictionary<ISocket, MessageFrameReceiver>();
@@ -92,6 +96,8 @@ namespace RedFoxMQ
 
             if (_readerClientSockets.TryAdd(socket, messageFrameWriter))
             {
+                _messageQueueDistributor.Register(messageFrameWriter);
+
                 ClientConnected(socket, socketConfiguration);
             }
         }
@@ -112,7 +118,7 @@ namespace RedFoxMQ
         {
             var task = messageFrameReceiver.ReceiveAsync(cancellationToken);
             var messageFrame = await task;
-            _queueMessageFrames.Enqueue(messageFrame);
+            _messageQueue.Add(messageFrame);
             MessageFrameReceived(messageFrame);
 
             var newTask = ReceiveAsync(messageFrameReceiver, cancellationToken);
@@ -120,7 +126,7 @@ namespace RedFoxMQ
 
         public void AddMessageFrame(MessageFrame messageFrame)
         {
-            _queueMessageFrames.Enqueue(messageFrame);
+            _messageQueue.Add(messageFrame);
         }
 
         private void MessageReceiveLoopOnException(ISocket socket, Exception exception)
@@ -138,6 +144,7 @@ namespace RedFoxMQ
             IMessageFrameWriter messageFrameWriter;
             if (_readerClientSockets.TryRemove(socket, out messageFrameWriter))
             {
+                _messageQueueDistributor.Unregister(messageFrameWriter);
                 ClientDisconnected(socket);
                 return true;
             }

@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ namespace RedFoxMQ
         private readonly BlockingCollection<List<MessageFrame>> _batchMessageFrames = new BlockingCollection<List<MessageFrame>>();
 
         public event Action<IReadOnlyCollection<MessageFrame>> MessageFramesAdded = m => { };
+
+        public int Count { get { return _singleMessageFrames.Count + _batchMessageFrames.Sum(x => x.Count); } }
 
         public MessageQueue(int sendBufferSize)
         {
