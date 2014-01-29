@@ -30,7 +30,7 @@ namespace RedFoxMQ
         private readonly ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter> _servers;
         private readonly ConcurrentDictionary<ISocket, MessageQueueReceiveLoop> _broadcastSockets;
         private readonly MessageFrameCreator _messageFrameCreator;
-        private readonly MessageQueueBroadcaster _messageQueueBroadcaster = new MessageQueueBroadcaster();
+        private readonly MessageQueueBatchBroadcaster _messageQueueBroadcaster = new MessageQueueBatchBroadcaster();
         private readonly IMessageSerialization _messageSerialization;
 
         public event ClientConnectedDelegate ClientConnected = (socket, socketConfig) => { };
@@ -71,7 +71,7 @@ namespace RedFoxMQ
             NodeGreetingMessageVerifier.SendReceiveAndVerify(socket, socketConfiguration.ConnectTimeout).Wait();
 
             var messageFrameWriter = MessageFrameWriterFactory.CreateWriterFromSocket(socket);
-            var messageQueue = new MessageQueue(socketConfiguration.SendBufferSize);
+            var messageQueue = new MessageQueueBatch(socketConfiguration.SendBufferSize);
             var messageReceiveLoop = new MessageReceiveLoop(_messageSerialization, socket);
 
             if (_broadcastSockets.TryAdd(socket, new MessageQueueReceiveLoop(messageQueue, messageReceiveLoop)))
@@ -193,10 +193,10 @@ namespace RedFoxMQ
 
         class MessageQueueReceiveLoop
         {
-            public readonly MessageQueue MessageQueue;
+            public readonly MessageQueueBatch MessageQueue;
             public readonly MessageReceiveLoop MessageReceiveLoop;
 
-            public MessageQueueReceiveLoop(MessageQueue messageQueue, MessageReceiveLoop messageReceiveLoop)
+            public MessageQueueReceiveLoop(MessageQueueBatch messageQueue, MessageReceiveLoop messageReceiveLoop)
             {
                 MessageQueue = messageQueue;
                 MessageReceiveLoop = messageReceiveLoop;

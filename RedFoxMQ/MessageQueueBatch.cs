@@ -24,7 +24,7 @@ using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
-    class MessageQueue
+    class MessageQueueBatch
     {
         private readonly int _sendBufferSize;
 
@@ -36,7 +36,7 @@ namespace RedFoxMQ
 
         public int Count { get { return _singleMessageFrames.Count + _batchMessageFrames.Sum(x => x.Count); } }
 
-        public MessageQueue(int sendBufferSize)
+        public MessageQueueBatch(int sendBufferSize)
         {
             _sendBufferSize = sendBufferSize;
         }

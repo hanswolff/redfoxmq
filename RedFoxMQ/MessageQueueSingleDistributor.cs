@@ -21,9 +21,9 @@ using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
-    class MessageQueueDistributor
+    class MessageQueueSingleDistributor
     {
-        private readonly MessageQueue _messageQueue;
+        private readonly MessageQueueSingle _messageQueue;
         private readonly ConcurrentDictionary<IMessageFrameWriter, MessageFrameWriterPayload> _messageFrameWriters = new ConcurrentDictionary<IMessageFrameWriter, MessageFrameWriterPayload>();
         private readonly ConcurrentQueue<MessageFrameWriterPayload> _messageWritersQueueForRoundRobin = new ConcurrentQueue<MessageFrameWriterPayload>();
         private readonly Action<CancellationToken> _rotationFunc;
@@ -31,7 +31,7 @@ namespace RedFoxMQ
         private Task _asyncSchedulerTask;
         private CancellationTokenSource _cts = new CancellationTokenSource();
 
-        public MessageQueueDistributor(MessageQueue messageQueue, ServiceQueueRotationAlgorithm rotationAlgorithm)
+        public MessageQueueSingleDistributor(MessageQueueSingle messageQueue, ServiceQueueRotationAlgorithm rotationAlgorithm)
         {
             if (messageQueue == null) throw new ArgumentNullException("messageQueue");
             _messageQueue = messageQueue;

@@ -59,7 +59,8 @@
     <Compile Include="IReceiveMessage.cs" />
     <Compile Include="ISendMessage.cs" />
     <Compile Include="INodeGreetingMessageNegotiator.cs" />
-    <Compile Include="MessageQueueDistributor.cs" />
+    <Compile Include="MessageQueueSingle.cs" />
+    <Compile Include="MessageQueueSingleDistributor.cs" />
     <Compile Include="ServiceQueueRotationAlgorithm.cs" />
     <Compile Include="NodeGreetingMessageVerifier.cs" />
     <Compile Include="NodeGreetingMessageNegotiatorFactory.cs" />
@@ -83,8 +84,8 @@
     <Compile Include="ISubscriber.cs" />
     <Compile Include="MessageFrameCreator.cs" />
     <Compile Include="MessageFrameReceiver.cs" />
-    <Compile Include="MessageQueue.cs" />
-    <Compile Include="MessageQueueBroadcaster.cs" />
+    <Compile Include="MessageQueueBatch.cs" />
+    <Compile Include="MessageQueueBatchBroadcaster.cs" />
     <Compile Include="MessageReceiveLoop.cs" />
     <Compile Include="Responder.cs" />
     <Compile Include="Requester.cs" />

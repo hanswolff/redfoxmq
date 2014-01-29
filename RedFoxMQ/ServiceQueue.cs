@@ -31,8 +31,8 @@ namespace RedFoxMQ
         private readonly ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter> _servers;
         private readonly ConcurrentDictionary<ISocket, IMessageFrameWriter> _readerClientSockets;
         private readonly ConcurrentDictionary<ISocket, MessageFrameReceiver> _writerClientSockets;
-        private readonly MessageQueue _messageQueue;
-        private readonly MessageQueueDistributor _messageQueueDistributor;
+        private readonly MessageQueueSingle _messageQueue;
+        private readonly MessageQueueSingleDistributor _messageQueueDistributor;
         private readonly CancellationTokenSource _disposedCancellationTokenSource = new CancellationTokenSource();
         private readonly CancellationToken _disposedToken;
 
@@ -49,8 +49,8 @@ namespace RedFoxMQ
 
         public ServiceQueue(ServiceQueueRotationAlgorithm rotationAlgorithm)
         {
-            _messageQueue = new MessageQueue(65536);
-            _messageQueueDistributor = new MessageQueueDistributor(_messageQueue, rotationAlgorithm);
+            _messageQueue = new MessageQueueSingle();
+            _messageQueueDistributor = new MessageQueueSingleDistributor(_messageQueue, rotationAlgorithm);
 
             _servers = new ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter>();
             _readerClientSockets = new ConcurrentDictionary<ISocket, IMessageFrameWriter>();

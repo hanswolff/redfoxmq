@@ -22,14 +22,14 @@ using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
-    class MessageQueueBroadcaster
+    class MessageQueueBatchBroadcaster
     {
-        private readonly ConcurrentDictionary<MessageQueue, MessageQueuePayload> _messageQueues = new ConcurrentDictionary<MessageQueue, MessageQueuePayload>();
+        private readonly ConcurrentDictionary<MessageQueueBatch, MessageQueuePayload> _messageQueues = new ConcurrentDictionary<MessageQueueBatch, MessageQueuePayload>();
         private readonly AutoResetEvent _messageQueueHasMessage = new AutoResetEvent(false);
         private Task _asyncSchedulerTask;
         private CancellationTokenSource _cts = new CancellationTokenSource();
 
-        public void Register(MessageQueue messageQueue, IMessageFrameWriter messageFrameWriter)
+        public void Register(MessageQueueBatch messageQueue, IMessageFrameWriter messageFrameWriter)
         {
             if (messageQueue == null) throw new ArgumentNullException("messageQueue");
             if (messageFrameWriter == null) throw new ArgumentNullException("messageFrameWriter");
@@ -45,7 +45,7 @@ namespace RedFoxMQ
             _messageQueueHasMessage.Set();
         }
 
-        public bool Unregister(MessageQueue messageQueue)
+        public bool Unregister(MessageQueueBatch messageQueue)
         {
             if (messageQueue == null) throw new ArgumentNullException("messageQueue");
 
@@ -114,7 +114,7 @@ namespace RedFoxMQ
             }
         }
 
-        private static async Task LoopMessageQueueAsync(MessageQueue messageQueue, MessageQueuePayload messageQueuePayload, CancellationToken cancellationToken)
+        private static async Task LoopMessageQueueAsync(MessageQueueBatch messageQueue, MessageQueuePayload messageQueuePayload, CancellationToken cancellationToken)
         {
             try
             {

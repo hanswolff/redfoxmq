@@ -22,12 +22,12 @@ using System.Linq;
 namespace RedFoxMQ.Tests
 {
     [TestFixture]
-    public class MessageQueueTests
+    public class MessageQueueSingleTests
     {
         [Test]
         public void MessageQueue_empty_MessageCounterSignal_IsSet_false()
         {
-            var messageQueue = new MessageQueue(4096);
+            var messageQueue = new MessageQueueSingle();
             Assert.IsFalse(messageQueue.MessageCounterSignal.IsSet);
         }
 
@@ -36,20 +36,20 @@ namespace RedFoxMQ.Tests
         {
             var testMessageFrame = new MessageFrame();
 
-            var messageQueue = new MessageQueue(4096);
+            var messageQueue = new MessageQueueSingle();
             messageQueue.Add(testMessageFrame);
 
             Assert.IsTrue(messageQueue.MessageCounterSignal.IsSet);
         }
 
         [Test]
-        public void MessageQueue_Add_fires_MessageFramesAdded()
+        public void MessageQueue_Add_fires_MessageFrameAdded()
         {
             var testMessageFrame = new MessageFrame();
 
-            var messageQueue = new MessageQueue(4096);
+            var messageQueue = new MessageQueueSingle();
             MessageFrame messageFrame = null;
-            messageQueue.MessageFramesAdded += m => { messageFrame = m.Single(); };
+            messageQueue.MessageFrameAdded += m => { messageFrame = m; };
 
             messageQueue.Add(testMessageFrame);
             
@@ -57,13 +57,13 @@ namespace RedFoxMQ.Tests
         }
 
         [Test]
-        public void MessageQueue_AddRange_fires_MessageFramesAdded()
+        public void MessageQueue_AddRange_fires_MessageFrameAdded()
         {
             var testMessageFrame = new MessageFrame();
 
-            var messageQueue = new MessageQueue(4096);
+            var messageQueue = new MessageQueueSingle();
             MessageFrame messageFrame = null;
-            messageQueue.MessageFramesAdded += m => { messageFrame = m.Single(); };
+            messageQueue.MessageFrameAdded += m => { messageFrame = m; };
 
             messageQueue.AddRange(new [] { testMessageFrame });
 
@@ -78,10 +78,10 @@ namespace RedFoxMQ.Tests
 
             var testMessageFrame = new MessageFrame();
 
-            var messageQueue = new MessageQueue(4096);
+            var messageQueue = new MessageQueueSingle();
             messageQueue.Add(testMessageFrame);
 
-            messageQueue.SendMultipleFromQueue(messageFramesWriter);
+            messageQueue.SendFromQueue(messageFramesWriter);
 
             Assert.AreSame(testMessageFrame, messageFramesWritten.First());
         }
@@ -94,43 +94,79 @@ namespace RedFoxMQ.Tests
 
             var testMessageFrame = new MessageFrame();
 
-            var messageQueue = new MessageQueue(4096);
+            var messageQueue = new MessageQueueSingle();
             messageQueue.Add(testMessageFrame);
 
-            messageQueue.SendMultipleFromQueue(messageFramesWriter);
+            messageQueue.SendFromQueue(messageFramesWriter);
 
             Assert.IsFalse(messageQueue.MessageCounterSignal.IsSet);
         }
 
         [Test]
-        public void MessageQueue_AddRange_two_messages_SendMultipleFromQueue_fires_MessageFramesAdded()
+        public void MessageQueue_AddRange_two_messages_SendFromQueue_writer_receive_first_message()
         {
             var messageFramesWritten = new List<MessageFrame>();
             var messageFramesWriter = CreateMessagFrameWriter(messageFramesWritten);
 
-            var testMessageFrame = new MessageFrame();
+            var testMessageFrame1 = new MessageFrame();
+            var testMessageFrame2 = new MessageFrame();
 
-            var messageQueue = new MessageQueue(4096);
-            messageQueue.AddRange(new[] { testMessageFrame, testMessageFrame });
+            var messageQueue = new MessageQueueSingle();
+            messageQueue.AddRange(new[] { testMessageFrame1, testMessageFrame2 });
 
-            messageQueue.SendMultipleFromQueue(messageFramesWriter);
+            messageQueue.SendFromQueue(messageFramesWriter);
 
-            Assert.AreSame(testMessageFrame, messageFramesWritten.First());
-            Assert.AreSame(testMessageFrame, messageFramesWritten.Skip(1).Single());
+            Assert.AreSame(testMessageFrame1, messageFramesWritten.Single());
         }
 
         [Test]
-        public void MessageQueue_AddRange_two_messages_after_SendMultipleFromQueue_MessageCounterSignal_IsSet_false()
+        public void MessageQueue_AddRange_two_messages_SendFromQueue_twice_writer_receives_both_messages()
+        {
+            var messageFramesWritten = new List<MessageFrame>();
+            var messageFramesWriter = CreateMessagFrameWriter(messageFramesWritten);
+
+            var testMessageFrame1 = new MessageFrame();
+            var testMessageFrame2 = new MessageFrame();
+
+            var messageQueue = new MessageQueueSingle();
+            messageQueue.AddRange(new[] { testMessageFrame1, testMessageFrame2 });
+
+            messageQueue.SendFromQueue(messageFramesWriter);
+            messageQueue.SendFromQueue(messageFramesWriter);
+
+            Assert.AreSame(testMessageFrame1, messageFramesWritten.First());
+            Assert.AreSame(testMessageFrame2, messageFramesWritten.Skip(1).Single());
+        }
+
+        [Test]
+        public void MessageQueue_AddRange_two_messages_after_SendFromQueue_MessageCounterSignal_IsSet_true()
         {
             var messageFramesWritten = new List<MessageFrame>();
             var messageFramesWriter = CreateMessagFrameWriter(messageFramesWritten);
 
             var testMessageFrame = new MessageFrame();
 
-            var messageQueue = new MessageQueue(4096);
+            var messageQueue = new MessageQueueSingle();
             messageQueue.AddRange(new[] { testMessageFrame, testMessageFrame });
 
-            messageQueue.SendMultipleFromQueue(messageFramesWriter);
+            messageQueue.SendFromQueue(messageFramesWriter);
+
+            Assert.IsTrue(messageQueue.MessageCounterSignal.IsSet);
+        }
+
+        [Test]
+        public void MessageQueue_AddRange_two_messages_after_SendFromQueue_twice_MessageCounterSignal_IsSet_false()
+        {
+            var messageFramesWritten = new List<MessageFrame>();
+            var messageFramesWriter = CreateMessagFrameWriter(messageFramesWritten);
+
+            var testMessageFrame = new MessageFrame();
+
+            var messageQueue = new MessageQueueSingle();
+            messageQueue.AddRange(new[] { testMessageFrame, testMessageFrame });
+
+            messageQueue.SendFromQueue(messageFramesWriter);
+            messageQueue.SendFromQueue(messageFramesWriter);
 
             Assert.IsFalse(messageQueue.MessageCounterSignal.IsSet);
         }
