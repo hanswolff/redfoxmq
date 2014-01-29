@@ -216,8 +216,8 @@ namespace RedFoxMQ.Tests
                 Assert.AreNotEqual(0, messagesReceived2.Count);
 
                 var ratio = (decimal)messagesReceived1.Count / messagesReceived2.Count;
-                Assert.Greater(ratio, 0.25);
-                Assert.Less(ratio, 0.75);
+                Assert.Greater(ratio, 0.9);
+                Assert.Less(ratio, 1.1);
             }
         }
 

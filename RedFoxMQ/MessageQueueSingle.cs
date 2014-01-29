@@ -65,7 +65,7 @@ namespace RedFoxMQ
             return true;
         }
 
-        internal async Task<bool> SendMultipleFromQueueAsync(IMessageFrameWriter writer, CancellationToken cancellationToken)
+        internal async Task<bool> SendFromQueueAsync(IMessageFrameWriter writer, CancellationToken cancellationToken)
         {
             MessageFrame messageFrame;
             if (!_singleMessageFrames.TryTake(out messageFrame)) return false;
