@@ -26,7 +26,7 @@ namespace RedFoxMQ.Tests
     public class ServiceQueueWriterTests
     {
         [Test]
-        public void ServiceQueue_single_message_sent_MessageFramesCount_is_one()
+        public void ServiceQueue_connect_Writer_send_single_message_MessageFramesCount_is_one()
         {
             using (var serviceQueue = new ServiceQueue())
             using (var writer = new ServiceQueueWriter())
@@ -48,7 +48,7 @@ namespace RedFoxMQ.Tests
         }
 
         [Test]
-        public void ServiceQueue_single_message_received_fires_MessageFrameReceived_event()
+        public void ServiceQueue_connect_Writer_send_single_message_received_fires_MessageFrameReceived_event()
         {
             using (var serviceQueue = new ServiceQueue())
             using (var writer = new ServiceQueueWriter())
@@ -74,7 +74,7 @@ namespace RedFoxMQ.Tests
         }
 
         [Test]
-        public void ServiceQueue_multiple_message_received()
+        public void ServiceQueue_connect_Writer_send_multiple_message_received()
         {
             const int count = 1000;
 

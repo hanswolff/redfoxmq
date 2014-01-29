@@ -25,7 +25,7 @@ namespace RedFoxMQ.Tests
     public class ServiceQueueReaderTests
     {
         [Test]
-        public void ServiceQueue_single_message_received()
+        public void ServiceQueue_connect_AddMessageFrame_single_message_received()
         {
             using (var serviceQueue = new ServiceQueue())
             using (var reader = new ServiceQueueReader())
@@ -47,6 +47,35 @@ namespace RedFoxMQ.Tests
                 var testMessageFrame = new MessageFrameCreator(DefaultMessageSerialization.Instance).CreateFromMessage(testMessage);
 
                 serviceQueue.AddMessageFrame(testMessageFrame);
+
+                Assert.IsTrue(received.Wait(TimeSpan.FromSeconds(1)));
+                Assert.AreEqual(testMessage, messageReceived);
+            }
+        }
+
+        [Test]
+        public void ServiceQueue_AddMessageFrame_connect_single_message_received()
+        {
+            using (var serviceQueue = new ServiceQueue())
+            using (var reader = new ServiceQueueReader())
+            {
+                var endpoint = new RedFoxEndpoint("/path");
+
+                IMessage messageReceived = null;
+                var received = new ManualResetEventSlim();
+                reader.MessageReceived += m =>
+                {
+                    messageReceived = m;
+                    received.Set();
+                };
+
+                var testMessage = new TestMessage();
+                var testMessageFrame = new MessageFrameCreator(DefaultMessageSerialization.Instance).CreateFromMessage(testMessage);
+
+                serviceQueue.AddMessageFrame(testMessageFrame);
+
+                serviceQueue.Bind(endpoint);
+                reader.Connect(endpoint);
 
                 Assert.IsTrue(received.Wait(TimeSpan.FromSeconds(1)));
                 Assert.AreEqual(testMessage, messageReceived);

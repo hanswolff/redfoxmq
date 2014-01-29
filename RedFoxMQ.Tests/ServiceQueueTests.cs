@@ -35,7 +35,7 @@ namespace RedFoxMQ.Tests
         }
 
         [Test]
-        public void servicequeues_bind_same_endpoint_twice_fails()
+        public void ServiceQueues_bind_same_endpoint_twice_fails()
         {
             using (var serviceQueue = new ServiceQueue())
             {
@@ -46,7 +46,7 @@ namespace RedFoxMQ.Tests
         }
 
         [Test]
-        public void servicequeue_can_bind_multiple_different_endpoints()
+        public void ServiceQueue_can_bind_multiple_different_endpoints()
         {
             using (var serviceQueue = new ServiceQueue())
             {
@@ -56,7 +56,7 @@ namespace RedFoxMQ.Tests
         }
 
         [Test]
-        public void servicequeue_dispose_unbinds_endpoints()
+        public void ServiceQueue_dispose_unbinds_endpoints()
         {
             using (var serviceQueue = new ServiceQueue())
             {
@@ -72,7 +72,7 @@ namespace RedFoxMQ.Tests
         }
 
         [Test]
-        public void two_servicequeues_same_endpoint_fails()
+        public void two_ServiceQueues_same_endpoint_fails()
         {
             using (var serviceQueue1 = new ServiceQueue())
             using (var serviceQueue2 = new ServiceQueue())
