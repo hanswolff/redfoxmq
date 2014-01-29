@@ -61,7 +61,7 @@ namespace RedFoxMQ
 
         public void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration)
         {
-            var server = SocketAccepterFactory.CreateAndBind(endpoint, socketConfiguration, OnClientConnected, SocketDisconnected);
+            var server = SocketAccepterFactory.CreateAndBind(endpoint, socketConfiguration, OnClientConnected, CheckIfSocketDisconnected);
             _servers[endpoint] = server;
         }
 
@@ -86,7 +86,7 @@ namespace RedFoxMQ
             if (socket.IsDisconnected)
             {
                 // this is to fix the race condition if socket was disconnected meanwhile
-                SocketDisconnected(socket);
+                CheckIfSocketDisconnected(socket);
             }
         }
 
@@ -129,12 +129,7 @@ namespace RedFoxMQ
             _messageQueue.Add(messageFrame);
         }
 
-        private void MessageReceiveLoopOnException(ISocket socket, Exception exception)
-        {
-            socket.Disconnect();
-        }
-
-        private void SocketDisconnected(ISocket socket)
+        private void CheckIfSocketDisconnected(ISocket socket)
         {
             var disconnected = ReaderSocketDisconnected(socket) && WriterSocketDisconnected(socket);
         }
