@@ -63,7 +63,7 @@ namespace RedFoxMQ
             }
         }
 
-        internal bool SendFromQueue(IMessageFrameWriter writer)
+        internal bool SendMultipleFromQueue(IMessageFrameWriter writer)
         {
             List<MessageFrame> batch;
             if (!_batchMessageFrames.TryTake(out batch))
@@ -92,7 +92,7 @@ namespace RedFoxMQ
             return true;
         }
 
-        internal async Task<bool> SendFromQueueAsync(IMessageFrameWriter writer, CancellationToken cancellationToken)
+        internal async Task<bool> SendMultipleFromQueueAsync(IMessageFrameWriter writer, CancellationToken cancellationToken)
         {
             List<MessageFrame> batch;
             if (!_batchMessageFrames.TryTake(out batch))

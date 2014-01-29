@@ -118,7 +118,7 @@ namespace RedFoxMQ
         {
             try
             {
-                await messageQueue.SendFromQueueAsync(messageQueuePayload.Writer, cancellationToken);
+                await messageQueue.SendMultipleFromQueueAsync(messageQueuePayload.Writer, cancellationToken);
             }
             finally
             {

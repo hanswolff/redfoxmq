@@ -103,10 +103,14 @@ namespace RedFoxMQ
 
         private void ExecuteAsyncLoop(CancellationToken cancellationToken)
         {
+            var idleTimeout = TimeSpan.FromMilliseconds(10);
+
             try
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
+                    _messageQueue.MessageCounterSignal.Wait(idleTimeout);
+
                     _rotationFunc(cancellationToken);
                 }
             }
@@ -154,7 +158,7 @@ namespace RedFoxMQ
         {
             try
             {
-                await _messageQueue.SendFromQueueAsync(messageFrameWriterPayload.Writer, cancellationToken);
+                await _messageQueue.SendMultipleFromQueueAsync(messageFrameWriterPayload.Writer, cancellationToken);
             }
             finally
             {
