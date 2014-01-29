@@ -25,13 +25,31 @@ namespace RedFoxMQ
     {
         private readonly MessageQueue _messageQueue;
         private readonly ConcurrentDictionary<IMessageFrameWriter, MessageFrameWriterPayload> _messageFrameWriters = new ConcurrentDictionary<IMessageFrameWriter, MessageFrameWriterPayload>();
+        private readonly ConcurrentQueue<MessageFrameWriterPayload> _messageWritersQueueForRoundRobin = new ConcurrentQueue<MessageFrameWriterPayload>();
+        private readonly Action<CancellationToken> _rotationFunc;
+
         private Task _asyncSchedulerTask;
         private CancellationTokenSource _cts = new CancellationTokenSource();
 
-        public MessageQueueDistributor(MessageQueue messageQueue)
+        public MessageQueueDistributor(MessageQueue messageQueue, ServiceQueueRotationAlgorithm rotationAlgorithm)
         {
             if (messageQueue == null) throw new ArgumentNullException("messageQueue");
             _messageQueue = messageQueue;
+            _rotationFunc = GetRotationFunc(rotationAlgorithm);
+        }
+
+        private Action<CancellationToken> GetRotationFunc(ServiceQueueRotationAlgorithm rotationAlgorithm)
+        {
+            switch (rotationAlgorithm)
+            {
+                case ServiceQueueRotationAlgorithm.FirstIdle:
+                    return LoopFirstIdleAsync;
+                case ServiceQueueRotationAlgorithm.LoadBalance:
+                    return LoopLoadBalanceAsync;
+                default:
+                    throw new NotSupportedException(String.Format("Unsupported ServiceQueueRotationAlgorithm: {0}",
+                        rotationAlgorithm));
+            }
         }
 
         public void Register(IMessageFrameWriter messageFrameWriter)
@@ -39,7 +57,11 @@ namespace RedFoxMQ
             if (messageFrameWriter == null) throw new ArgumentNullException("messageFrameWriter");
 
             var messageQueuePayload = new MessageFrameWriterPayload(messageFrameWriter);
-            _messageFrameWriters[messageFrameWriter] = messageQueuePayload;
+            if (_messageFrameWriters.TryAdd(messageFrameWriter, messageQueuePayload))
+            {
+                _messageWritersQueueForRoundRobin.Enqueue(messageQueuePayload);
+            }
+
             StartAsyncProcessingIfNotStartedYet();
         }
 
@@ -85,7 +107,7 @@ namespace RedFoxMQ
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    LoopUsingAsync(cancellationToken);
+                    _rotationFunc(cancellationToken);
                 }
             }
             catch (OperationCanceledException)
@@ -97,19 +119,38 @@ namespace RedFoxMQ
             }
         }
 
-        private void LoopUsingAsync(CancellationToken cancellationToken)
+        private void LoopFirstIdleAsync(CancellationToken cancellationToken)
         {
             foreach (var item in _messageFrameWriters)
             {
-                var messageQueuePayload = item.Value;
+                var messageFrameWriterPayload = item.Value;
 
-                if (messageQueuePayload.Busy.Set(true)) continue;
-                var task = LoopMessageQueueAsync(messageQueuePayload, cancellationToken).ConfigureAwait(false);
+                if (messageFrameWriterPayload.Busy.Set(true)) continue;
+                var task = LoopMessageQueueAsync(messageFrameWriterPayload, cancellationToken);
                 return;
             }
         }
 
-        private async Task LoopMessageQueueAsync(MessageFrameWriterPayload messageFrameWriterPayload, CancellationToken cancellationToken)
+        private void LoopLoadBalanceAsync(CancellationToken cancellationToken)
+        {
+            while (true)
+            {
+                MessageFrameWriterPayload messageFrameWriterPayload;
+                if (!_messageWritersQueueForRoundRobin.TryDequeue(out messageFrameWriterPayload)) continue;
+
+                if (messageFrameWriterPayload.Cancelled.Value) continue;
+                if (messageFrameWriterPayload.Busy.Set(true)) continue;
+
+                var task = LoopMessageQueueAsync(
+                    messageFrameWriterPayload, 
+                    cancellationToken, 
+                    () => _messageWritersQueueForRoundRobin.Enqueue(messageFrameWriterPayload));
+
+                return;
+            }
+        }
+
+        private async Task LoopMessageQueueAsync(MessageFrameWriterPayload messageFrameWriterPayload, CancellationToken cancellationToken, Action finalAction = null)
         {
             try
             {
@@ -118,6 +159,7 @@ namespace RedFoxMQ
             finally
             {
                 messageFrameWriterPayload.Busy.Set(false);
+                if (finalAction != null) finalAction();
             }
         }
 

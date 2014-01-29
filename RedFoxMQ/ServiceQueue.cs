@@ -43,9 +43,14 @@ namespace RedFoxMQ
         public int MessageFramesCount { get { return _messageQueue.Count; } }
 
         public ServiceQueue()
+            : this(ServiceQueueRotationAlgorithm.FirstIdle)
+        {
+        }
+
+        public ServiceQueue(ServiceQueueRotationAlgorithm rotationAlgorithm)
         {
             _messageQueue = new MessageQueue(65536);
-            _messageQueueDistributor = new MessageQueueDistributor(_messageQueue);
+            _messageQueueDistributor = new MessageQueueDistributor(_messageQueue, rotationAlgorithm);
 
             _servers = new ConcurrentDictionary<RedFoxEndpoint, ISocketAccepter>();
             _readerClientSockets = new ConcurrentDictionary<ISocket, IMessageFrameWriter>();

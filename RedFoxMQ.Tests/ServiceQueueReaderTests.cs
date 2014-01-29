@@ -25,12 +25,13 @@ namespace RedFoxMQ.Tests
     [TestFixture]
     public class ServiceQueueReaderTests
     {
-        [Test]
-        public void ServiceQueue_connect_AddMessageFrame_single_message_received()
+        [TestCase(ServiceQueueRotationAlgorithm.FirstIdle)]
+        [TestCase(ServiceQueueRotationAlgorithm.LoadBalance)]
+        public void ServiceQueue_connect_AddMessageFrame_single_message_received(ServiceQueueRotationAlgorithm rotationAlgorithm)
         {
             var endpoint = new RedFoxEndpoint("/path");
 
-            using (var serviceQueue = new ServiceQueue())
+            using (var serviceQueue = new ServiceQueue(rotationAlgorithm))
             using (var serviceQueueReader = new ServiceQueueReader())
             {
                 IMessage messageReceived = null;
@@ -54,12 +55,13 @@ namespace RedFoxMQ.Tests
             }
         }
 
-        [Test]
-        public void ServiceQueue_AddMessageFrame_connect_single_message_received()
+        [TestCase(ServiceQueueRotationAlgorithm.FirstIdle)]
+        [TestCase(ServiceQueueRotationAlgorithm.LoadBalance)]
+        public void ServiceQueue_AddMessageFrame_connect_single_message_received(ServiceQueueRotationAlgorithm rotationAlgorithm)
         {
             var endpoint = new RedFoxEndpoint("/path");
 
-            using (var serviceQueue = new ServiceQueue())
+            using (var serviceQueue = new ServiceQueue(rotationAlgorithm))
             using (var serviceQueueReader = new ServiceQueueReader())
             {
                 IMessage messageReceived = null;
@@ -83,12 +85,13 @@ namespace RedFoxMQ.Tests
             }
         }
 
-        [Test]
-        public void ServiceQueue_connect_AddMessageFrame_single_message_received_disconnect_connect_AddMessageFrame_single_message_received()
+        [TestCase(ServiceQueueRotationAlgorithm.FirstIdle)]
+        [TestCase(ServiceQueueRotationAlgorithm.LoadBalance)]
+        public void ServiceQueue_connect_AddMessageFrame_single_message_received_disconnect_connect_AddMessageFrame_single_message_received(ServiceQueueRotationAlgorithm rotationAlgorithm)
         {
             var endpoint = new RedFoxEndpoint("/path");
 
-            using (var serviceQueue = new ServiceQueue())
+            using (var serviceQueue = new ServiceQueue(rotationAlgorithm))
             using (var serviceQueueReader = new ServiceQueueReader())
             {
                 IMessage messageReceived = null;
@@ -124,12 +127,13 @@ namespace RedFoxMQ.Tests
             }
         }
 
-        [Test]
-        public void ServiceQueue_AddMessageFrame_connect_multiple_readers_multiple_message_received()
+        [TestCase(ServiceQueueRotationAlgorithm.FirstIdle)]
+        [TestCase(ServiceQueueRotationAlgorithm.LoadBalance)]
+        public void ServiceQueue_AddMessageFrame_connect_multiple_readers_multiple_message_received(ServiceQueueRotationAlgorithm rotationAlgorithm)
         {
             var endpoint = new RedFoxEndpoint("/path");
 
-            using (var serviceQueue = new ServiceQueue())
+            using (var serviceQueue = new ServiceQueue(rotationAlgorithm))
             using (var serviceQueueReader1 = new ServiceQueueReader())
             using (var serviceQueueReader2 = new ServiceQueueReader())
             {
@@ -163,6 +167,57 @@ namespace RedFoxMQ.Tests
 
                 Assert.IsTrue(counter.Wait(TimeSpan.FromSeconds(10)));
                 Assert.AreEqual(count, messagesReceived1.Count + messagesReceived2.Count);
+            }
+        }
+
+        [Test]
+        public void ServiceQueue_AddMessageFrame_connect_multiple_readers_LoadBalance()
+        {
+            var endpoint1 = new RedFoxEndpoint("/path1");
+            var endpoint2 = new RedFoxEndpoint("/path2");
+
+            using (var serviceQueue = new ServiceQueue(ServiceQueueRotationAlgorithm.LoadBalance))
+            using (var serviceQueueReader1 = new ServiceQueueReader())
+            using (var serviceQueueReader2 = new ServiceQueueReader())
+            {
+                const int count = 1000;
+                var counter = new CounterSignal(count, 0);
+
+                var messagesReceived1 = new List<IMessage>();
+                serviceQueueReader1.MessageReceived += m =>
+                {
+                    messagesReceived1.Add(m);
+                    counter.Increment();
+                };
+
+                var messagesReceived2 = new List<IMessage>();
+                serviceQueueReader2.MessageReceived += m =>
+                {
+                    messagesReceived2.Add(m);
+                    counter.Increment();
+                };
+
+                var testMessage = new TestMessage();
+                var testMessageFrame = new MessageFrameCreator(DefaultMessageSerialization.Instance).CreateFromMessage(testMessage);
+
+                serviceQueue.Bind(endpoint1);
+                serviceQueue.Bind(endpoint2);
+
+                serviceQueueReader1.Connect(endpoint1);
+                serviceQueueReader2.Connect(endpoint2);
+
+                for (var i = 0; i < count; i++)
+                    serviceQueue.AddMessageFrame(testMessageFrame);
+
+                Assert.IsTrue(counter.Wait());
+                Assert.AreEqual(count, messagesReceived1.Count + messagesReceived2.Count);
+
+                Assert.AreNotEqual(0, messagesReceived1.Count);
+                Assert.AreNotEqual(0, messagesReceived2.Count);
+
+                var ratio = (decimal)messagesReceived1.Count / messagesReceived2.Count;
+                Assert.Greater(ratio, 0.25);
+                Assert.Less(ratio, 0.75);
             }
         }
 

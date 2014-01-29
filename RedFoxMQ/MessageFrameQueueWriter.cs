@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@
 using RedFoxMQ.Transports;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace RedFoxMQ
 {
+    [DebuggerDisplay("MessageFrameQueueWriter: {_queueSocket}")]
     class MessageFrameQueueWriter : IMessageFrameWriter
     {
         private readonly IQueueSocket _queueSocket;

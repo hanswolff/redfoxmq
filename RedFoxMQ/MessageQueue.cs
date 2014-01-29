@@ -30,6 +30,7 @@ namespace RedFoxMQ
 
         private readonly BlockingCollection<MessageFrame> _singleMessageFrames = new BlockingCollection<MessageFrame>();
         private readonly BlockingCollection<List<MessageFrame>> _batchMessageFrames = new BlockingCollection<List<MessageFrame>>();
+        public readonly CounterSignal MessageCounterSignal = new CounterSignal(1, 0);
 
         public event Action<IReadOnlyCollection<MessageFrame>> MessageFramesAdded = m => { };
 
@@ -45,6 +46,7 @@ namespace RedFoxMQ
             if (messageFrame == null) throw new ArgumentNullException("messageFrame");
             if (_singleMessageFrames.TryAdd(messageFrame))
             {
+                MessageCounterSignal.Increment();
                 MessageFramesAdded(new [] { messageFrame });
             }
         }
@@ -56,6 +58,7 @@ namespace RedFoxMQ
             var batch = new List<MessageFrame>(messageFrames);
             if (_batchMessageFrames.TryAdd(batch))
             {
+                MessageCounterSignal.Add(batch.Count);
                 MessageFramesAdded(new ReadOnlyCollection<MessageFrame>(batch));
             }
         }
@@ -67,10 +70,13 @@ namespace RedFoxMQ
             {
                 batch = new List<MessageFrame>();
             }
+            else MessageCounterSignal.Add(-batch.Count);
 
             MessageFrame messageFrame;
             if (_singleMessageFrames.TryTake(out messageFrame))
             {
+                MessageCounterSignal.Decrement();
+
                 var batchSize = batch.Sum(x => x.RawMessage.LongLength);
                 batch.Add(messageFrame);
                 batchSize += messageFrame.RawMessage.LongLength;
@@ -93,10 +99,13 @@ namespace RedFoxMQ
             {
                 batch = new List<MessageFrame>();
             }
+            else MessageCounterSignal.Add(-batch.Count);
 
             MessageFrame messageFrame;
             if (_singleMessageFrames.TryTake(out messageFrame))
             {
+                MessageCounterSignal.Decrement();
+
                 var batchSize = batch.Sum(x => x.RawMessage.LongLength);
                 batch.Add(messageFrame);
                 batchSize += messageFrame.RawMessage.LongLength;
