@@ -39,6 +39,7 @@ The easiest way is to look at the unit tests. They are a good source of examples
 
 Or have a look at a standalone Request / Response example:
 
+```c#
 	using RedFoxMQ;
 	using RedFoxMQ.Transports;
 	using System;
@@ -48,10 +49,15 @@ Or have a look at a standalone Request / Response example:
 	{
 		static void Main()
 		{
-			// initialize message serialization / deserialization
 			var messageSerialization = new MessageSerialization();
-			messageSerialization.RegisterSerializer(TestMessage.UniqueIdPerMessageType, new TestMessageSerializer());
-			messageSerialization.RegisterDeserializer(TestMessage.UniqueIdPerMessageType, new TestMessageDeserializer());
+			
+			messageSerialization.RegisterSerializer( // register serializer for each message type
+				TestMessage.UniqueIdPerMessageType, 
+				new TestMessageSerializer());
+				
+			messageSerialization.RegisterDeserializer( // register deserializer for each message type
+				TestMessage.UniqueIdPerMessageType, 
+				new TestMessageDeserializer());
 
 			// setup simple echo responder
 			Func<IMessage, IMessage> echoFunc = request => request; // alternatively implement IResponderWorker instead
@@ -62,7 +68,7 @@ Or have a look at a standalone Request / Response example:
 			using (var requester = new Requester(messageSerialization))
 			{
 				var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
-				responder.Bind(endpoint);
+				responder.Bind(endpoint); // call Bind multiple times to listen to multiple endpoints
 
 				requester.Connect(endpoint);
 
@@ -103,6 +109,7 @@ Or have a look at a standalone Request / Response example:
 			public string Text { get; set; }
 		}    
 	}
+```
 
 I recommend using [Protocol Buffers](https://code.google.com/p/protobuf-net/)
 for message serialization, but it is entirely up to you!
