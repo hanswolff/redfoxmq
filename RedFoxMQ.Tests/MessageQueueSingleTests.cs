@@ -71,7 +71,7 @@ namespace RedFoxMQ.Tests
         }
 
         [Test]
-        public void MessageQueue_Add_single_message_SendMultipleFromQueue_fires_MessageFramesAdded()
+        public void MessageQueue_Add_single_message_SendFromQueue_fires_MessageFramesAdded()
         {
             var messageFramesWritten = new List<MessageFrame>();
             var messageFramesWriter = CreateMessageFrameWriter(messageFramesWritten);
@@ -87,7 +87,7 @@ namespace RedFoxMQ.Tests
         }
 
         [Test]
-        public void MessageQueue_Add_single_message_after_SendMultipleFromQueue_MessageCounterSignal_IsSet_false()
+        public void MessageQueue_Add_single_message_SendFromQueue_MessageCounterSignal_IsSet_false()
         {
             var messageFramesWritten = new List<MessageFrame>();
             var messageFramesWriter = CreateMessageFrameWriter(messageFramesWritten);
