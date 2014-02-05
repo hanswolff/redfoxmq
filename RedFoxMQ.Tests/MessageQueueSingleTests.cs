@@ -74,7 +74,7 @@ namespace RedFoxMQ.Tests
         public void MessageQueue_Add_single_message_SendMultipleFromQueue_fires_MessageFramesAdded()
         {
             var messageFramesWritten = new List<MessageFrame>();
-            var messageFramesWriter = CreateMessagFrameWriter(messageFramesWritten);
+            var messageFramesWriter = CreateMessageFrameWriter(messageFramesWritten);
 
             var testMessageFrame = new MessageFrame();
 
@@ -90,7 +90,7 @@ namespace RedFoxMQ.Tests
         public void MessageQueue_Add_single_message_after_SendMultipleFromQueue_MessageCounterSignal_IsSet_false()
         {
             var messageFramesWritten = new List<MessageFrame>();
-            var messageFramesWriter = CreateMessagFrameWriter(messageFramesWritten);
+            var messageFramesWriter = CreateMessageFrameWriter(messageFramesWritten);
 
             var testMessageFrame = new MessageFrame();
 
@@ -106,7 +106,7 @@ namespace RedFoxMQ.Tests
         public void MessageQueue_AddRange_two_messages_SendFromQueue_writer_receive_first_message()
         {
             var messageFramesWritten = new List<MessageFrame>();
-            var messageFramesWriter = CreateMessagFrameWriter(messageFramesWritten);
+            var messageFramesWriter = CreateMessageFrameWriter(messageFramesWritten);
 
             var testMessageFrame1 = new MessageFrame();
             var testMessageFrame2 = new MessageFrame();
@@ -123,7 +123,7 @@ namespace RedFoxMQ.Tests
         public void MessageQueue_AddRange_two_messages_SendFromQueue_twice_writer_receives_both_messages()
         {
             var messageFramesWritten = new List<MessageFrame>();
-            var messageFramesWriter = CreateMessagFrameWriter(messageFramesWritten);
+            var messageFramesWriter = CreateMessageFrameWriter(messageFramesWritten);
 
             var testMessageFrame1 = new MessageFrame();
             var testMessageFrame2 = new MessageFrame();
@@ -142,7 +142,7 @@ namespace RedFoxMQ.Tests
         public void MessageQueue_AddRange_two_messages_after_SendFromQueue_MessageCounterSignal_IsSet_true()
         {
             var messageFramesWritten = new List<MessageFrame>();
-            var messageFramesWriter = CreateMessagFrameWriter(messageFramesWritten);
+            var messageFramesWriter = CreateMessageFrameWriter(messageFramesWritten);
 
             var testMessageFrame = new MessageFrame();
 
@@ -158,7 +158,7 @@ namespace RedFoxMQ.Tests
         public void MessageQueue_AddRange_two_messages_after_SendFromQueue_twice_MessageCounterSignal_IsSet_false()
         {
             var messageFramesWritten = new List<MessageFrame>();
-            var messageFramesWriter = CreateMessagFrameWriter(messageFramesWritten);
+            var messageFramesWriter = CreateMessageFrameWriter(messageFramesWritten);
 
             var testMessageFrame = new MessageFrame();
 
@@ -171,7 +171,7 @@ namespace RedFoxMQ.Tests
             Assert.IsFalse(messageQueue.MessageCounterSignal.IsSet);
         }
 
-        private static IMessageFrameWriter CreateMessagFrameWriter(List<MessageFrame> messageFramesWritten)
+        private static IMessageFrameWriter CreateMessageFrameWriter(List<MessageFrame> messageFramesWritten)
         {
             var mock = new Mock<IMessageFrameWriter>(MockBehavior.Strict);
 
