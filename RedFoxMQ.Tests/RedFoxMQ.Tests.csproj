@@ -49,6 +49,9 @@
       <Link>Properties\GlobalAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="Benchmarks\InprocPublisherSubscriberBenchmarks.cs" />
+    <Compile Include="Benchmarks\InprocServiceQueueBenchmarks.cs" />
+    <Compile Include="Benchmarks\ServiceQueueBenchmarks.cs" />
+    <Compile Include="Benchmarks\TcpServiceQueueBenchmarks.cs" />
     <Compile Include="Benchmarks\TcpResponderRequesterBenchmarks.cs" />
     <Compile Include="Benchmarks\InprocResponderRequesterBenchmarks.cs" />
     <Compile Include="Benchmarks\ResponderRequesterBenchmarks.cs" />
