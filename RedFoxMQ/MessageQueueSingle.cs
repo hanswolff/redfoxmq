@@ -64,15 +64,18 @@ namespace RedFoxMQ
             if (_resentMessageFramesCount > 0 && _resentMessageFrames.TryTake(out messageFrame))
             {
                 Interlocked.Decrement(ref _resentMessageFramesCount);
+                
                 SendMessageFrame(writer, messageFrame);
+                MessageCounterSignal.Decrement();
+
                 return true;
             }
 
             if (!_singleMessageFrames.TryTake(out messageFrame)) return false;
 
+            SendMessageFrame(writer, messageFrame);
             MessageCounterSignal.Decrement();
 
-            SendMessageFrame(writer, messageFrame);
             return true;
         }
 
@@ -99,14 +102,18 @@ namespace RedFoxMQ
             if (_resentMessageFramesCount > 0 && _resentMessageFrames.TryTake(out messageFrame))
             {
                 Interlocked.Decrement(ref _resentMessageFramesCount);
+                
                 await SendMessageFrameAsync(writer, messageFrame, cancellationToken);
+                MessageCounterSignal.Decrement();
+
                 return true;
             }
 
             if (!_singleMessageFrames.TryTake(out messageFrame)) return false;
 
+            await SendMessageFrameAsync(writer, messageFrame, cancellationToken);
             MessageCounterSignal.Decrement();
-            await writer.WriteMessageFrameAsync(messageFrame, cancellationToken);
+
             return true;
         }
 
