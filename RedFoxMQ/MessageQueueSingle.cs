@@ -25,6 +25,8 @@ namespace RedFoxMQ
     class MessageQueueSingle
     {
         private readonly BlockingCollection<MessageFrame> _singleMessageFrames = new BlockingCollection<MessageFrame>();
+        private readonly BlockingCollection<MessageFrame> _resentMessageFrames = new BlockingCollection<MessageFrame>();
+        private int _resentMessageFramesCount;
         public readonly CounterSignal MessageCounterSignal = new CounterSignal(1, 0);
 
         public event Action<MessageFrame> MessageFrameAdded = m => { };
@@ -58,21 +60,70 @@ namespace RedFoxMQ
         internal bool SendFromQueue(IMessageFrameWriter writer)
         {
             MessageFrame messageFrame;
+
+            if (_resentMessageFramesCount > 0 && _resentMessageFrames.TryTake(out messageFrame))
+            {
+                Interlocked.Decrement(ref _resentMessageFramesCount);
+                SendMessageFrame(writer, messageFrame);
+                return true;
+            }
+
             if (!_singleMessageFrames.TryTake(out messageFrame)) return false;
 
             MessageCounterSignal.Decrement();
-            writer.WriteMessageFrame(messageFrame);
+
+            SendMessageFrame(writer, messageFrame);
             return true;
+        }
+
+        private void SendMessageFrame(IMessageFrameWriter writer, MessageFrame messageFrame)
+        {
+            try
+            {
+                writer.WriteMessageFrame(messageFrame);
+            }
+            catch
+            {
+                if (_resentMessageFrames.TryAdd(messageFrame))
+                {
+                    Interlocked.Increment(ref _resentMessageFramesCount);
+                }
+                throw;
+            }
         }
 
         internal async Task<bool> SendFromQueueAsync(IMessageFrameWriter writer, CancellationToken cancellationToken)
         {
             MessageFrame messageFrame;
+
+            if (_resentMessageFramesCount > 0 && _resentMessageFrames.TryTake(out messageFrame))
+            {
+                Interlocked.Decrement(ref _resentMessageFramesCount);
+                await SendMessageFrameAsync(writer, messageFrame, cancellationToken);
+                return true;
+            }
+
             if (!_singleMessageFrames.TryTake(out messageFrame)) return false;
 
             MessageCounterSignal.Decrement();
             await writer.WriteMessageFrameAsync(messageFrame, cancellationToken);
             return true;
+        }
+
+        private async Task SendMessageFrameAsync(IMessageFrameWriter writer, MessageFrame messageFrame, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await writer.WriteMessageFrameAsync(messageFrame, cancellationToken);
+            }
+            catch
+            {
+                if (_resentMessageFrames.TryAdd(messageFrame))
+                {
+                    Interlocked.Increment(ref _resentMessageFramesCount);
+                }
+                throw;
+            }
         }
     }
 }
