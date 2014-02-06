@@ -20,7 +20,7 @@ using System.Threading;
 namespace RedFoxMQ
 {
     /// <summary>
-    /// Counter that can can be waited on for reaching a certain value
+    /// Counter that can be waited on for reaching a certain value
     /// </summary>
     public class CounterSignal
     {
