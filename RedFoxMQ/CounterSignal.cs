@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,61 +13,87 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using System;
 using System.Threading;
 
 namespace RedFoxMQ
 {
-    class CounterSignal
+    /// <summary>
+    /// Counter that can can be waited on for reaching a certain value
+    /// </summary>
+    public class CounterSignal
     {
-        private int _counter;
-        private readonly int _signalGreaterOrEqual;
+        private long _counter;
+        private readonly long _signalGreaterOrEqual;
 
         private readonly ManualResetEventSlim _counterSignal = new ManualResetEventSlim();
 
+        /// <summary>
+        /// Determines if signal is set (meaning CurrentValue >= signalGreaterOrEqual)
+        /// </summary>
         public bool IsSet
         {
             get { return _counterSignal.IsSet; }
         }
 
-        public int CurrentValue
+        /// <summary>
+        /// Current counter value
+        /// </summary>
+        public long CurrentValue
         {
             get { return _counter; }
             set { _counter = value; }
         }
 
-        public CounterSignal(int signalGreaterOrEqual)
+        public CounterSignal(long signalGreaterOrEqual)
             : this(signalGreaterOrEqual, 0)
         {
         }
 
-        public CounterSignal(int signalGreaterOrEqual, int initialCounterValue)
+        public CounterSignal(long signalGreaterOrEqual, long initialCounterValue)
         {
             _counter = initialCounterValue;
             _signalGreaterOrEqual = signalGreaterOrEqual;
 
-            SignalIfNeeded(_counter);
+            if (initialCounterValue >= _signalGreaterOrEqual) _counterSignal.Set();
+            else _counterSignal.Reset();
         }
 
-        public int Add(int value)
+        /// <summary>
+        /// Add a value to counter
+        /// </summary>
+        /// <returns>new value after adding to the current value</returns>
+        public long Add(long value)
         {
-            var oldValue = Interlocked.Add(ref _counter, value);
-            SignalIfNeeded(oldValue);
-            return oldValue;
+            var newValue = Interlocked.Add(ref _counter, value);
+            if (newValue >= _signalGreaterOrEqual) _counterSignal.Set();
+            else _counterSignal.Reset(); 
+            return newValue;
         }
 
-        public int Increment()
+        /// <summary>
+        /// Increment counter value
+        /// </summary>
+        /// <returns>new value after incrementing the current value</returns>
+        public long Increment()
         {
-            var oldValue = Interlocked.Increment(ref _counter);
-            SignalIfNeeded(oldValue);
-            return oldValue;
+            var newValue = Interlocked.Increment(ref _counter);
+            if (newValue >= _signalGreaterOrEqual) _counterSignal.Set();
+            else _counterSignal.Reset();
+            return newValue;
         }
 
-        public int Decrement()
+        /// <summary>
+        /// Decrement counter value
+        /// </summary>
+        /// <returns>new value after decrementing the current value</returns>
+        public long Decrement()
         {
-            var oldValue = Interlocked.Decrement(ref _counter);
-            SignalIfNeeded(oldValue);
-            return oldValue;
+            var newValue = Interlocked.Decrement(ref _counter);
+            if (newValue >= _signalGreaterOrEqual) _counterSignal.Set();
+            else _counterSignal.Reset();
+            return newValue;
         }
 
         public bool Wait()
@@ -88,12 +114,6 @@ namespace RedFoxMQ
         public bool Wait(TimeSpan timeout, CancellationToken cancellationToken)
         {
             return _counterSignal.Wait(timeout, cancellationToken);
-        }
-
-        private void SignalIfNeeded(int currentValue)
-        {
-            if (currentValue >= _signalGreaterOrEqual) _counterSignal.Set();
-            else _counterSignal.Reset();
         }
     }
 }
