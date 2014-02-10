@@ -21,7 +21,7 @@ namespace RedFoxMQ
         IMessage GetResponse(IMessage requestMessage, object state);
     }
 
-    public interface IResponderWorker<in T> where T : IMessage
+    public interface IResponderWorker<in T> : IResponderWorker where T : IMessage
     {
         IMessage GetResponse(T requestMessage, object state);
     }

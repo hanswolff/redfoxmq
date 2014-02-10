@@ -59,13 +59,13 @@ namespace RedFoxMQ
             }
         }
 
-        public void Map<T>(ResponderWorker responderWorker) where T : IMessage, new()
+        public void Map<T>(IResponderWorker responderWorker) where T : IMessage, new()
         {
             var messageTypeId = new T().MessageTypeId;
             _map[messageTypeId] = m => responderWorker;
         }
 
-        public void Map<T>(ResponderWorker<T> responderWorker) where T : IMessage, new()
+        public void Map<T>(IResponderWorker<T> responderWorker) where T : IMessage, new()
         {
             var messageTypeId = new T().MessageTypeId;
             _map[messageTypeId] = m => responderWorker;

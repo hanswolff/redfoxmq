@@ -41,7 +41,7 @@ namespace RedFoxMQ
         }
     }
 
-    public class ResponderWorker<T> : IResponderWorker, IResponderWorker<T> where T : IMessage
+    public class ResponderWorker<T> : IResponderWorker<T> where T : IMessage
     {
         private static readonly Func<T, IMessage> EchoFunction = request => request;
 
