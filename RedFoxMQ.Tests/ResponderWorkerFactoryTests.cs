@@ -14,23 +14,22 @@
 // limitations under the License.
 // 
 
+using NUnit.Framework;
 using System;
 
-namespace RedFoxMQ
+namespace RedFoxMQ.Tests
 {
-    public class ResponderWorkerFactory : IResponderWorkerFactory
+    [TestFixture]
+    public class ResponderWorkerFactoryTests
     {
-        private readonly Func<IMessage, IResponderWorker> _factory;
-
-        public ResponderWorkerFactory(Func<IMessage, IResponderWorker> factory)
+        [Test]
+        public void GetWorkerFor_constructor_passed_function_is_called()
         {
-            if (factory == null) throw new ArgumentNullException("factory");
-            _factory = factory;
-        }
+            var responderWorker = new ResponderWorker();
+            Func<IMessage, IResponderWorker> func = m => responderWorker;
 
-        public IResponderWorker GetWorkerFor(IMessage requestMessage)
-        {
-            return _factory(requestMessage);
+            var factory = new ResponderWorkerFactory(func);
+            Assert.AreSame(responderWorker, factory.GetWorkerFor(new TestMessage()));
         }
     }
 }
