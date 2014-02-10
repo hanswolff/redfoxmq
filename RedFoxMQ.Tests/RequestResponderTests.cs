@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -70,6 +70,27 @@ namespace RedFoxMQ.Tests
                 var messageReceived = (TestMessage)requester.RequestAsync(messageSent).Result;
 
                 Assert.AreEqual(messageSent.Text, messageReceived.Text);
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void RequestAsync_Cancel_single_message(RedFoxTransport transport)
+        {
+            using (var responder = TestHelpers.CreateTestResponder(1000))
+            using (var requester = new Requester())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+
+                responder.Bind(endpoint);
+
+                requester.Connect(endpoint);
+
+                Thread.Sleep(100);
+
+                var messageSent = new TestMessage { Text = "Hello" };
+                var cancellationToken = new CancellationTokenSource(TimeSpan.FromMilliseconds(100)).Token;
+                Assert.Throws<AggregateException>(() => requester.RequestAsync(messageSent, cancellationToken).Wait());
             }
         }
 
