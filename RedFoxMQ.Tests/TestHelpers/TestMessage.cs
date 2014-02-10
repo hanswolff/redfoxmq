@@ -24,7 +24,12 @@ namespace RedFoxMQ.Tests
 
         public string Text { get; set; }
 
-        public TestMessage(string text = "")
+        public TestMessage()
+            : this("")
+        {
+        }
+
+        public TestMessage(string text)
         {
             Text = text;
         }

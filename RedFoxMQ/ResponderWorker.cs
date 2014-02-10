@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,6 +38,29 @@ namespace RedFoxMQ
         public IMessage GetResponse(IMessage requestMessage, object state)
         {
             return _responderFunc(requestMessage);
+        }
+    }
+
+    public class ResponderWorker<T> : IResponderWorker where T : IMessage
+    {
+        private static readonly Func<T, IMessage> EchoFunction = request => request;
+
+        private readonly Func<T, IMessage> _responderFunc;
+
+        public ResponderWorker()
+        {
+            _responderFunc = EchoFunction;
+        }
+
+        public ResponderWorker(Func<T, IMessage> responderFunc)
+        {
+            if (responderFunc == null) throw new ArgumentNullException("responderFunc");
+            _responderFunc = responderFunc;
+        }
+
+        public IMessage GetResponse(IMessage requestMessage, object state)
+        {
+            return _responderFunc((T)requestMessage);
         }
     }
 }

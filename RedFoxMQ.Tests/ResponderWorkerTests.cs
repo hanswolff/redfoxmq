@@ -23,10 +23,40 @@ namespace RedFoxMQ.Tests
     public class ResponderWorkerTests
     {
         [Test]
-        public void GetResponse_constructor_passed_function_is_called()
+        public void GetResponse_constructor_passed_IMessage_IMessage_function_is_called()
         {
             Func<IMessage, IMessage> func = m => new TestMessage("response");
             var responderWorker = new ResponderWorker(func);
+
+            var response = (TestMessage)responderWorker.GetResponse(new TestMessage(), null);
+            Assert.AreEqual("response", response.Text);
+        }
+
+        [Test]
+        public void GetResponse_constructor_passed_nothing_Echo_function_is_called()
+        {
+            var responderWorker = new ResponderWorker();
+
+            var requestMessage = new TestMessage();
+            var response = (TestMessage)responderWorker.GetResponse(requestMessage, null);
+            Assert.AreEqual(requestMessage, response);
+        }
+
+        [Test]
+        public void GetResponse_typed_constructor_passed_nothing_Echo_function_is_called()
+        {
+            var responderWorker = new ResponderWorker<TestMessage>();
+
+            var requestMessage = new TestMessage();
+            var response = (TestMessage)responderWorker.GetResponse(requestMessage, null);
+            Assert.AreEqual(requestMessage, response);
+        }
+
+        [Test]
+        public void GetResponse_typed_constructor_passed_TestMessage_IMessage_function_is_called()
+        {
+            Func<TestMessage, IMessage> func = m => new TestMessage("response");
+            var responderWorker = new ResponderWorker<TestMessage>(func);
 
             var response = (TestMessage)responderWorker.GetResponse(new TestMessage(), null);
             Assert.AreEqual("response", response.Text);
