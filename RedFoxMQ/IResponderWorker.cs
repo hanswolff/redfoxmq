@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,5 +19,10 @@ namespace RedFoxMQ
     public interface IResponderWorker
     {
         IMessage GetResponse(IMessage requestMessage, object state);
+    }
+
+    public interface IResponderWorker<in T> where T : IMessage
+    {
+        IMessage GetResponse(T requestMessage, object state);
     }
 }

@@ -41,7 +41,7 @@ namespace RedFoxMQ
         }
     }
 
-    public class ResponderWorker<T> : IResponderWorker where T : IMessage
+    public class ResponderWorker<T> : IResponderWorker, IResponderWorker<T> where T : IMessage
     {
         private static readonly Func<T, IMessage> EchoFunction = request => request;
 
@@ -56,6 +56,11 @@ namespace RedFoxMQ
         {
             if (responderFunc == null) throw new ArgumentNullException("responderFunc");
             _responderFunc = responderFunc;
+        }
+
+        public IMessage GetResponse(T requestMessage, object state)
+        {
+            return _responderFunc(requestMessage);
         }
 
         public IMessage GetResponse(IMessage requestMessage, object state)
