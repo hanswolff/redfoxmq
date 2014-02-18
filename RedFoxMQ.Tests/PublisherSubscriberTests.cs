@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -203,6 +203,28 @@ namespace RedFoxMQ.Tests
                 subscriber.Disconnect();
 
                 Assert.IsTrue(eventFired.Wait(Timeout));
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
+        public void Publisher_Unbound_Subscriber_Disconnected_event_fires(RedFoxTransport transport)
+        {
+            using (var publisher = new Publisher())
+            using (var subscriber = new TestSubscriber())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+                var eventFired = new ManualResetEventSlim();
+
+                publisher.Bind(endpoint);
+
+                subscriber.Disconnected += eventFired.Set;
+                subscriber.Connect(endpoint);
+
+                publisher.Unbind(endpoint);
+
+                Assert.IsTrue(eventFired.Wait(Timeout));
+                Assert.IsTrue(subscriber.IsDisconnected);
             }
         }
 
