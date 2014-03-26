@@ -41,13 +41,11 @@ namespace RedFoxMQ
             var greetingMessageNegotiator = NodeGreetingMessageNegotiatorFactory.CreateFromSocket(socket);
 
             var cancellationTokenSource = new CancellationTokenSource(timeout.ToMillisOrZero());
-            var taskWriteGreeting = greetingMessageNegotiator.WriteGreetingAsync(_greetingMessage, cancellationTokenSource.Token);
+            var token = cancellationTokenSource.Token;
+            greetingMessageNegotiator.WriteGreetingAsync(_greetingMessage, token).ConfigureAwait(false);
 
-            var taskReadGreeting = greetingMessageNegotiator.VerifyRemoteGreetingAsync(_expectedRemoteNodeTypes, cancellationTokenSource.Token);
-
-            await Task.WhenAll(taskWriteGreeting, taskReadGreeting);
-
-            return taskReadGreeting.Result.NodeType;
+            var taskReadGreeting = await greetingMessageNegotiator.VerifyRemoteGreetingAsync(_expectedRemoteNodeTypes, token).ConfigureAwait(false);
+            return taskReadGreeting.NodeType;
         }
     }
 }

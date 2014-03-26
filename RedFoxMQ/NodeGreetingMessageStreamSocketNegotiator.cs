@@ -75,7 +75,7 @@ namespace RedFoxMQ
 
         public async Task<NodeGreetingMessage> VerifyRemoteGreetingAsync(HashSet<NodeType> expectedNodeTypes, CancellationToken cancellationToken)
         {
-            var remoteGreeting = await ReadGreetingAsync(cancellationToken);
+            var remoteGreeting = await ReadGreetingAsync(cancellationToken).ConfigureAwait(false);
             if (!expectedNodeTypes.Contains(remoteGreeting.NodeType))
                 throw new RedFoxProtocolException(
                     String.Format("Remote greeting node type was {0} but expected node type are: {1}", remoteGreeting.NodeType, FormatHelpers.FormatHashSet(expectedNodeTypes)));
@@ -84,7 +84,7 @@ namespace RedFoxMQ
 
         private async Task<NodeGreetingMessage> ReadGreetingAsync(CancellationToken cancellationToken)
         {
-            var read = await _streamSocket.ReadAsync(_singleByteBuffer, 0, 1, cancellationToken);
+            var read = await _streamSocket.ReadAsync(_singleByteBuffer, 0, 1, cancellationToken).ConfigureAwait(false);
             if (read == 0) throw new RedFoxProtocolException("Error receiving greeting message from remote machine");
 
             var headerLength = _singleByteBuffer[0];

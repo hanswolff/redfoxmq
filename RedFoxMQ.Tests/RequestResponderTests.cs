@@ -241,6 +241,29 @@ namespace RedFoxMQ.Tests
 
         [TestCase(RedFoxTransport.Inproc)]
         [TestCase(RedFoxTransport.Tcp)]
+        public void Responder_Connects_with_timeout_ClientConnected_event_fired(RedFoxTransport transport)
+        {
+            using (var responder = TestHelpers.CreateTestResponder())
+            using (var requester = new Requester())
+            {
+                var eventFired = new ManualResetEventSlim();
+                var endpoint = TestHelpers.CreateEndpointForTransport(transport);
+
+                responder.ClientConnected += (s, c) => eventFired.Set();
+                responder.Bind(endpoint);
+
+                requester.Connect(endpoint, TimeSpan.FromSeconds(5));
+
+                Thread.Sleep(100);
+
+                requester.Disconnect();
+
+                Assert.IsTrue(eventFired.Wait(Timeout));
+            }
+        }
+
+        [TestCase(RedFoxTransport.Inproc)]
+        [TestCase(RedFoxTransport.Tcp)]
         public void Requester_Disconnected_event_fired(RedFoxTransport transport)
         {
             using (var responder = TestHelpers.CreateTestResponder())
