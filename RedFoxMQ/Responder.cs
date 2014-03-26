@@ -35,7 +35,7 @@ namespace RedFoxMQ
         private readonly IMessageSerialization _messageSerialization;
         private readonly ResponderWorkerScheduler _scheduler;
 
-        public Responder(IResponderWorkerFactory responderWorkerFactory, int minThreads = 1, int maxThreads = 1)
+        public Responder(IResponderWorkerFactory responderWorkerFactory, int minThreads = 0, int maxThreads = 1)
             : this(responderWorkerFactory, DefaultMessageSerialization.Instance, minThreads, maxThreads)
         {
         }
@@ -114,6 +114,8 @@ namespace RedFoxMQ
             if (senderReceiver.Sender == null) throw new ArgumentException("senderReceiver.Writer must not be null");
 
             var messageFrame = await senderReceiver.Receiver.ReceiveAsync(_disposeCancellationToken).ConfigureAwait(false);
+            ReceiveRequestMessage(senderReceiver).ConfigureAwait(false);
+
             var requestMessage = _messageSerialization.Deserialize(messageFrame.MessageTypeId,
                 messageFrame.RawMessage);
 
@@ -126,8 +128,6 @@ namespace RedFoxMQ
             var senderReceiver = (SenderReceiver)state;
             var responseFrame = _messageFrameCreator.CreateFromMessage(responseMessage);
             senderReceiver.Sender.WriteMessageFrame(responseFrame);
-
-            var task = ReceiveRequestMessage(senderReceiver).ConfigureAwait(false);
         }
 
         public bool Unbind(RedFoxEndpoint endpoint)
