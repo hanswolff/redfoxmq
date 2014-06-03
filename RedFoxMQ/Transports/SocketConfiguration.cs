@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
+
 using System;
 
 namespace RedFoxMQ.Transports
@@ -28,13 +29,17 @@ namespace RedFoxMQ.Transports
         public int ReceiveBufferSize { get; set; }
         public int SendBufferSize { get; set; }
 
+        public SocketConfiguration()
+        {
+            ConnectTimeout = TimeSpan.FromSeconds(10);
+        }
+
         static ISocketConfiguration DefaultSocketConfiguration()
         {
             return new SocketConfiguration
             {
-                ConnectTimeout = TimeSpan.FromSeconds(10),
-                ReceiveTimeout = TimeSpan.FromMilliseconds(-1),
-                SendTimeout = TimeSpan.FromMilliseconds(-1),
+                ReceiveTimeout = TimeSpan.FromMilliseconds(30),
+                SendTimeout = TimeSpan.FromMilliseconds(30),
                 ReceiveBufferSize = 65536,
                 SendBufferSize = 65536
             };

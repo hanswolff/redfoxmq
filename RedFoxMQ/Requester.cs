@@ -82,7 +82,7 @@ namespace RedFoxMQ
             _socket = SocketFactory.CreateAndConnectAsync(endpoint, socketConfiguration);
             _socket.Disconnected += SocketDisconnected;
 
-            NodeGreetingMessageVerifier.SendReceiveAndVerify(_socket, socketConfiguration.ConnectTimeout).Wait();
+            NodeGreetingMessageVerifier.SendReceiveAndVerify(_socket, socketConfiguration.ConnectTimeout);
 
             if (!_cts.IsCancellationRequested)
             {

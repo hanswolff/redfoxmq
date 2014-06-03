@@ -23,9 +23,9 @@ namespace RedFoxMQ.Transports.Tcp
 {
     public class TcpSocket : IStreamSocket
     {
-        private readonly TcpClient _tcpClient;
+        internal readonly TcpClient TcpClient;
 
-        private readonly NetworkStream _stream;
+        internal readonly NetworkStream Stream;
 
         public RedFoxEndpoint Endpoint { get; private set; }
 
@@ -33,11 +33,11 @@ namespace RedFoxMQ.Transports.Tcp
         public TcpSocket(RedFoxEndpoint endpoint, TcpClient tcpClient)
         {
             if (tcpClient == null) throw new ArgumentNullException("tcpClient");
-            _tcpClient = tcpClient;
+            TcpClient = tcpClient;
             _remoteEndPoint = tcpClient.Client.RemoteEndPoint;
 
             Endpoint = endpoint;
-            _stream = tcpClient.GetStream();
+            Stream = tcpClient.GetStream();
         }
 
         private readonly InterlockedBoolean _isDisconnected = new InterlockedBoolean();
@@ -50,29 +50,29 @@ namespace RedFoxMQ.Transports.Tcp
 
         public int Read(byte[] buf, int offset, int count)
         {
-            return _stream.Read(buf, offset, count);
+            return Stream.Read(buf, offset, count);
         }
 
         public async Task<int> ReadAsync(byte[] buf, int offset, int count, CancellationToken cancellationToken)
         {
-            return await _stream.ReadAsync(buf, offset, count, cancellationToken);
+            return await Stream.ReadAsync(buf, offset, count, cancellationToken);
         }
 
         public void Write(byte[] buf, int offset, int count)
         {
-            _stream.Write(buf, offset, count);
+            Stream.Write(buf, offset, count);
         }
 
         public async Task WriteAsync(byte[] buf, int offset, int count, CancellationToken cancellationToken)
         {
-            await _stream.WriteAsync(buf, offset, count, cancellationToken);
+            await Stream.WriteAsync(buf, offset, count, cancellationToken);
         }
 
         public void Disconnect()
         {
             if (_isDisconnected.Set(true)) return;
 
-            _tcpClient.Close();
+            TcpClient.Close();
             Disconnected();
         }
 

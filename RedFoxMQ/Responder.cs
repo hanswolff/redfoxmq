@@ -78,7 +78,7 @@ namespace RedFoxMQ
         {
             if (socket == null) throw new ArgumentNullException("socket");
 
-            NodeGreetingMessageVerifier.SendReceiveAndVerify(socket, socketConfiguration.ConnectTimeout).Wait(_disposeCancellationToken);
+            NodeGreetingMessageVerifier.SendReceiveAndVerify(socket, socketConfiguration.ConnectTimeout);
 
             var messageFrameWriter = MessageFrameWriterFactory.CreateWriterFromSocket(socket);
             var messageFrameReceiver = new MessageFrameReceiver(socket);

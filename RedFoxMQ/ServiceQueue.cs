@@ -75,7 +75,7 @@ namespace RedFoxMQ
         {
             if (socket == null) throw new ArgumentNullException("socket");
 
-            var remoteNodeType = NodeGreetingMessageVerifier.SendReceiveAndVerify(socket, socketConfiguration.ConnectTimeout).Result;
+            var remoteNodeType = NodeGreetingMessageVerifier.SendReceiveAndVerify(socket, socketConfiguration.ConnectTimeout);
             switch (remoteNodeType)
             {
                 case NodeType.ServiceQueueReader:

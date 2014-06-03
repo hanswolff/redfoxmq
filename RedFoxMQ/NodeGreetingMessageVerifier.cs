@@ -14,7 +14,9 @@
 // limitations under the License.
 // 
 
+using System.IO;
 using RedFoxMQ.Transports;
+using RedFoxMQ.Transports.Tcp;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -36,7 +38,7 @@ namespace RedFoxMQ
             _greetingMessage = new NodeGreetingMessage(localNodeType);
         }
 
-        public async Task<NodeType> SendReceiveAndVerify(ISocket socket, TimeSpan timeout)
+        public async Task<NodeType> SendReceiveAndVerifyAsync(ISocket socket, TimeSpan timeout)
         {
             var greetingMessageNegotiator = NodeGreetingMessageNegotiatorFactory.CreateFromSocket(socket);
 
@@ -46,6 +48,42 @@ namespace RedFoxMQ
 
             var taskReadGreeting = await greetingMessageNegotiator.VerifyRemoteGreetingAsync(_expectedRemoteNodeTypes, token).ConfigureAwait(false);
             return taskReadGreeting.NodeType;
+        }
+
+        public NodeType SendReceiveAndVerify(ISocket socket, TimeSpan timeout)
+        {
+            var greetingMessageNegotiator = NodeGreetingMessageNegotiatorFactory.CreateFromSocket(socket);
+
+            var tcpSocket = socket as TcpSocket;
+            var sendReceiveTimeout = new Tuple<int, int>(0, 0);
+            if (tcpSocket != null)
+            {
+                sendReceiveTimeout = new Tuple<int, int>(tcpSocket.TcpClient.SendTimeout,
+                    tcpSocket.TcpClient.ReceiveTimeout);
+
+                tcpSocket.TcpClient.SendTimeout = timeout.ToMillisOrZero();
+                tcpSocket.TcpClient.ReceiveTimeout = timeout.ToMillisOrZero();
+            }
+
+            try
+            {
+                greetingMessageNegotiator.WriteGreeting(_greetingMessage);
+
+                var readGreeting = greetingMessageNegotiator.VerifyRemoteGreeting(_expectedRemoteNodeTypes);
+                return readGreeting.NodeType;
+            }
+            catch (IOException)
+            {
+                throw new TimeoutException("Timeout occurred negotiating after connection had been established");
+            }
+            finally
+            {
+                if (tcpSocket != null)
+                {
+                    tcpSocket.TcpClient.SendTimeout = sendReceiveTimeout.Item1;
+                    tcpSocket.TcpClient.ReceiveTimeout = sendReceiveTimeout.Item2;
+                }
+            }
         }
     }
 }
