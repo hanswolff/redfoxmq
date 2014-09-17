@@ -110,16 +110,16 @@ class Program
     {
         public IMessage AnyMethodNameYouLike(TestMessage message)
         {
-            return new TestMesage { Text = "Response: " + message.Text };
+            return new TestMessage { Text = "Response: " + message.Text };
         }
 
-        /// <summary>
-        /// ResponderWorkerFactoryBuilder maps all methods with single parameter derived
-        /// from IMessage and IMessage result (-> types must have different MessageTypeIds)
-        /// </summary>
+        ///// <summary>
+        ///// ResponderWorkerFactoryBuilder maps all methods with single parameter derived
+        ///// from IMessage and IMessage result (-> types must have different MessageTypeIds)
+        ///// </summary>
         // public IMessage OtherMethodName(OtherMessage message)
         // {
-        //     return new TestMesage { Text = "Response: " + message.Text };
+        //     return new TestMessage { Text = "Response: " + message.Text };
         // }
     } 
 }
