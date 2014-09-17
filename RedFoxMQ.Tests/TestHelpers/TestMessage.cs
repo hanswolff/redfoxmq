@@ -17,7 +17,7 @@
 // ReSharper disable once CheckNamespace
 namespace RedFoxMQ.Tests
 {
-    class TestMessage : IMessage
+    public class TestMessage : IMessage
     {
         public const int TypeId = 1;
         public ushort MessageTypeId { get { return TypeId; } }

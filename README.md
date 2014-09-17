@@ -47,67 +47,81 @@ using System.Text;
 
 class Program
 {
-	static void Main()
-	{
-		var messageSerialization = new MessageSerialization();
-		
-		messageSerialization.RegisterSerializer( // register serializer for each message type
-			TestMessage.UniqueIdPerMessageType, 
-			new TestMessageSerializer());
-			
-		messageSerialization.RegisterDeserializer( // register deserializer for each message type
-			TestMessage.UniqueIdPerMessageType, 
-			new TestMessageDeserializer());
+    static void Main()
+    {
+        var messageSerialization = new MessageSerialization();
+        
+        messageSerialization.RegisterSerializer( // register serializer for each message type
+            TestMessage.UniqueIdPerMessageType, 
+            new TestMessageSerializer());
+            
+        messageSerialization.RegisterDeserializer( // register deserializer for each message type
+            TestMessage.UniqueIdPerMessageType, 
+            new TestMessageDeserializer());
 
-		// setup simple echo responder
-		Func<IMessage, IMessage> echoFunc = request => request; // alternatively implement IResponderWorker instead
-		var echoWorker = new ResponderWorker(echoFunc);
-		var workerFactory = new ResponderWorkerFactory(request => echoWorker);
+        var workerFactory = new ResponderWorkerFactoryBuilder().Create(new TestHub());
 
-		using (var responder = new Responder(workerFactory, messageSerialization))
-		using (var requester = new Requester(messageSerialization))
-		{
-			var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
-			responder.Bind(endpoint); // call Bind multiple times to listen to multiple endpoints
+        using (var responder = new Responder(workerFactory, messageSerialization))
+        using (var requester = new Requester(messageSerialization))
+        {
+            var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
+            responder.Bind(endpoint); // call Bind multiple times to listen to multiple endpoints
 
-			requester.Connect(endpoint);
+            requester.Connect(endpoint);
 
-			foreach (var text in new[] {"Hello", "World"})
-			{
-				var requestMessage = new TestMessage {Text = text};
-				var responseMessage = (TestMessage) requester.Request(requestMessage);
+            foreach (var text in new[] {"Hello", "World"})
+            {
+                var requestMessage = new TestMessage {Text = text};
+                var responseMessage = (TestMessage) requester.Request(requestMessage);
 
-				Console.WriteLine(responseMessage.Text);
-			}
-		}
+                Console.WriteLine(responseMessage.Text);
+            }
+        }
 
-		Console.ReadLine();
-	}
+        Console.ReadLine();
+    }
+    
+    class TestMessageSerializer : IMessageSerializer
+    {
+        public byte[] Serialize(IMessage message)
+        {
+            var testMessage = (TestMessage)message;
+            return Encoding.UTF8.GetBytes(testMessage.Text);
+        }
+    }
 
-	class TestMessageSerializer : IMessageSerializer
-	{
-		public byte[] Serialize(IMessage message)
-		{
-			var testMessage = (TestMessage)message;
-			return Encoding.UTF8.GetBytes(testMessage.Text);
-		}
-	}
+    class TestMessageDeserializer : IMessageDeserializer
+    {
+        public IMessage Deserialize(byte[] rawMessage)
+        {
+            return new TestMessage { Text = Encoding.UTF8.GetString(rawMessage) };
+        }
+    }
 
-	class TestMessageDeserializer : IMessageDeserializer
-	{
-		public IMessage Deserialize(byte[] rawMessage)
-		{
-			return new TestMessage { Text = Encoding.UTF8.GetString(rawMessage) };
-		}
-	}
+    class TestMessage : IMessage
+    {
+        public const ushort UniqueIdPerMessageType = 1;
 
-	class TestMessage : IMessage
-	{
-		public const ushort UniqueIdPerMessageType = 1;
+        public ushort MessageTypeId { get { return UniqueIdPerMessageType; } }
+        public string Text { get; set; }
+    }
+    
+    class TestHub
+    {
+        public IMessage AnyMethodNameYouLike(TestMessage message)
+        {
+            return new TestMesage { Text = "Response: " + message.Text };
+        }
 
-		public ushort MessageTypeId { get { return UniqueIdPerMessageType; } }
-		public string Text { get; set; }
-	}    
+        /// <summary>
+        /// ResponderWorkerFactoryBuilder maps all methods with single parameter derived
+        /// from IMessage and IMessage result (-> types must have different MessageTypeIds)
+        /// </summary>
+        // public IMessage OtherMethodName(OtherMessage message)
+        // {
+        //     return new TestMesage { Text = "Response: " + message.Text };
+        // }
+    } 
 }
 ```
 

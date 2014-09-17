@@ -66,6 +66,7 @@
     <Compile Include="NodeGreetingMessageStreamSocketNegotiatorTests.cs" />
     <Compile Include="NodeGreetingMessageTests.cs" />
     <Compile Include="NodeGreetingMessageVerifierTests.cs" />
+    <Compile Include="ResponderWorkerFactoryBuilderTests.cs" />
     <Compile Include="Transports\SocketFactoryTests.cs" />
     <Compile Include="TypeMappedResponderWorkerFactoryTests.cs" />
     <Compile Include="ResponderWorkerTests.cs" />
