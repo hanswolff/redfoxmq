@@ -15,6 +15,7 @@
 // 
 
 using NUnit.Framework;
+using System;
 
 namespace RedFoxMQ.Tests
 {
@@ -22,22 +23,96 @@ namespace RedFoxMQ.Tests
     public class ResponderWorkerFactoryBuilderTests
     {
         [Test]
-        public void Create()
+        public void Create_no_method_throws_ArgumentException()
         {
             var builder = new ResponderWorkerFactoryBuilder();
-            var responderFactory = builder.Create(new TestResponderHub());
+            Assert.Throws<ArgumentException>(() => builder.Create(new TestHubNoMethod()));
+        }
+
+        [Test]
+        public void Create_single_method()
+        {
+            var builder = new ResponderWorkerFactoryBuilder();
+            var responderFactory = builder.Create(new TestHubSingleMethod());
 
             var worker = responderFactory.GetWorkerFor(new TestMessage());
             var response = (TestMessage)worker.GetResponse(null, null);
             Assert.AreEqual("hub", response.Text);
         }
 
-        public class TestResponderHub
+        [Test]
+        public void Create_single_default_method()
         {
-            public IMessage Respond(TestMessage message)
+            var builder = new ResponderWorkerFactoryBuilder();
+            var responderFactory = builder.Create(new TestHubSingleDefaultMethod());
+
+            var worker = responderFactory.GetWorkerFor(new TestMessage());
+            var response = (TestMessage)worker.GetResponse(null, null);
+            Assert.AreEqual("hub", response.Text);
+        }
+
+        [Test]
+        public void Create_multiple_default_methods_throws_ArgumentException()
+        {
+            var builder = new ResponderWorkerFactoryBuilder();
+            Assert.Throws<ArgumentException>(() => builder.Create(new TestHubMultipleDefaultMethods()));
+        }
+
+        [Test]
+        public void Create_multiple_methods_same_signature_throws_ArgumentException()
+        {
+            var builder = new ResponderWorkerFactoryBuilder();
+            Assert.Throws<ArgumentException>(() => builder.Create(new TestHubMultipleMethodsSameSignature()));
+        }
+
+        #region Test Hubs
+
+        public class TestHubNoMethod
+        {
+        }
+
+        public class TestHubSingleMethod
+        {
+            public IMessage SomeMethodName(TestMessage message)
             {
                 return new TestMessage("hub");
             }
         }
+
+        public class TestHubSingleDefaultMethod
+        {
+            public IMessage SomeMethodName(IMessage message)
+            {
+                return new TestMessage("hub");
+            }
+        }
+
+        public class TestHubMultipleDefaultMethods
+        {
+            public IMessage SomeMethodName(IMessage message)
+            {
+                return new TestMessage("hub");
+            }
+
+            public IMessage SomeOtherMethod(IMessage message)
+            {
+                return SomeMethodName(message);
+            }
+        }
+
+        public class TestHubMultipleMethodsSameSignature
+        {
+            public IMessage SomeMethodName(TestMessage message)
+            {
+                return new TestMessage("hub");
+            }
+
+            public IMessage SomeOtherMethod(TestMessage message)
+            {
+                return SomeMethodName(message);
+            }
+        }
+
+        #endregion
     }
 }

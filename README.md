@@ -119,8 +119,16 @@ class Program
         ///// </summary>
         // public IMessage OtherMethodName(OtherMessage message)
         // {
-        //     return new TestMessage { Text = "Response: " + message.Text };
+        //     return new TestMessage { Text = "Other Response: " + message.Text };
         // }
+		
+        ///// <summary>
+        ///// Default responder when message is not handled by any other specific implementation
+        ///// </summary>
+        // public IMessage OtherMethodName(IMessage message)
+        // {
+        //     return new TestMessage { Text = "Default Response: " + message.Text };
+        // }		
     } 
 }
 ```
