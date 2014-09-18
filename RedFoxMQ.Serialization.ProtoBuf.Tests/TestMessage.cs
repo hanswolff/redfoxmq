@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013-2014 Hans Wolff
+// Copyright 2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,14 +14,30 @@
 // limitations under the License.
 // 
 
-namespace RedFoxMQ
+using System;
+using ProtoBuf;
+
+namespace RedFoxMQ.Serialization.ProtoBuf.Tests
 {
-    /// <summary>
-    /// MessageSerialization which is used when no IMessageSerialization 
-    /// object is provided
-    /// </summary>
-    public static class DefaultMessageSerialization
+    [ProtoContract]
+    class TestMessage : IMessage
     {
-        public static MessageSerialization Instance = new MessageSerialization();
+        [ProtoIgnore]
+        public ushort MessageTypeId { get { return 1; } }
+
+        [ProtoMember(1)]
+        public string String { get; set; }
+
+        [ProtoMember(2)]
+        public bool Boolean { get; set; }
+
+        [ProtoMember(3)]
+        public int Int32 { get; set; }
+
+        [ProtoMember(4)]
+        public long Int64 { get; set; }
+
+        [ProtoMember(5)]
+        public Guid Guid { get; set; }
     }
 }
