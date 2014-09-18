@@ -1,11 +1,15 @@
 
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
+VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedFoxMQ (.NET 4.5.1)", "RedFoxMQ\RedFoxMQ (.NET 4.5.1).csproj", "{79EC11B9-3372-43F6-95C2-A7965E89C22C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedFoxMQ.Tests (.NET 4.5.1)", "RedFoxMQ.Tests\RedFoxMQ.Tests (.NET 4.5.1).csproj", "{F556000D-FC5B-45A6-8415-0B01D2024A3A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedFoxMQ.Serialization.ProtoBuf (.NET 4.5.1)", "RedFoxMQ.Serialization.ProtoBuf\RedFoxMQ.Serialization.ProtoBuf (.NET 4.5.1).csproj", "{4D05EE41-31ED-421E-A09F-BAD0CD2C3FED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedFoxMQ.Serialization.ProtoBuf.Tests (.NET 4.5.1)", "RedFoxMQ.Serialization.ProtoBuf.Tests\RedFoxMQ.Serialization.ProtoBuf.Tests (.NET 4.5.1).csproj", "{2257340C-383D-4072-9EC8-B066D58BA611}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +25,14 @@ Global
 		{F556000D-FC5B-45A6-8415-0B01D2024A3A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F556000D-FC5B-45A6-8415-0B01D2024A3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F556000D-FC5B-45A6-8415-0B01D2024A3A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D05EE41-31ED-421E-A09F-BAD0CD2C3FED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D05EE41-31ED-421E-A09F-BAD0CD2C3FED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D05EE41-31ED-421E-A09F-BAD0CD2C3FED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D05EE41-31ED-421E-A09F-BAD0CD2C3FED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2257340C-383D-4072-9EC8-B066D58BA611}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2257340C-383D-4072-9EC8-B066D58BA611}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2257340C-383D-4072-9EC8-B066D58BA611}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2257340C-383D-4072-9EC8-B066D58BA611}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

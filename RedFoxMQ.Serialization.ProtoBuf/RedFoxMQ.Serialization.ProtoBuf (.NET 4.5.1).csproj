@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>RedFoxMQ.Serialization.ProtoBuf</RootNamespace>
     <AssemblyName>RedFoxMQ.Serialization.ProtoBuf</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -52,9 +52,9 @@
     <Compile Include="ProtobufMessageSerializer.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RedFoxMQ\RedFoxMQ.csproj">
+    <ProjectReference Include="..\RedFoxMQ\RedFoxMQ %28.NET 4.5.1%29.csproj">
       <Project>{79ec11b9-3372-43f6-95c2-a7965e89c22c}</Project>
-      <Name>RedFoxMQ</Name>
+      <Name>RedFoxMQ %28.NET 4.5.1%29</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

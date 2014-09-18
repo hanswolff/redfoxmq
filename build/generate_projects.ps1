@@ -6,7 +6,7 @@
 # use 'Set-ExecutionPolicy Unrestricted -Force' to enable scripts
 
 $frameworks = "4.5.1"
-$namespaces = "RedFoxMQ", "RedFoxMQ.Tests"
+$namespaces = "RedFoxMQ", "RedFoxMQ.Tests", "RedFoxMQ.Serialization.ProtoBuf", "RedFoxMQ.Serialization.ProtoBuf.Tests"
 
 ForEach ($framework in $frameworks)
 {
