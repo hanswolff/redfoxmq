@@ -17,7 +17,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <BaseOutputPath>..\build\$(AssemblyName)</BaseOutputPath>
-    <OutputPath>$(BaseOutputPath)\$(Configuration)\</OutputPath>
+    <OutputPath>$(BaseOutputPath)\$(Configuration)_v4.5.1\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -26,7 +26,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <BaseOutputPath>..\build\$(AssemblyName)</BaseOutputPath>
-    <OutputPath>$(BaseOutputPath)\$(Configuration)\</OutputPath>
+    <OutputPath>$(BaseOutputPath)\$(Configuration)_v4.5.1\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -59,9 +59,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\RedFoxMQ.Serialization.ProtoBuf\RedFoxMQ.Serialization.ProtoBuf.csproj">
+    <ProjectReference Include="..\RedFoxMQ.Serialization.ProtoBuf\RedFoxMQ.Serialization.ProtoBuf %28.NET 4.5.1%29.csproj">
       <Project>{4d05ee41-31ed-421e-a09f-bad0cd2c3fed}</Project>
-      <Name>RedFoxMQ.Serialization.ProtoBuf</Name>
+      <Name>RedFoxMQ.Serialization.ProtoBuf %28.NET 4.5.1%29</Name>
     </ProjectReference>
     <ProjectReference Include="..\RedFoxMQ\RedFoxMQ %28.NET 4.5.1%29.csproj">
       <Project>{79ec11b9-3372-43f6-95c2-a7965e89c22c}</Project>

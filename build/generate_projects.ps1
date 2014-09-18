@@ -32,11 +32,14 @@ ForEach ($framework in $frameworks)
 		$xml = [xml](gc $dst)
 		$xml | Select-Xml "//msb:TargetFrameworkVersion" -Namespace $ns | Foreach {$_.Node.set_InnerText("v$framework")}
 		
-		$xml | Select-Xml "//msb:OutputPath[text() = 'bin\Debug\']" -Namespace $ns | Foreach {$_.Node.set_InnerText("bin\Debug_v$framework\")}
-		$xml | Select-Xml "//msb:OutputPath[text() = 'bin\Release\']" -Namespace $ns | Foreach {$_.Node.set_InnerText("bin\Release_v$framework\")}
+		$xml | Select-Xml "//msb:OutputPath[text() = '`$(BaseOutputPath)\`$(Configuration)\']" -Namespace $ns | Foreach {$_.Node.set_InnerText("`$(BaseOutputPath)\`$(Configuration)_v$framework\")}
+		$xml | Select-Xml "//msb:OutputPath[text() = '`$(BaseOutputPath)\`$(Configuration)\']" -Namespace $ns | Foreach {$_.Node.set_InnerText("`$(BaseOutputPath)\`$(Configuration)_v$framework\")}
 		
-		$xml | Select-Xml "//msb:ProjectReference[@Include = '..\RedFoxMQ\RedFoxMQ.csproj']" -Namespace $ns | Foreach {$_.Node.Include = "..\RedFoxMQ\RedFoxMQ %28.NET $framework%29.csproj"}
-		$xml | Select-Xml "//msb:Name[text() = 'RedFoxMQ']" -Namespace $ns | Foreach {$_.Node.set_InnerText("RedFoxMQ %28.NET $framework%29")}
+		ForEach ($project in $namespaces) 
+		{
+			$xml | Select-Xml "//msb:ProjectReference[@Include = '..\$project\$project.csproj']" -Namespace $ns | Foreach {$_.Node.Include = "..\$project\$project %28.NET $framework%29.csproj"}
+			$xml | Select-Xml "//msb:Name[text() = '$project']" -Namespace $ns | Foreach {$_.Node.set_InnerText("$project %28.NET $framework%29")}
+		}
 		
 		$xml.Save($dst)
 	}
