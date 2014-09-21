@@ -50,7 +50,7 @@ namespace RedFoxMQ
 
         public event DisconnectedDelegate Disconnected = () => { };
 
-        public event MessageReceivedDelegate MessageReceived = message => { };
+        public event MessageReceivedDelegate MessageReceived = (socket, message) => { };
         public event SocketExceptionDelegate ResponseException = (socket, exception) => { };
 
         public Subscriber()
@@ -97,7 +97,7 @@ namespace RedFoxMQ
                 _messageFrameWriter = MessageFrameWriterFactory.CreateWriterFromSocket(_socket);
 
                 _messageReceiveLoop = new MessageReceiveLoop(_messageSerialization, _socket);
-                _messageReceiveLoop.MessageReceived += m => MessageReceived(m);
+                _messageReceiveLoop.MessageReceived += (s, m) => MessageReceived(s, m);
                 _messageReceiveLoop.OnException += MessageReceiveLoopOnException;
                 _messageReceiveLoop.Start();
             }

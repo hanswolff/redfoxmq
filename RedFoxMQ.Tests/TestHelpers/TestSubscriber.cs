@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+using RedFoxMQ.Transports;
 using System;
 using System.Collections.Concurrent;
 
@@ -29,7 +30,7 @@ namespace RedFoxMQ.Tests
             MessageReceived += OnMessageReceived;
         }
 
-        private void OnMessageReceived(IMessage message)
+        private void OnMessageReceived(ISocket socket, IMessage message)
         {
             _receivedMessages.Add(message);
         }

@@ -24,7 +24,7 @@ namespace RedFoxMQ
 
     public delegate void DisconnectedDelegate();
 
-    public delegate void MessageReceivedDelegate(IMessage message);
+    public delegate void MessageReceivedDelegate(ISocket originatingSocket, IMessage message);
     public delegate void MessageFrameReceivedDelegate(MessageFrame message);
 
     public delegate void SocketExceptionDelegate(ISocket socket, Exception exception);

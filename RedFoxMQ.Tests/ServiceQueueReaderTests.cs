@@ -36,7 +36,7 @@ namespace RedFoxMQ.Tests
             {
                 IMessage messageReceived = null;
                 var received = new ManualResetEventSlim();
-                serviceQueueReader.MessageReceived += m =>
+                serviceQueueReader.MessageReceived += (s, m) =>
                 {
                     messageReceived = m;
                     received.Set();
@@ -66,7 +66,7 @@ namespace RedFoxMQ.Tests
             {
                 IMessage messageReceived = null;
                 var received = new ManualResetEventSlim();
-                serviceQueueReader.MessageReceived += m =>
+                serviceQueueReader.MessageReceived += (s, m) =>
                 {
                     messageReceived = m;
                     received.Set();
@@ -96,7 +96,7 @@ namespace RedFoxMQ.Tests
             {
                 IMessage messageReceived = null;
                 var received = new ManualResetEventSlim();
-                serviceQueueReader.MessageReceived += m =>
+                serviceQueueReader.MessageReceived += (s, m) =>
                 {
                     messageReceived = m;
                     received.Set();
@@ -141,14 +141,14 @@ namespace RedFoxMQ.Tests
                 var counter = new CounterSignal(count, 0);
 
                 var messagesReceived1 = new List<IMessage>();
-                serviceQueueReader1.MessageReceived += m =>
+                serviceQueueReader1.MessageReceived += (s, m) =>
                 {
                     messagesReceived1.Add(m);
                     counter.Increment();
                 };
 
                 var messagesReceived2 = new List<IMessage>();
-                serviceQueueReader2.MessageReceived += m =>
+                serviceQueueReader2.MessageReceived += (s, m) =>
                 {
                     messagesReceived2.Add(m);
                     counter.Increment();
@@ -184,14 +184,14 @@ namespace RedFoxMQ.Tests
                 var counter = new CounterSignal(count, 0);
 
                 var messagesReceived1 = new List<IMessage>();
-                serviceQueueReader1.MessageReceived += m =>
+                serviceQueueReader1.MessageReceived += (s, m) =>
                 {
                     messagesReceived1.Add(m);
                     counter.Increment();
                 };
 
                 var messagesReceived2 = new List<IMessage>();
-                serviceQueueReader2.MessageReceived += m =>
+                serviceQueueReader2.MessageReceived += (s, m) =>
                 {
                     messagesReceived2.Add(m);
                     counter.Increment();

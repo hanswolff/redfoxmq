@@ -167,12 +167,16 @@ namespace RedFoxMQ.Tests
                 var eventFired = new ManualResetEventSlim();
 
                 IMessage messageReceived = null;
-                publisher.MessageReceived += m =>
+                ISocket messageSocket = null;
+                publisher.MessageReceived += (s, m) =>
                 {
+                    messageSocket = s;
                     messageReceived = m;
                     eventFired.Set();
                 };
 
+                ISocket connectedSocket = null;
+                publisher.ClientConnected += (s, m) => { connectedSocket = s; };
                 publisher.Bind(endpoint);
                 
                 subscriber.Connect(endpoint);
@@ -182,9 +186,9 @@ namespace RedFoxMQ.Tests
 
                 Assert.IsTrue(eventFired.Wait(Timeout));
                 Assert.AreEqual(messageSent, messageReceived);
+                Assert.AreEqual(connectedSocket, messageSocket);
             }
         }
-
 
         [TestCase(RedFoxTransport.Inproc)]
         [TestCase(RedFoxTransport.Tcp)]

@@ -40,7 +40,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 serviceQueue.Bind(endpoint);
 
                 var counterSignal = new CounterSignal(NumberOfMessages, 0);
-                reader.MessageReceived += m => counterSignal.Increment();
+                reader.MessageReceived += (s, m) => counterSignal.Increment();
 
                 reader.Connect(endpoint);
                 writer.Connect(endpoint);
@@ -94,7 +94,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 for (var i = 0; i < readers; i++)
                 {
                     var reader = new ServiceQueueReader();
-                    reader.MessageReceived += m => counterSignal.Increment();
+                    reader.MessageReceived += (s, m) => counterSignal.Increment();
 
                     reader.Connect(endpoint);
                 }

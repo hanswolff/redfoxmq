@@ -44,7 +44,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 Thread.Sleep(100);
 
                 var counterSignal = new CounterSignal(NumberOfMessagesToReceive);
-                subscriber.MessageReceived += m => counterSignal.Increment();
+                subscriber.MessageReceived += (s, m) => counterSignal.Increment();
 
                 var messageSent = new TestMessage();
 
@@ -73,7 +73,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 Thread.Sleep(100);
 
                 var counterSignal = new CounterSignal(NumberOfMessagesToReceive);
-                subscriber.MessageReceived += m => counterSignal.Increment();
+                subscriber.MessageReceived += (s, m) => counterSignal.Increment();
 
                 var messageSent = new TestMessage();
 
@@ -105,8 +105,8 @@ namespace RedFoxMQ.Tests.Benchmarks
                 Thread.Sleep(100);
 
                 var counterSignal = new CounterSignal(NumberOfMessagesToReceive);
-                subscriber1.MessageReceived += m => counterSignal.Increment();
-                subscriber2.MessageReceived += m => counterSignal.Increment();
+                subscriber1.MessageReceived += (s, m) => counterSignal.Increment();
+                subscriber2.MessageReceived += (s, m) => counterSignal.Increment();
 
                 var messageSent = new TestMessage();
 
@@ -137,8 +137,8 @@ namespace RedFoxMQ.Tests.Benchmarks
                 Thread.Sleep(100);
 
                 var counterSignal = new CounterSignal(NumberOfMessagesToReceive);
-                subscriber1.MessageReceived += m => counterSignal.Increment();
-                subscriber2.MessageReceived += m => counterSignal.Increment();
+                subscriber1.MessageReceived += (s, m) => counterSignal.Increment();
+                subscriber2.MessageReceived += (s, m) => counterSignal.Increment();
 
                 var messageSent = new TestMessage();
 
@@ -167,7 +167,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 var subscribers = Enumerable.Range(1, 10).Select(i =>
                 {
                     var sub = new Subscriber();
-                    sub.MessageReceived += m => counterSignal.Increment();
+                    sub.MessageReceived += (s, m) => counterSignal.Increment();
                     sub.Connect(endpoint);
                     return sub;
                 }).ToList();
@@ -202,7 +202,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 var subscribers = Enumerable.Range(1, 10).Select(i =>
                 {
                     var sub = new Subscriber();
-                    sub.MessageReceived += m => counterSignal.Increment();
+                    sub.MessageReceived += (s, m) => counterSignal.Increment();
                     sub.Connect(endpoint);
                     return sub;
                 }).ToList();
@@ -238,7 +238,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 var subscribers = Enumerable.Range(1, 100).Select(i =>
                 {
                     var sub = new Subscriber();
-                    sub.MessageReceived += m => counterSignal.Increment();
+                    sub.MessageReceived += (s, m) => counterSignal.Increment();
                     sub.Connect(endpoint);
                     return sub;
                 }).ToList();
@@ -273,7 +273,7 @@ namespace RedFoxMQ.Tests.Benchmarks
                 var subscribers = Enumerable.Range(1, 100).Select(i =>
                 {
                     var sub = new Subscriber();
-                    sub.MessageReceived += m => counterSignal.Increment();
+                    sub.MessageReceived += (s, m) => counterSignal.Increment();
                     sub.Connect(endpoint);
                     return sub;
                 }).ToList();

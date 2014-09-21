@@ -35,7 +35,7 @@ namespace RedFoxMQ
 
         public event ClientConnectedDelegate ClientConnected = (socket, socketConfig) => { };
         public event ClientDisconnectedDelegate ClientDisconnected = socket => { };
-        public event MessageReceivedDelegate MessageReceived = message => { };
+        public event MessageReceivedDelegate MessageReceived = (socket, message) => { };
 
         public Publisher()
             : this(DefaultMessageSerialization.Instance)
@@ -77,7 +77,7 @@ namespace RedFoxMQ
             if (_broadcastSockets.TryAdd(socket, new MessageQueueReceiveLoop(messageQueue, messageReceiveLoop)))
             {
                 _messageQueueBroadcaster.Register(messageQueue, messageFrameWriter);
-                messageReceiveLoop.MessageReceived += m => MessageReceived(m);
+                messageReceiveLoop.MessageReceived += (s, m) => MessageReceived(s, m);
                 messageReceiveLoop.OnException += MessageReceiveLoopOnException;
                 ClientConnected(socket, socketConfiguration);
                 messageReceiveLoop.Start();
