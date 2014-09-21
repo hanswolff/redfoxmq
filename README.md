@@ -37,6 +37,85 @@ if you need timestamps).
 
 The easiest way is to look at the unit tests. They are a good source of examples.
 
+This is standalone Publisher / Subscriber example:
+
+```c#
+using RedFoxMQ;
+using RedFoxMQ.Transports;
+using System;
+using System.Text;
+using System.Threading;
+
+class Program
+{
+    static void Main()
+    {
+        var messageSerialization = new MessageSerialization();
+        
+        messageSerialization.RegisterSerializer( // register serializer for each message type
+            TestMessage.UniqueIdPerMessageType, 
+            new TestMessageSerializer());
+            
+        messageSerialization.RegisterDeserializer( // register deserializer for each message type
+            TestMessage.UniqueIdPerMessageType, 
+            new TestMessageDeserializer());
+
+        using (var publisher = new Publisher())
+        using (var subscriber1 = new Subscriber())
+        using (var subscriber2 = new Subscriber())
+        {
+            var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
+            publisher.Bind(endpoint); // call Bind multiple times to listen to multiple endpoints
+
+            subscriber1.MessageReceived += (socket, msg) => 
+               Console.WriteLine("Subscriber 1: " + ((TestMessage)msg).Text);
+            subscriber1.Connect(endpoint);
+
+            subscriber2.MessageReceived += (socket, msg) => 
+               Console.WriteLine("Subscriber 2: " + ((TestMessage)msg).Text);
+            subscriber2.Connect(endpoint);
+            
+            // wait a bit to ensure Publisher is aware of all connected subscribers
+            // this step is not needed when Publisher / Subscriber are on different processes
+            Thread.Sleep(100);
+
+            foreach (var text in new[] {"Hello", "World"})
+            {
+                var message = new TestMessage {Text = text};
+                publisher.Broadcast(message);
+            }
+        }
+
+        Console.ReadLine();
+    }
+    
+    class TestMessageSerializer : IMessageSerializer
+    {
+        public byte[] Serialize(IMessage message)
+        {
+            var testMessage = (TestMessage)message;
+            return Encoding.UTF8.GetBytes(testMessage.Text);
+        }
+    }
+
+    class TestMessageDeserializer : IMessageDeserializer
+    {
+        public IMessage Deserialize(byte[] rawMessage)
+        {
+            return new TestMessage { Text = Encoding.UTF8.GetString(rawMessage) };
+        }
+    }
+
+    class TestMessage : IMessage
+    {
+        public const ushort UniqueIdPerMessageType = 1;
+
+        public ushort MessageTypeId { get { return UniqueIdPerMessageType; } }
+        public string Text { get; set; }
+    }
+}
+```
+
 Or have a look at a standalone Request / Response example:
 
 ```c#
