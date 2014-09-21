@@ -52,25 +52,16 @@ using RedFoxMQ;
 using RedFoxMQ.Transports;
 using System;
 using System.Text;
-using System.Threading;
 
 class Program
 {
     static void Main()
     {
-        var messageSerialization = new MessageSerialization();
+        var messageSerialization = InitializeMessageSerialization();
         
-        messageSerialization.RegisterSerializer( // register serializer for each message type
-            TestMessage.UniqueIdPerMessageType, 
-            new TestMessageSerializer());
-            
-        messageSerialization.RegisterDeserializer( // register deserializer for each message type
-            TestMessage.UniqueIdPerMessageType, 
-            new TestMessageDeserializer());
-
-        using (var publisher = new Publisher())
-        using (var subscriber1 = new Subscriber())
-        using (var subscriber2 = new Subscriber())
+        using (var publisher = new Publisher(messageSerialization))
+        using (var subscriber1 = new Subscriber(messageSerialization))
+        using (var subscriber2 = new Subscriber(messageSerialization))
         {
             var endpoint = new RedFoxEndpoint(RedFoxTransport.Tcp, "localhost", 5555, null);
             publisher.Bind(endpoint); // call Bind multiple times to listen to multiple endpoints
@@ -83,18 +74,30 @@ class Program
                Console.WriteLine("Subscriber 2: " + ((TestMessage)msg).Text);
             subscriber2.Connect(endpoint);
             
-            // wait a bit to ensure Publisher is aware of all connected subscribers
-            // this step is not needed when Publisher / Subscriber are on different processes
-            Thread.Sleep(100);
-
             foreach (var text in new[] {"Hello", "World"})
             {
                 var message = new TestMessage {Text = text};
                 publisher.Broadcast(message);
             }
-        }
 
-        Console.ReadLine();
+            Console.ReadLine();
+        }
+    }
+    
+    static MessageSerialization InitializeMessageSerialization()
+    {
+        // for ProtoBuf serialization see NuGet package "RedFoxMQ.Serialization.ProtoBuf"
+        var messageSerialization = new MessageSerialization();
+        
+        messageSerialization.RegisterSerializer( // register serializer for each message type
+            TestMessage.UniqueIdPerMessageType, 
+            new TestMessageSerializer());
+            
+        messageSerialization.RegisterDeserializer( // register deserializer for each message type
+            TestMessage.UniqueIdPerMessageType, 
+            new TestMessageDeserializer());
+        
+        return messageSerialization;
     }
     
     class TestMessageSerializer : IMessageSerializer
@@ -136,16 +139,8 @@ class Program
 {
     static void Main()
     {
-        var messageSerialization = new MessageSerialization();
+        var messageSerialization = InitializeMessageSerialization();
         
-        messageSerialization.RegisterSerializer( // register serializer for each message type
-            TestMessage.UniqueIdPerMessageType, 
-            new TestMessageSerializer());
-            
-        messageSerialization.RegisterDeserializer( // register deserializer for each message type
-            TestMessage.UniqueIdPerMessageType, 
-            new TestMessageDeserializer());
-
         var workerFactory = new ResponderWorkerFactoryBuilder().Create(new TestHub());
 
         using (var responder = new Responder(workerFactory, messageSerialization))
@@ -163,11 +158,27 @@ class Program
 
                 Console.WriteLine(responseMessage.Text);
             }
-        }
 
-        Console.ReadLine();
+            Console.ReadLine();
+        }
     }
     
+    static MessageSerialization InitializeMessageSerialization()
+    {
+        // for ProtoBuf serialization see NuGet package "RedFoxMQ.Serialization.ProtoBuf"
+        var messageSerialization = new MessageSerialization();
+        
+        messageSerialization.RegisterSerializer( // register serializer for each message type
+            TestMessage.UniqueIdPerMessageType, 
+            new TestMessageSerializer());
+            
+        messageSerialization.RegisterDeserializer( // register deserializer for each message type
+            TestMessage.UniqueIdPerMessageType, 
+            new TestMessageDeserializer());
+        
+        return messageSerialization;
+    }
+
     class TestMessageSerializer : IMessageSerializer
     {
         public byte[] Serialize(IMessage message)
@@ -214,7 +225,7 @@ class Program
         ///// </summary>
         // public IMessage OtherMethodName(IMessage message)
         // {
-        //     return new TestMessage { Text = "Default Response: " + message.Text };
+        //     return new TestMessage { Text = "Default Response: " + message };
         // }		
     } 
 }
