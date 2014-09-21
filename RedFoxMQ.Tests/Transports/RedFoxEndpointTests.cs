@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ namespace RedFoxMQ.Tests.Transports
             Assert.AreEqual(RedFoxTransport.Tcp, endpoint.Transport);
             Assert.AreEqual("host", endpoint.Host);
             Assert.AreEqual(1234, endpoint.Port);
-            Assert.AreEqual(null, endpoint.Path);
+            Assert.AreEqual("/", endpoint.Path);
         }
 
         [Test]
@@ -233,12 +233,14 @@ namespace RedFoxMQ.Tests.Transports
             Assert.AreEqual(1234, endpoint.Port);
         }
 
-        [Test]
-        public void TryParse_path_should_be_parsed()
+        [TestCase("tcp://hostname:1234", "/")]
+        [TestCase("tcp://hostname:1234/", "/")]
+        [TestCase("tcp://hostname:1234/path?query", "/path?query")]
+        public void TryParse_path_should_be_parsed(string endpointString, string path)
         {
             RedFoxEndpoint endpoint;
-            Assert.IsTrue(RedFoxEndpoint.TryParse("tcp://hostname:1234/path?query", out endpoint));
-            Assert.AreEqual("/path?query", endpoint.Path);
+            Assert.IsTrue(RedFoxEndpoint.TryParse(endpointString, out endpoint));
+            Assert.AreEqual(path, endpoint.Path);
         }
 
         [TestCase("inproc://HOSTNAME/", "inproc://hostname/")]
@@ -253,6 +255,18 @@ namespace RedFoxMQ.Tests.Transports
             var endpoint2 = RedFoxEndpoint.Parse(endpointUri2);
 
             Assert.AreEqual(endpoint2, endpoint1);
+        }
+
+        [Test]
+        public void ToString_default_constructor()
+        {
+            Assert.AreEqual("inproc://:0", new RedFoxEndpoint().ToString());
+        }
+
+        [Test]
+        public void ToString_TCP_hostname_port()
+        {
+            Assert.AreEqual("tcp://host:1234/", new RedFoxEndpoint(RedFoxTransport.Tcp, "host", 1234, null).ToString());
         }
     }
 }

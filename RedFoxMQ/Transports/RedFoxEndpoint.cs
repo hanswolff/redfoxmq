@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,13 @@ namespace RedFoxMQ.Transports
         public RedFoxTransport Transport;
         public string Host;
         public ushort Port;
-        public string Path;
+
+        private string _path;
+        public string Path
+        {
+            get { return _path; }
+            set { _path = String.IsNullOrEmpty(value) ? "/" : value; }
+        }
 
         public RedFoxEndpoint(string path)
             : this(RedFoxTransport.Inproc, null, 0, path)
@@ -48,7 +54,7 @@ namespace RedFoxMQ.Transports
             Transport = transport;
             Host = host;
             Port = port;
-            Path = path;
+            _path = String.IsNullOrEmpty(path) ? "/" : path;
         }
 
         public override bool Equals(object obj)
