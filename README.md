@@ -4,6 +4,14 @@ RedFoxMQ is a .NET in-memory message queue that uses a simple TCP transport. It 
 and provides full control over message serialization / de-serialization. The performance is very
 good (batch broadcasting over TCP reaches >2 million (!) messages per second on my machine).
 
+### Get it on NuGet!
+
+    Install-Package RedFoxMQ
+
+If you need ProtoBuf serialization:
+
+    Install-Package RedFoxMQ.Serialization.ProtoBuf
+    
 #### Supported Features
 
 - easy integration (no external components needed)
