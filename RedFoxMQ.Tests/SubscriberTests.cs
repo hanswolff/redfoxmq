@@ -17,6 +17,7 @@
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using System;
+using System.Diagnostics;
 using System.Linq;
 
 namespace RedFoxMQ.Tests
@@ -30,6 +31,23 @@ namespace RedFoxMQ.Tests
             using (var subscriber = new Subscriber())
             {
                 Assert.IsTrue(subscriber.IsDisconnected);
+            }
+        }
+
+        [Test]
+        public void Connect_with_timeout_to_non_existing_endpoint_should_throw_TimeoutException()
+        {
+            using (var subscriber = new Subscriber())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(RedFoxTransport.Tcp);
+
+                var sw = Stopwatch.StartNew();
+
+                Assert.Throws<TimeoutException>(() =>
+                    subscriber.Connect(endpoint, TimeSpan.FromMilliseconds(100)));
+
+                sw.Stop();
+                Assert.GreaterOrEqual(sw.ElapsedMilliseconds, 100);
             }
         }
 

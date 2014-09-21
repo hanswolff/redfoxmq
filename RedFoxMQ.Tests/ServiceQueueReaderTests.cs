@@ -18,6 +18,7 @@ using NUnit.Framework;
 using RedFoxMQ.Transports;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 
 namespace RedFoxMQ.Tests
@@ -25,6 +26,23 @@ namespace RedFoxMQ.Tests
     [TestFixture]
     public class ServiceQueueReaderTests
     {
+        [Test]
+        public void Connect_with_timeout_to_non_existing_endpoint_should_throw_TimeoutException()
+        {
+            using (var serviceQueueReader = new ServiceQueueReader())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(RedFoxTransport.Tcp);
+
+                var sw = Stopwatch.StartNew();
+
+                Assert.Throws<TimeoutException>(() =>
+                    serviceQueueReader.Connect(endpoint, TimeSpan.FromMilliseconds(100)));
+
+                sw.Stop();
+                Assert.GreaterOrEqual(sw.ElapsedMilliseconds, 100);
+            }
+        }
+
         [TestCase(ServiceQueueRotationAlgorithm.FirstIdle)]
         [TestCase(ServiceQueueRotationAlgorithm.LoadBalance)]
         public void ServiceQueue_connect_AddMessageFrame_single_message_received(ServiceQueueRotationAlgorithm rotationAlgorithm)

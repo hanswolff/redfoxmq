@@ -25,17 +25,6 @@ namespace RedFoxMQ.Tests
     public class ResponderTests
     {
         [Test]
-        public void Responder_cancel_Connect_TimeoutException()
-        {
-            using (var requester = new Requester())
-            {
-                var endpoint = TestHelpers.CreateEndpointForTransport(RedFoxTransport.Tcp);
-
-                Assert.Throws<TimeoutException>(() => requester.Connect(endpoint, TimeSpan.FromMilliseconds(100)));
-            }
-        }
-
-        [Test]
         public void responders_bind_same_endpoint_twice_fails()
         {
             using (var responder = TestHelpers.CreateTestResponder())
