@@ -72,13 +72,11 @@ namespace RedFoxMQ
 
             var messageFrameWriter = MessageFrameWriterFactory.CreateWriterFromSocket(socket);
             var messageQueue = new MessageQueueBatch(socketConfiguration.SendBufferSize);
-            var messageReceiveLoop = new MessageReceiveLoop(_messageSerialization, socket);
+            var messageReceiveLoop = new MessageReceiveLoop(_messageSerialization, socket, OnMessageReceived, MessageReceiveLoopOnException);
 
             if (_broadcastSockets.TryAdd(socket, new MessageQueueReceiveLoop(messageQueue, messageReceiveLoop)))
             {
                 _messageQueueBroadcaster.Register(messageQueue, messageFrameWriter);
-                messageReceiveLoop.MessageReceived += (s, m) => MessageReceived(s, m);
-                messageReceiveLoop.OnException += MessageReceiveLoopOnException;
                 ClientConnected(socket, socketConfiguration);
                 messageReceiveLoop.Start();
             }
@@ -88,6 +86,11 @@ namespace RedFoxMQ
                 // this is to fix the race condition if socket was disconnected meanwhile
                 SocketDisconnected(socket);
             }
+        }
+
+        private void OnMessageReceived(ISocket socket, IMessage message)
+        {
+            MessageReceived(socket, message);
         }
 
         private void MessageReceiveLoopOnException(ISocket socket, Exception exception)

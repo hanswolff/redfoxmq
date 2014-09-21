@@ -92,11 +92,14 @@ namespace RedFoxMQ
 
             if (!_cts.IsCancellationRequested)
             {
-                _messageReceiveLoop = new MessageReceiveLoop(_messageSerialization, _socket);
-                _messageReceiveLoop.MessageReceived += (s, m) => MessageReceived(s, m);
-                _messageReceiveLoop.OnException += MessageReceiveLoopOnException;
+                _messageReceiveLoop = new MessageReceiveLoop(_messageSerialization, _socket, OnMessageReceived, MessageReceiveLoopOnException);
                 _messageReceiveLoop.Start();
             }
+        }
+
+        private void OnMessageReceived(ISocket socket, IMessage message)
+        {
+            MessageReceived(socket, message);
         }
 
         private void MessageReceiveLoopOnException(ISocket socket, Exception exception)

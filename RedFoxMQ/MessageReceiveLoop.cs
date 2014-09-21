@@ -31,20 +31,23 @@ namespace RedFoxMQ
         private TaskCompletionSource<bool> _started = new TaskCompletionSource<bool>();
         private readonly ManualResetEventSlim _stopped = new ManualResetEventSlim(true);
 
-        public event MessageReceivedDelegate MessageReceived = (socket, message) => { };
-        public event SocketExceptionDelegate OnException = (socket, exception) => { };
-
         private readonly IMessageSerialization _messageSerialization;
         private readonly ISocket _socket;
+        private readonly MessageReceivedDelegate _messageReceivedDelegate;
+        private readonly SocketExceptionDelegate _socketExceptionDelegate;
 
-        public MessageReceiveLoop(IMessageSerialization messageSerialization, ISocket socket)
+        public MessageReceiveLoop(IMessageSerialization messageSerialization, ISocket socket, 
+            MessageReceivedDelegate messageReceivedDelegate, SocketExceptionDelegate onExceptionDelegate)
         {
             if (messageSerialization == null) throw new ArgumentNullException("messageSerialization");
             if (socket == null) throw new ArgumentNullException("socket");
+            if (messageReceivedDelegate == null) throw new ArgumentNullException("messageReceivedDelegate");
 
             _socket = socket;
             _messageFrameReceiver = new MessageFrameReceiver(socket);
             _messageSerialization = messageSerialization;
+            _messageReceivedDelegate = messageReceivedDelegate;
+            _socketExceptionDelegate = onExceptionDelegate;
         }
 
         public void Start()
@@ -90,7 +93,7 @@ namespace RedFoxMQ
                     {
                         Debug.WriteLine(ex);
 
-                        OnException(_socket, ex);
+                        _socketExceptionDelegate(_socket, ex);
                     }
 
                     FireMessageReceivedEvent(message);
@@ -104,7 +107,7 @@ namespace RedFoxMQ
             }
             catch (IOException ex)
             {
-                OnException(_socket, ex);
+                _socketExceptionDelegate(_socket, ex);
             }
             finally
             {
@@ -116,7 +119,7 @@ namespace RedFoxMQ
         {
             if (message == null) return;
 
-            try { MessageReceived(_socket, message); }
+            try { _messageReceivedDelegate(_socket, message); }
             catch { }
         }
 
