@@ -14,11 +14,13 @@
 // limitations under the License.
 // 
 
+using System.IO;
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 
 namespace RedFoxMQ.Tests
 {
@@ -72,6 +74,31 @@ namespace RedFoxMQ.Tests
                     throw ex.InnerExceptions.First();
                 }
             }
+        }
+
+        [Test]
+        public void Requester_Request_should_obey_ReceiveTimeout_in_socket_configuration_and_throw_IOException()
+        {
+            using (var responder = TestHelpers.CreateTestResponder(1000))
+            using (var requester = new Requester())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(RedFoxTransport.Tcp);
+                var socketConfiguration = new SocketConfiguration { ReceiveTimeout = TimeSpan.FromMilliseconds(100) };
+
+                responder.Bind(endpoint);
+                requester.Connect(endpoint, socketConfiguration);
+
+                var disconnected = new ManualResetEventSlim();
+                requester.Disconnected += disconnected.Set;
+
+                Assert.Throws<IOException>(() => requester.Request(new TestMessage()));
+            }
+        }
+
+        [SetUp]
+        public void Setup()
+        {
+            TestHelpers.InitializeMessageSerialization();
         }
     }
 }

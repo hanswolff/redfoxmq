@@ -59,7 +59,7 @@ namespace RedFoxMQ
 
         public void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration)
         {
-            var server = SocketAccepterFactory.CreateAndBind(endpoint, socketConfiguration, OnClientConnected, SocketDisconnected);
+            var server = SocketAccepterFactory.CreateAndBind(endpoint, NodeType.Publisher, socketConfiguration, OnClientConnected, SocketDisconnected);
             _servers[endpoint] = server;
         }
 

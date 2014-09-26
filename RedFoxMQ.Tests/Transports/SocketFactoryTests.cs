@@ -26,8 +26,14 @@ namespace RedFoxMQ.Tests.Transports
     [TestFixture]
     public class SocketFactoryTests
     {
-        [Test]
-        public void SocketConfiguration_applied_to_TcpSocket_when_connecting()
+        [TestCase(NodeType.Publisher, false)]
+        [TestCase(NodeType.Requester, true)]
+        [TestCase(NodeType.Responder, true)]
+        [TestCase(NodeType.ServiceQueue, false)]
+        [TestCase(NodeType.ServiceQueueReader, true)]
+        [TestCase(NodeType.ServiceQueueWriter, true)]
+        [TestCase(NodeType.Subscriber, false)]
+        public void SocketConfiguration_applied_to_TcpSocket_when_connecting(NodeType nodeType, bool hasReceiveTimeout)
         {
             var endpoint = TestHelpers.CreateEndpointForTransport(RedFoxTransport.Tcp);
             var socketConfiguration = new SocketConfiguration
@@ -45,12 +51,13 @@ namespace RedFoxMQ.Tests.Transports
             {
                 server.AcceptTcpClientAsync();
 
-                var socket = (TcpSocket) new SocketFactory().CreateAndConnectAsync(endpoint, socketConfiguration);
+                var socket = (TcpSocket)new SocketFactory().CreateAndConnectAsync(endpoint, nodeType, socketConfiguration);
 
                 Assert.AreEqual(socketConfiguration.SendBufferSize, socket.TcpClient.SendBufferSize);
                 Assert.AreEqual(socketConfiguration.ReceiveBufferSize, socket.TcpClient.ReceiveBufferSize);
                 Assert.AreEqual(socketConfiguration.SendTimeout.ToMillisOrZero(), socket.TcpClient.SendTimeout);
-                Assert.AreEqual(socketConfiguration.ReceiveTimeout.ToMillisOrZero(), socket.TcpClient.ReceiveTimeout);
+                var expectedReceiveTimeout = hasReceiveTimeout ? socketConfiguration.ReceiveTimeout.ToMillisOrZero() : 0;
+                Assert.AreEqual(expectedReceiveTimeout, socket.TcpClient.ReceiveTimeout);
             }
             finally
             {

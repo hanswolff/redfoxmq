@@ -47,6 +47,7 @@
     <Compile Include="DefaultMessageSerialization.cs" />
     <Compile Include="Delegates.cs" />
     <Compile Include="CounterSignal.cs" />
+    <Compile Include="NodeTypeHasReceiveTimeout.cs" />
     <Compile Include="ResponderWorkerFactoryBuilder.cs" />
     <Compile Include="FormatHelpers.cs" />
     <Compile Include="IDisconnect.cs" />

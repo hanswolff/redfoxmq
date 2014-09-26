@@ -43,6 +43,25 @@ namespace RedFoxMQ.Tests
             }
         }
 
+        [Test]
+        public void ServiceQueueReader_should_obey_ReceiveTimeout_in_socket_configuration_and_disconnects_on_timeout()
+        {
+            using (var serviceQueue = new ServiceQueue())
+            using (var serviceQueueReader = new ServiceQueueReader())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(RedFoxTransport.Tcp);
+                var socketConfiguration = new SocketConfiguration { ReceiveTimeout = TimeSpan.FromMilliseconds(100) };
+
+                serviceQueue.Bind(endpoint);
+                serviceQueueReader.Connect(endpoint, socketConfiguration);
+
+                var disconnected = new ManualResetEventSlim();
+                serviceQueueReader.Disconnected += disconnected.Set;
+
+                Assert.IsTrue(disconnected.Wait(TimeSpan.FromSeconds(1)));
+            }
+        }
+
         [TestCase(ServiceQueueRotationAlgorithm.FirstIdle)]
         [TestCase(ServiceQueueRotationAlgorithm.LoadBalance)]
         public void ServiceQueue_connect_AddMessageFrame_single_message_received(ServiceQueueRotationAlgorithm rotationAlgorithm)

@@ -47,7 +47,7 @@ namespace RedFoxMQ.Tests
 
                 var nodeGreetingVerifier = new NodeGreetingMessageVerifier(NodeType.Publisher, NodeType.Subscriber);
 
-                var socket = new SocketFactory().CreateAndConnectAsync(endpoint, socketConfiguration);
+                var socket = new SocketFactory().CreateAndConnectAsync(endpoint, NodeType.Subscriber, socketConfiguration);
 
                 var sw = Stopwatch.StartNew();
                 var task = Task.Factory.StartNew(() =>
@@ -88,9 +88,9 @@ namespace RedFoxMQ.Tests
             {
                 server.AcceptTcpClientAsync();
 
-                var nodeGreetingVerifier = new NodeGreetingMessageVerifier(NodeType.Publisher, NodeType.Subscriber);
+                var nodeGreetingVerifier = new NodeGreetingMessageVerifier(NodeType.Requester, NodeType.Responder);
 
-                var socket = (TcpSocket)new SocketFactory().CreateAndConnectAsync(endpoint, socketConfiguration);
+                var socket = (TcpSocket)new SocketFactory().CreateAndConnectAsync(endpoint, NodeType.Responder, socketConfiguration);
                 Assert.Throws<TimeoutException>(() => nodeGreetingVerifier.SendReceiveAndVerify(socket, TimeSpan.FromSeconds(2)));
 
                 Assert.AreEqual(socketConfiguration.SendTimeout.ToMillisOrZero(), socket.TcpClient.SendTimeout);

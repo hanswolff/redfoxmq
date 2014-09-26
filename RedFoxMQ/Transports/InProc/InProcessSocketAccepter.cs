@@ -32,7 +32,7 @@ namespace RedFoxMQ.Transports.InProc
         public event ClientDisconnectedDelegate ClientDisconnected = client => { };
 
         private RedFoxEndpoint _endpoint;
-        public void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration, ClientConnectedDelegate onClientConnected = null, ClientDisconnectedDelegate onClientDisconnected = null)
+        public void Bind(RedFoxEndpoint endpoint, NodeType nodeType, ISocketConfiguration socketConfiguration, ClientConnectedDelegate onClientConnected = null, ClientDisconnectedDelegate onClientDisconnected = null)
         {
             if (_listener != null || !_stopped.IsSet)
                 throw new InvalidOperationException("Server already bound, please use Unbind first");

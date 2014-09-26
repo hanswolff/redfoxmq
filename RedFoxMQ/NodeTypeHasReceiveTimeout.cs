@@ -14,14 +14,21 @@
 // limitations under the License.
 // 
 
-namespace RedFoxMQ.Transports
+namespace RedFoxMQ
 {
-    interface ISocketAccepter
+    class NodeTypeHasReceiveTimeout
     {
-        event ClientConnectedDelegate ClientConnected;
-        event ClientDisconnectedDelegate ClientDisconnected;
-
-        void Bind(RedFoxEndpoint endpoint, NodeType nodeType, ISocketConfiguration socketConfiguration, ClientConnectedDelegate onClientConnected = null, ClientDisconnectedDelegate onClientDisconnected = null);
-        void Unbind(bool waitForExit = true);
+        public bool HasReceiveTimeout(NodeType nodeType)
+        {
+            switch (nodeType)
+            {
+                case NodeType.Publisher:
+                case NodeType.ServiceQueue:
+                case NodeType.Subscriber:
+                    return false;
+                default:
+                    return true;
+            }
+        }
     }
 }

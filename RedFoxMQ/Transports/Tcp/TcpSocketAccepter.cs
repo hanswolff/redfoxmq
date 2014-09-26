@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ namespace RedFoxMQ.Transports.Tcp
     class TcpSocketAccepter : ISocketAccepter
     {
         private static readonly IpAddressFromHostTranslator IpAddressFromHostTranslator = new IpAddressFromHostTranslator();
+        private static readonly NodeTypeHasReceiveTimeout NodeTypeHasReceiveTimeout = new NodeTypeHasReceiveTimeout();
 
         private RedFoxEndpoint _endpoint;
         private TcpListener _listener;
@@ -35,7 +36,7 @@ namespace RedFoxMQ.Transports.Tcp
         public event ClientConnectedDelegate ClientConnected = (socket, socketConfig) => { };
         public event ClientDisconnectedDelegate ClientDisconnected = client => { };
 
-        public void Bind(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration, ClientConnectedDelegate onClientConnected = null, ClientDisconnectedDelegate onClientDisconnected = null)
+        public void Bind(RedFoxEndpoint endpoint, NodeType nodeType, ISocketConfiguration socketConfiguration, ClientConnectedDelegate onClientConnected = null, ClientDisconnectedDelegate onClientDisconnected = null)
         {
             if (_listener != null || !_stopped.IsSet)
                 throw new InvalidOperationException("Server already bound, please use Unbind first");
@@ -58,15 +59,15 @@ namespace RedFoxMQ.Transports.Tcp
 
             _cts = new CancellationTokenSource();
 
-            StartAcceptLoop(socketConfiguration, _cts.Token);
+            StartAcceptLoop(socketConfiguration, _cts.Token, nodeType);
         }
 
-        private void StartAcceptLoop(ISocketConfiguration socketConfiguration, CancellationToken cancellationToken)
+        private void StartAcceptLoop(ISocketConfiguration socketConfiguration, CancellationToken cancellationToken, NodeType nodeType)
         {
-            var task = AcceptLoopAsync(socketConfiguration, cancellationToken);
+            var task = AcceptLoopAsync(socketConfiguration, cancellationToken, nodeType);
         }
 
-        private async Task AcceptLoopAsync(ISocketConfiguration socketConfiguration, CancellationToken cancellationToken)
+        private async Task AcceptLoopAsync(ISocketConfiguration socketConfiguration, CancellationToken cancellationToken, NodeType nodeType)
         {
             _started.Set();
 
@@ -75,7 +76,8 @@ namespace RedFoxMQ.Transports.Tcp
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     var tcpClient = await _listener.AcceptTcpClientAsync();
-                    SetupTcpClientParameters(tcpClient, socketConfiguration);
+                    SetupTcpClientParametersWithoutReceiveTimeout(tcpClient, socketConfiguration);
+                    tcpClient.ReceiveTimeout = NodeTypeHasReceiveTimeout.HasReceiveTimeout(nodeType) ? socketConfiguration.ReceiveTimeout.ToMillisOrZero() : 0;
 
                     var socket = new TcpSocket(_endpoint, tcpClient);
                     socket.Disconnected += () => ClientDisconnected(socket);
@@ -98,9 +100,8 @@ namespace RedFoxMQ.Transports.Tcp
             }
         }
 
-        private static void SetupTcpClientParameters(TcpClient tcpClient, ISocketConfiguration socketConfiguration)
+        private static void SetupTcpClientParametersWithoutReceiveTimeout(TcpClient tcpClient, ISocketConfiguration socketConfiguration)
         {
-            tcpClient.ReceiveTimeout = socketConfiguration.ReceiveTimeout.ToMillisOrZero();
             tcpClient.SendTimeout = socketConfiguration.SendTimeout.ToMillisOrZero();
 
             tcpClient.NoDelay = true;

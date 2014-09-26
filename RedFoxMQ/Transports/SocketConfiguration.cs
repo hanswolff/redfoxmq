@@ -20,7 +20,7 @@ namespace RedFoxMQ.Transports
 {
     public class SocketConfiguration : ISocketConfiguration
     {
-        public static readonly ISocketConfiguration Default = new SocketConfiguration();
+        public static readonly SocketConfiguration Default = new SocketConfiguration();
 
         public TimeSpan ConnectTimeout { get; set; }
         public TimeSpan ReceiveTimeout { get; set; }
@@ -32,7 +32,7 @@ namespace RedFoxMQ.Transports
         public SocketConfiguration()
         {
             ConnectTimeout = TimeSpan.FromSeconds(10);
-            ReceiveTimeout = TimeSpan.FromSeconds(30);
+            ReceiveTimeout = TimeSpan.FromMilliseconds(0);
             SendTimeout = TimeSpan.FromSeconds(30);
             ReceiveBufferSize = 65536;
             SendBufferSize = 65536;

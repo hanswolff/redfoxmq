@@ -16,7 +16,7 @@
 
 namespace RedFoxMQ
 {
-    enum NodeType : byte
+    public enum NodeType : byte
     {
         Publisher = 1,
         Subscriber = 2,

@@ -23,14 +23,16 @@ namespace RedFoxMQ.Transports
 {
     class SocketFactory
     {
-        public ISocket CreateAndConnectAsync(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration)
+        private static readonly NodeTypeHasReceiveTimeout NodeTypeHasReceiveTimeout = new NodeTypeHasReceiveTimeout();
+
+        public ISocket CreateAndConnectAsync(RedFoxEndpoint endpoint, NodeType nodeType, ISocketConfiguration socketConfiguration)
         {
             switch (endpoint.Transport)
             {
                 case RedFoxTransport.Inproc:
                     return CreateInProcSocket(endpoint);
                 case RedFoxTransport.Tcp:
-                    return CreateTcpSocket(endpoint, socketConfiguration);
+                    return CreateTcpSocket(endpoint, nodeType, socketConfiguration);
                 default:
                     throw new NotSupportedException(String.Format("Transport {0} not supported", endpoint.Transport));
             }
@@ -41,11 +43,13 @@ namespace RedFoxMQ.Transports
             return InProcessEndpoints.Instance.Connect(endpoint);
         }
 
-        private static ISocket CreateTcpSocket(RedFoxEndpoint endpoint, ISocketConfiguration socketConfiguration)
+        private static ISocket CreateTcpSocket(RedFoxEndpoint endpoint, NodeType nodeType, ISocketConfiguration socketConfiguration)
         {
+            var hasReceiveTimeout = NodeTypeHasReceiveTimeout.HasReceiveTimeout(nodeType);
+
             var tcpClient = new TcpClient
             {
-                ReceiveTimeout = socketConfiguration.ReceiveTimeout.ToMillisOrZero(),
+                ReceiveTimeout = hasReceiveTimeout ? socketConfiguration.ReceiveTimeout.ToMillisOrZero() : 0,
                 SendTimeout = socketConfiguration.SendTimeout.ToMillisOrZero(),
 
                 NoDelay = true,

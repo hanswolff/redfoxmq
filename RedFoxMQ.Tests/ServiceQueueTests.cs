@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+using System.Threading;
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using System;

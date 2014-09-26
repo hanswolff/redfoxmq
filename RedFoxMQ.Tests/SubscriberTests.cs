@@ -14,6 +14,7 @@
 // limitations under the License.
 // 
 
+using System.Threading;
 using NUnit.Framework;
 using RedFoxMQ.Transports;
 using System;
@@ -71,6 +72,25 @@ namespace RedFoxMQ.Tests
                 {
                     throw ex.InnerExceptions.First();
                 }
+            }
+        }
+
+        [Test]
+        public void subscriber_should_ignore_ReceiveTimeout_in_socket_configuration_and_must_not_disconnect_on_timeout()
+        {
+            using (var publisher = new Publisher())
+            using (var subscriber = new Subscriber())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(RedFoxTransport.Tcp);
+                var socketConfiguration = new SocketConfiguration { ReceiveTimeout = TimeSpan.FromMilliseconds(100) };
+
+                var disconnected = new ManualResetEventSlim();
+                publisher.ClientDisconnected += s => disconnected.Set();
+
+                publisher.Bind(endpoint);
+                subscriber.Connect(endpoint, socketConfiguration);
+
+                Assert.IsFalse(disconnected.Wait(TimeSpan.FromSeconds(1)));
             }
         }
     }

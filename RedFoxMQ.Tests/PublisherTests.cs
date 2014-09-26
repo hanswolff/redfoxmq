@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013 Hans Wolff
+// Copyright 2013-2014 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -86,15 +86,34 @@ namespace RedFoxMQ.Tests
 
                 publisher.ClientConnected += (s, c) => connected.Set();
                 publisher.ClientDisconnected += s => disconnected.Set();
-                
+
                 publisher.Bind(endpoint);
                 subscriber.Connect(endpoint);
-                
+
                 Assert.IsTrue(connected.Wait(TimeSpan.FromSeconds(1)));
 
                 publisher.Unbind(endpoint);
 
                 Assert.IsTrue(disconnected.Wait(TimeSpan.FromSeconds(1)));
+            }
+        }
+
+        [Test]
+        public void publisher_should_ignore_ReceiveTimeout_in_socket_configuration_and_must_not_disconnect_on_timeout()
+        {
+            using (var publisher = new Publisher())
+            using (var subscriber = new Subscriber())
+            {
+                var endpoint = TestHelpers.CreateEndpointForTransport(RedFoxTransport.Tcp);
+                var socketConfiguration = new SocketConfiguration { ReceiveTimeout = TimeSpan.FromMilliseconds(100) };
+
+                var disconnected = new ManualResetEventSlim();
+                publisher.ClientDisconnected += s => disconnected.Set();
+
+                publisher.Bind(endpoint, socketConfiguration);
+                subscriber.Connect(endpoint);
+
+                Assert.IsFalse(disconnected.Wait(TimeSpan.FromSeconds(1)));
             }
         }
     }
