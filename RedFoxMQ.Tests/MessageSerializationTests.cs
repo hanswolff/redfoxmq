@@ -59,6 +59,15 @@ namespace RedFoxMQ.Tests
         }
 
         [Test]
+        public void serializer_defined_for_message_with_MessageTypeId_65535_Serialize_returns_serialized_object()
+        {
+            var messageSerialization = new MessageSerialization();
+            messageSerialization.RegisterSerializer(CustomMessage.TypeId, new TestMessageSerializer());
+
+            Assert.AreEqual(Encoding.UTF8.GetBytes("abc"), messageSerialization.Serialize(new CustomMessage { Text = "abc" }));
+        }
+
+        [Test]
         public void no_deserializer_defined_Deserialize_throws_MissingMessageDeserializerException()
         {
             var messageSerialization = new MessageSerialization();
@@ -95,6 +104,15 @@ namespace RedFoxMQ.Tests
         }
 
         [Test]
+        public void deserializer_defined_for_message_with_MessageTypeId_65535_Deserialize_creates_object()
+        {
+            var messageSerialization = new MessageSerialization();
+            messageSerialization.RegisterDeserializer(CustomMessage.TypeId, new TestMessageDeserializer());
+
+            Assert.IsNotNull(messageSerialization.Deserialize(CustomMessage.TypeId, new byte[1]));
+        }
+
+        [Test]
         public void MessageSerializationException_should_be_thrown_on_exception_while_serializing_message()
         {
             var messageSerialization = new MessageSerialization();
@@ -116,6 +134,12 @@ namespace RedFoxMQ.Tests
             var message = messageSerialization.Serialize(messageThatCausesExceptionOnDeserialization);
             var exception = Assert.Throws<MessageDeserializationException>(() => messageSerialization.Deserialize(ExceptionTestMessage.TypeId, message));
             Assert.IsInstanceOf<TestException>(exception.InnerException);
+        }
+
+        class CustomMessage : TestMessage
+        {
+            public new const ushort TypeId = ushort.MaxValue;
+            public override ushort MessageTypeId { get { return TypeId; } }
         }
     }
 }

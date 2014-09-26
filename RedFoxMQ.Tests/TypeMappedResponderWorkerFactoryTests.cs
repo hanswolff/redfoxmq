@@ -48,6 +48,20 @@ namespace RedFoxMQ.Tests
         }
 
         [Test]
+        public void Map_untyped_ResponderWorker_for_message_with_MessageTypeId_65536()
+        {
+            Func<IMessage, IMessage> echoFunc = m => new TestMessage("response");
+            var factory = new TypeMappedResponderWorkerFactory();
+
+            factory.Map<CustomMessage>(new ResponderWorker(echoFunc));
+
+            var requestMessage = new CustomMessage();
+            var response = factory.GetWorkerFor(requestMessage).GetResponse(requestMessage, null);
+
+            Assert.IsNotNull(response);
+        }
+
+        [Test]
         public void Map_typed_ResponderWorker()
         {
             Func<TestMessage, IMessage> echoFunc = m => new TestMessage("response");
@@ -73,6 +87,12 @@ namespace RedFoxMQ.Tests
             var response = factory.GetWorkerFor(requestMessage).GetResponse(requestMessage, null);
 
             Assert.AreEqual("response", ((TestMessage)response).Text);
+        }
+
+        class CustomMessage : TestMessage
+        {
+            public new const ushort TypeId = ushort.MaxValue;
+            public override ushort MessageTypeId { get { return TypeId; } }
         }
     }
 }

@@ -20,7 +20,7 @@ namespace RedFoxMQ.Tests
     public class TestMessage : IMessage
     {
         public const int TypeId = 1;
-        public ushort MessageTypeId { get { return TypeId; } }
+        public virtual ushort MessageTypeId { get { return TypeId; } }
 
         public string Text { get; set; }
 

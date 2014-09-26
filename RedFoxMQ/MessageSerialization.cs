@@ -20,8 +20,8 @@ namespace RedFoxMQ
 {
     public sealed class MessageSerialization : IMessageSerialization
     {
-        private readonly IMessageSerializer[] _serializers = new IMessageSerializer[ushort.MaxValue];
-        private readonly IMessageDeserializer[] _deserializers = new IMessageDeserializer[ushort.MaxValue];
+        private readonly IMessageSerializer[] _serializers = new IMessageSerializer[ushort.MaxValue + 1];
+        private readonly IMessageDeserializer[] _deserializers = new IMessageDeserializer[ushort.MaxValue + 1];
 
         public IMessageSerializer DefaultSerializer { get; set; }
         public IMessageDeserializer DefaultDeserializer { get; set; }

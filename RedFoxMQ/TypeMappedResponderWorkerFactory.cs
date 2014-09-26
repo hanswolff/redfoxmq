@@ -42,7 +42,7 @@ namespace RedFoxMQ
 
         public TypeMappedResponderWorkerFactory()
         {
-            _map = new Func<IMessage, IResponderWorker>[ushort.MaxValue];
+            _map = new Func<IMessage, IResponderWorker>[ushort.MaxValue + 1];
 
             CreateDefaultMap();
         }
