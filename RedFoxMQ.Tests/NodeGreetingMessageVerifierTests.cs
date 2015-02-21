@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013-2014 Hans Wolff
+// Copyright 2013-2015 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,10 +34,7 @@ namespace RedFoxMQ.Tests
         public void SendReceiveAndVerify_times_out_after_ConnectTimeout()
         {
             var endpoint = TestHelpers.CreateEndpointForTransport(RedFoxTransport.Tcp);
-            var socketConfiguration = new SocketConfiguration
-            {
-                ConnectTimeout = TimeSpan.FromSeconds(2)
-            };
+            var socketConfiguration = new SocketConfiguration { ConnectTimeout = TimeSpan.FromSeconds(2) };
 
             var server = new TcpListener(IPAddress.Loopback, endpoint.Port);
             server.Start();

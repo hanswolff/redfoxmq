@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright 2013-2014 Hans Wolff
+// Copyright 2013-2015 Hans Wolff
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,14 +23,14 @@ namespace RedFoxMQ.Tests
     public class ResponderWorkerFactoryBuilderTests
     {
         [Test]
-        public void Create_no_method_throws_ArgumentException()
+        public void Create_hub_with_no_method_throws_ArgumentException()
         {
             var builder = new ResponderWorkerFactoryBuilder();
             Assert.Throws<ArgumentException>(() => builder.Create(new TestHubNoMethod()));
         }
 
         [Test]
-        public void Create_single_method()
+        public void Create_hub_with_single_method()
         {
             var builder = new ResponderWorkerFactoryBuilder();
             var responderFactory = builder.Create(new TestHubSingleMethod());
@@ -41,7 +41,7 @@ namespace RedFoxMQ.Tests
         }
 
         [Test]
-        public void Create_single_default_method()
+        public void Create_hub_with_single_default_method()
         {
             var builder = new ResponderWorkerFactoryBuilder();
             var responderFactory = builder.Create(new TestHubSingleDefaultMethod());
@@ -52,14 +52,14 @@ namespace RedFoxMQ.Tests
         }
 
         [Test]
-        public void Create_multiple_default_methods_throws_ArgumentException()
+        public void Create_hub_with_multiple_default_methods_throws_ArgumentException()
         {
             var builder = new ResponderWorkerFactoryBuilder();
             Assert.Throws<ArgumentException>(() => builder.Create(new TestHubMultipleDefaultMethods()));
         }
 
         [Test]
-        public void Create_multiple_methods_same_signature_throws_ArgumentException()
+        public void Create_hub_with_with_multiple_methods_same_signature_throws_ArgumentException()
         {
             var builder = new ResponderWorkerFactoryBuilder();
             Assert.Throws<ArgumentException>(() => builder.Create(new TestHubMultipleMethodsSameSignature()));
